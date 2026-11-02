@@ -1,283 +1,553 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ColoPlus Smart Diesel & Autonomy Tracking System</title>
+  <title>ColoPlus Industrial Diesel & Fleet Autonomy Command Center</title>
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    body { font-family: var(--font-sans); }
+    .font-mono { font-family: var(--font-mono); }
+
+    /* Custom scrollbars */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: var(--background, #0f172a); }
-    ::-webkit-scrollbar-thumb { background: var(--border, #334155); border-radius: 4px; }
-    .badge-critical { background-color: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
-    .badge-warning { background-color: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
-    .badge-healthy { background-color: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
-    .tank-bar-critical { background: linear-gradient(90deg, #ef4444, #f87171); }
-    .tank-bar-warning { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-    .tank-bar-healthy { background: linear-gradient(90deg, #10b981, #34d399); }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.2); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.35); }
+
+    /* Glassmorphism & Cyber Accents */
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .glass-card:hover {
+      background: rgba(30, 41, 59, 0.75);
+      border-color: rgba(56, 189, 248, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5), 0 0 20px -5px rgba(56, 189, 248, 0.15);
+    }
+
+    /* Animated liquid wave inside cylinder */
+    @keyframes waveFlow {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .liquid-wave {
+      animation: waveFlow 4s linear infinite;
+    }
+
+    /* Pulse Glow */
+    .glow-critical {
+      box-shadow: 0 0 15px rgba(239, 68, 68, 0.35);
+    }
+    .glow-warning {
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+    }
+    .glow-emerald {
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+    }
+
+    /* Light mode adaptations */
+    html:not(.dark) body {
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+    html:not(.dark) .glass-panel {
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+    }
+    html:not(.dark) .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+    html:not(.dark) .glass-card:hover {
+      background: #ffffff;
+      border-color: rgba(14, 165, 233, 0.4);
+      box-shadow: 0 10px 25px -5px rgba(14, 165, 233, 0.12);
+    }
   </style>
 </head>
-<body class="bg-[var(--background,#0b0f19)] text-[var(--foreground,#f8fafc)] antialiased min-h-screen p-4 md:p-6 font-sans">
+<body class="bg-[#070b14] text-slate-100 min-h-screen antialiased flex flex-col transition-colors duration-300">
 
-  <!-- Header -->
-  <div class="max-w-7xl mx-auto">
-    <header class="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-[var(--border,#1e293b)] pb-5">
-      <div>
-        <div class="flex items-center gap-2 mb-1">
-          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping mr-1.5 inline-block"></span>LIVE AUDIT ENGINE
-          </span>
-          <span class="text-xs text-[var(--muted-foreground,#94a3b8)]">ColoPlus Telecom Infrastructure</span>
+  <!-- Ambient Background Glows -->
+  <div class="fixed top-0 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
+  <div class="fixed bottom-0 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
+  <div class="fixed top-1/2 left-3/4 w-80 h-80 bg-rose-500/5 rounded-full blur-3xl pointer-events-none -z-10"></div>
+
+  <!-- Top Navigation & Brand Header -->
+  <header class="sticky top-0 z-40 glass-panel border-b border-white/10 px-4 lg:px-8 py-3.5">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      
+      <div class="flex items-center gap-3.5">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-emerald-400 p-0.5 shadow-lg shadow-cyan-500/20 flex items-center justify-center">
+          <div class="w-full h-full bg-[#0b1120] rounded-[10px] flex items-center justify-center text-lg">
+            ⚡
+          </div>
         </div>
-        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-[var(--foreground,#f8fafc)]">
-          Diesel Consumption, Fuel Levels & Autonomy Predictor
-        </h1>
-        <p class="text-sm text-[var(--muted-foreground,#94a3b8)] mt-1">
-          Real-time daily fuel burn (CPD/CPH), tank volume audit, run-out date forecasting, FSE officer contacts, and emergency refuel dispatch.
-        </p>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg md:text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
+              COLOPLUS <span class="bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">NOC FUEL PULSE</span>
+            </h1>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              Live Telemetry
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">Autonomous Fuel Depletion Forecaster • 76 Active Infrastructure Nodes</p>
+        </div>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2.5">
-        <button onclick="exportToCsv()" class="px-3.5 py-2 text-xs font-semibold rounded-lg border border-[var(--border,#334155)] bg-[var(--card,#131b2e)] hover:bg-[var(--border,#334155)] transition flex items-center gap-1.5 shadow-sm">
-          <span>📥</span> Export Critical Watchlist (CSV)
+      <!-- Action Utilities -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <button onclick="toggleAnalyticsView()" id="toggleAnalyticsBtn" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/5 hover:bg-white/10 border border-white/10 transition flex items-center gap-1.5">
+          <span>📊</span> Analytics Hub
         </button>
-        <button onclick="window.print()" class="px-3.5 py-2 text-xs font-semibold rounded-lg border border-[var(--border,#334155)] bg-[var(--card,#131b2e)] hover:bg-[var(--border,#334155)] transition flex items-center gap-1.5 shadow-sm">
-          <span>🖨️</span> Print Dispatch Sheet
+        <button onclick="openDispatchBatchModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 transition flex items-center gap-1.5">
+          <span>🚚</span> Supplier PO Dispatch
         </button>
-        <button onclick="openSimulationModal(null)" class="px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center gap-1.5 shadow-md">
-          <span>⚡</span> Quick Fuel Logger / Calculator
+        <button onclick="exportToCsv()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/5 hover:bg-white/10 border border-white/10 transition flex items-center gap-1.5">
+          <span>📥</span> Export CSV
+        </button>
+        <button onclick="toggleTheme()" class="p-2 rounded-lg text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 transition" title="Toggle Dark/Light Mode">
+          <span id="themeIcon">☀️</span>
         </button>
       </div>
-    </header>
 
-    <!-- Top KPI Cards -->
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="max-w-7xl mx-auto w-full p-4 lg:p-8 flex-1">
+
+    <!-- KPI Overview Strip -->
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 mb-6">
-      <div class="p-4 rounded-xl border border-[var(--border,#1e293b)] bg-[var(--card,#131b2e)] shadow-sm">
-        <p class="text-xs font-medium text-[var(--muted-foreground,#94a3b8)]">Monitored Sites</p>
-        <p id="kpiTotalSites" class="text-2xl font-bold text-[var(--foreground,#f8fafc)] mt-1">76</p>
-        <p class="text-xs text-[var(--muted-foreground,#94a3b8)] mt-0.5">Nationwide Portfolio</p>
-      </div>
-
-      <div class="p-4 rounded-xl border border-red-500/30 bg-red-950/20 shadow-sm">
-        <div class="flex items-center justify-between">
-          <p class="text-xs font-medium text-red-400">🚨 Critical (&lt; 3 Days)</p>
+      
+      <div class="glass-panel p-4 rounded-2xl relative overflow-hidden group">
+        <div class="absolute -right-4 -bottom-4 w-16 h-16 bg-blue-500/10 rounded-full blur-xl group-hover:bg-blue-500/20 transition"></div>
+        <div class="flex items-center justify-between text-xs text-slate-400 font-medium">
+          <span>Network Sites</span>
+          <span class="text-blue-400">📡</span>
         </div>
-        <p id="kpiCriticalSites" class="text-2xl font-bold text-red-400 mt-1">0</p>
-        <p class="text-xs text-red-400/80 mt-0.5">Needs Immediate Refuel</p>
+        <div id="kpiTotalSites" class="text-2xl font-black text-white mt-1.5 font-mono">76</div>
+        <div class="text-[11px] text-slate-400 mt-0.5">100% Monitored</div>
       </div>
 
-      <div class="p-4 rounded-xl border border-amber-500/30 bg-amber-950/20 shadow-sm">
-        <p class="text-xs font-medium text-amber-400">⚠️ Warning (3-6 Days)</p>
-        <p id="kpiWarningSites" class="text-2xl font-bold text-amber-400 mt-1">0</p>
-        <p class="text-xs text-amber-400/80 mt-0.5">Reorder Point Reached</p>
+      <div class="glass-panel p-4 rounded-2xl border-rose-500/30 bg-rose-950/20 relative overflow-hidden group">
+        <div class="absolute -right-4 -bottom-4 w-16 h-16 bg-rose-500/20 rounded-full blur-xl"></div>
+        <div class="flex items-center justify-between text-xs text-rose-400 font-semibold">
+          <span>Critical Outage Risk</span>
+          <span class="animate-bounce">🚨</span>
+        </div>
+        <div id="kpiCriticalSites" class="text-2xl font-black text-rose-400 mt-1.5 font-mono">0</div>
+        <div class="text-[11px] text-rose-400/80 mt-0.5">&le; 3 Days Autonomy</div>
       </div>
 
-      <div class="p-4 rounded-xl border border-emerald-500/30 bg-emerald-950/20 shadow-sm">
-        <p class="text-xs font-medium text-emerald-400">🟢 Healthy (&gt; 6 Days)</p>
-        <p id="kpiHealthySites" class="text-2xl font-bold text-emerald-400 mt-1">0</p>
-        <p class="text-xs text-emerald-400/80 mt-0.5">Safe Fuel Autonomy</p>
+      <div class="glass-panel p-4 rounded-2xl border-amber-500/30 bg-amber-950/20 relative overflow-hidden group">
+        <div class="absolute -right-4 -bottom-4 w-16 h-16 bg-amber-500/20 rounded-full blur-xl"></div>
+        <div class="flex items-center justify-between text-xs text-amber-400 font-semibold">
+          <span>Reorder Warning</span>
+          <span>⚠️</span>
+        </div>
+        <div id="kpiWarningSites" class="text-2xl font-black text-amber-400 mt-1.5 font-mono">0</div>
+        <div class="text-[11px] text-amber-400/80 mt-0.5">3 to 6 Days Autonomy</div>
       </div>
 
-      <div class="p-4 rounded-xl border border-[var(--border,#1e293b)] bg-[var(--card,#131b2e)] shadow-sm">
-        <p class="text-xs font-medium text-[var(--muted-foreground,#94a3b8)]">Total Fuel in Tanks</p>
-        <p id="kpiTotalLiters" class="text-2xl font-bold text-blue-400 mt-1">0 L</p>
-        <p class="text-xs text-[var(--muted-foreground,#94a3b8)] mt-0.5">Current Stock Level</p>
+      <div class="glass-panel p-4 rounded-2xl border-emerald-500/30 bg-emerald-950/20 relative overflow-hidden group">
+        <div class="absolute -right-4 -bottom-4 w-16 h-16 bg-emerald-500/20 rounded-full blur-xl"></div>
+        <div class="flex items-center justify-between text-xs text-emerald-400 font-semibold">
+          <span>Safe Autonomy</span>
+          <span>🟢</span>
+        </div>
+        <div id="kpiHealthySites" class="text-2xl font-black text-emerald-400 mt-1.5 font-mono">0</div>
+        <div class="text-[11px] text-emerald-400/80 mt-0.5">&gt; 6 Days Buffer</div>
       </div>
 
-      <div class="p-4 rounded-xl border border-[var(--border,#1e293b)] bg-[var(--card,#131b2e)] shadow-sm">
-        <p class="text-xs font-medium text-[var(--muted-foreground,#94a3b8)]">Network Daily Burn</p>
-        <p id="kpiDailyBurn" class="text-2xl font-bold text-purple-400 mt-1">0 L/d</p>
-        <p id="kpiDailyCost" class="text-xs text-[var(--muted-foreground,#94a3b8)] mt-0.5">₦0 / day</p>
+      <div class="glass-panel p-4 rounded-2xl relative overflow-hidden group">
+        <div class="absolute -right-4 -bottom-4 w-16 h-16 bg-cyan-500/10 rounded-full blur-xl"></div>
+        <div class="flex items-center justify-between text-xs text-slate-400 font-medium">
+          <span>Total Fuel in Tanks</span>
+          <span class="text-cyan-400">🛢️</span>
+        </div>
+        <div id="kpiTotalLiters" class="text-2xl font-black text-cyan-300 mt-1.5 font-mono">0 L</div>
+        <div id="kpiAvgFill" class="text-[11px] text-slate-400 mt-0.5">0% Average Fill</div>
+      </div>
+
+      <div class="glass-panel p-4 rounded-2xl relative overflow-hidden group">
+        <div class="absolute -right-4 -bottom-4 w-16 h-16 bg-purple-500/10 rounded-full blur-xl"></div>
+        <div class="flex items-center justify-between text-xs text-slate-400 font-medium">
+          <span>Daily Network Burn</span>
+          <span class="text-purple-400">🔥</span>
+        </div>
+        <div id="kpiDailyBurn" class="text-2xl font-black text-purple-300 mt-1.5 font-mono">0 L/d</div>
+        <div id="kpiDailyCost" class="text-[11px] text-slate-400 mt-0.5 font-mono">₦0 / day</div>
+      </div>
+
+    </div>
+
+    <!-- Collapsible Analytics Hub (Visual Charts) -->
+    <div id="analyticsHub" class="hidden mb-6 glass-panel p-5 rounded-2xl border border-white/10 transition-all duration-300">
+      <div class="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-cyan-400 text-lg">📈</span>
+          <h2 class="text-sm font-bold uppercase tracking-wider text-white">Fleet Autonomy & Fuel Velocity Analytics</h2>
+        </div>
+        <button onclick="toggleAnalyticsView()" class="text-xs text-slate-400 hover:text-white">✕ Minimize</button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Runway Timeline Ranking -->
+        <div class="lg:col-span-2 bg-[#090e1c] p-4 rounded-xl border border-white/5">
+          <div class="flex items-center justify-between mb-3 text-xs">
+            <span class="font-bold text-white">Top 8 Most Urgent Sites (Days Until Depletion)</span>
+            <span class="text-slate-400">Autonomy Countdown</span>
+          </div>
+          <div id="runwayChartBars" class="space-y-2.5">
+            <!-- Dynamic SVG/HTML horizontal bars -->
+          </div>
+        </div>
+
+        <!-- Regional Distribution Breakdown -->
+        <div class="bg-[#090e1c] p-4 rounded-xl border border-white/5 flex flex-col justify-between">
+          <div class="text-xs font-bold text-white mb-2">Regional Fuel Stock Breakdown</div>
+          <div id="regionalBars" class="space-y-2 my-auto">
+            <!-- Regional Bars -->
+          </div>
+          <div class="text-[11px] text-slate-500 pt-2 border-t border-white/5 mt-2">
+            Top clusters: Lagos, Ogun, Delta & Edo represent 72% of daily diesel consumption.
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Filter & Search Toolbar -->
-    <div class="p-4 rounded-xl border border-[var(--border,#1e293b)] bg-[var(--card,#131b2e)] shadow-sm mb-6">
-      <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+    <!-- Search & Control Toolbar -->
+    <div class="glass-panel p-4 rounded-2xl mb-6 shadow-xl">
+      <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
         
-        <!-- Search bar -->
+        <!-- Live Search Field -->
         <div class="relative flex-1">
-          <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-[var(--muted-foreground,#94a3b8)]">🔍</span>
-          <input type="text" id="searchInput" oninput="renderSites()" placeholder="Search by Site ID (e.g. CP/CP/EK/002), Tenant (EK0474, Airtel), State, or FSE Name..."
-                 class="w-full pl-9 pr-4 py-2 text-xs md:text-sm rounded-lg bg-[var(--background,#0b0f19)] border border-[var(--border,#334155)] text-[var(--foreground,#f8fafc)] focus:outline-none focus:ring-1 focus:ring-emerald-500">
+          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          </div>
+          <input type="text" id="searchInput" oninput="renderSites()" placeholder="Search site ID (CP/CP/EK/002), tenant (EK0474, MTN, Airtel), state, FSE engineer..."
+                 class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-black/40 border border-white/10 text-white placeholder-slate-400 text-xs md:text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition">
         </div>
 
-        <!-- Filter tabs -->
-        <div class="flex flex-wrap items-center gap-1.5">
-          <button onclick="setFilter('ALL')" id="filterALL" class="filter-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white transition">
+        <!-- Filter Tabs -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0">
+          <button onclick="setFilter('ALL')" id="filterALL" class="filter-tab px-3.5 py-2 rounded-xl text-xs font-bold bg-cyan-500 text-black shadow-lg shadow-cyan-500/25 transition">
             All Sites (<span id="countALL">76</span>)
           </button>
-          <button onclick="setFilter('CRITICAL')" id="filterCRITICAL" class="filter-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--background,#0b0f19)] border border-[var(--border,#334155)] text-red-400 hover:bg-red-950/20 transition">
+          <button onclick="setFilter('CRITICAL')" id="filterCRITICAL" class="filter-tab px-3.5 py-2 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-rose-400 hover:bg-rose-950/20 transition">
             🚨 Critical (<span id="countCRITICAL">0</span>)
           </button>
-          <button onclick="setFilter('WARNING')" id="filterWARNING" class="filter-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--background,#0b0f19)] border border-[var(--border,#334155)] text-amber-400 hover:bg-amber-950/20 transition">
+          <button onclick="setFilter('WARNING')" id="filterWARNING" class="filter-tab px-3.5 py-2 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-amber-400 hover:bg-amber-950/20 transition">
             ⚠️ Warning (<span id="countWARNING">0</span>)
           </button>
-          <button onclick="setFilter('HEALTHY')" id="filterHEALTHY" class="filter-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--background,#0b0f19)] border border-[var(--border,#334155)] text-emerald-400 hover:bg-emerald-950/20 transition">
+          <button onclick="setFilter('HEALTHY')" id="filterHEALTHY" class="filter-tab px-3.5 py-2 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-emerald-400 hover:bg-emerald-950/20 transition">
             🟢 Healthy (<span id="countHEALTHY">0</span>)
           </button>
         </div>
 
-        <!-- State & Sort Dropdowns -->
+        <!-- Dropdown Controls -->
         <div class="flex items-center gap-2">
-          <select id="stateSelect" onchange="renderSites()" class="text-xs py-2 px-2.5 rounded-lg bg-[var(--background,#0b0f19)] border border-[var(--border,#334155)] text-[var(--foreground,#f8fafc)] focus:outline-none">
+          <select id="stateSelect" onchange="renderSites()" class="text-xs py-2.5 px-3 rounded-xl bg-black/40 border border-white/10 text-slate-200 focus:outline-none focus:border-cyan-500">
             <option value="ALL">All States (10+)</option>
-            <option value="Ekiti">Ekiti</option>
-            <option value="Delta">Delta</option>
             <option value="Lagos">Lagos</option>
             <option value="Ogun">Ogun</option>
-            <option value="Abuja FCT">Abuja FCT</option>
-            <option value="Enugu">Enugu</option>
-            <option value="Kaduna">Kaduna</option>
+            <option value="Delta">Delta</option>
             <option value="Edo">Edo</option>
+            <option value="Ekiti">Ekiti</option>
+            <option value="Kaduna">Kaduna</option>
+            <option value="Enugu">Enugu</option>
             <option value="Borno">Borno</option>
             <option value="Cross River">Cross River</option>
+            <option value="Abuja FCT">Abuja FCT</option>
             <option value="Anambra">Anambra</option>
           </select>
 
-          <select id="sortSelect" onchange="renderSites()" class="text-xs py-2 px-2.5 rounded-lg bg-[var(--background,#0b0f19)] border border-[var(--border,#334155)] text-[var(--foreground,#f8fafc)] focus:outline-none">
-            <option value="urgency">Sort: Most Urgent First</option>
-            <option value="dl-asc">Sort: Lowest Fuel First</option>
-            <option value="cpd-desc">Sort: Highest Daily Burn</option>
-            <option value="site-asc">Sort: Site ID (A-Z)</option>
+          <select id="sortSelect" onchange="renderSites()" class="text-xs py-2.5 px-3 rounded-xl bg-black/40 border border-white/10 text-slate-200 focus:outline-none focus:border-cyan-500">
+            <option value="urgency">⚡ Sort: Run-Out Urgency</option>
+            <option value="dl-asc">🛢️ Sort: Lowest Fuel First</option>
+            <option value="cpd-desc">🔥 Sort: Highest Burn Rate</option>
+            <option value="site-asc">🔤 Sort: Site ID (A-Z)</option>
           </select>
 
-          <div class="flex rounded-lg border border-[var(--border,#334155)] overflow-hidden">
-            <button onclick="setView('grid')" id="viewGridBtn" class="p-2 text-xs bg-emerald-600 text-white">🔲</button>
-            <button onclick="setView('table')" id="viewTableBtn" class="p-2 text-xs bg-[var(--background,#0b0f19)] text-[var(--muted-foreground,#94a3b8)]">📄</button>
+          <div class="flex rounded-xl border border-white/10 overflow-hidden bg-black/40 p-0.5">
+            <button onclick="setView('grid')" id="viewGridBtn" class="px-2.5 py-1.5 text-xs rounded-lg bg-cyan-500 text-black font-bold">🔲 Cards</button>
+            <button onclick="setView('table')" id="viewTableBtn" class="px-2.5 py-1.5 text-xs rounded-lg text-slate-400 hover:text-white">📄 Table</button>
           </div>
         </div>
 
       </div>
     </div>
 
-    <!-- Active Sites Container -->
-    <div id="sitesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-      <!-- Site Cards dynamically rendered here -->
+    <!-- Sites Grid Layout -->
+    <div id="sitesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+      <!-- Dynamic Cards -->
     </div>
 
-    <div id="sitesTableContainer" class="hidden mb-8 overflow-x-auto rounded-xl border border-[var(--border,#1e293b)] bg-[var(--card,#131b2e)] shadow-sm">
+    <!-- Sites Table Layout -->
+    <div id="sitesTableContainer" class="hidden mb-8 overflow-x-auto rounded-2xl glass-panel border border-white/10 shadow-2xl">
       <table class="w-full text-left text-xs">
-        <thead class="bg-[var(--background,#0b0f19)] border-b border-[var(--border,#1e293b)] text-[var(--muted-foreground,#94a3b8)] font-semibold uppercase tracking-wider">
+        <thead class="bg-black/40 border-b border-white/10 text-slate-400 uppercase font-mono tracking-wider">
           <tr>
-            <th class="py-3 px-3">Site ID / Tenant</th>
-            <th class="py-3 px-3">State & Address</th>
-            <th class="py-3 px-3">Current Level</th>
-            <th class="py-3 px-3">Daily Burn (CPD)</th>
-            <th class="py-3 px-3">Days Left</th>
-            <th class="py-3 px-3">Predicted Dry Date</th>
-            <th class="py-3 px-3">Last Fuel Supplied</th>
-            <th class="py-3 px-3">FSE In Charge</th>
-            <th class="py-3 px-3">Contact</th>
-            <th class="py-3 px-3 text-right">Actions</th>
+            <th class="py-3.5 px-4">Site & Client</th>
+            <th class="py-3.5 px-4">State / Location</th>
+            <th class="py-3.5 px-4">Fuel Level</th>
+            <th class="py-3.5 px-4">Daily Burn (CPD)</th>
+            <th class="py-3.5 px-4">Autonomy Days</th>
+            <th class="py-3.5 px-4">Predicted Dry Date</th>
+            <th class="py-3.5 px-4">250hr PPM Service</th>
+            <th class="py-3.5 px-4">Assigned FSE</th>
+            <th class="py-3.5 px-4 text-right">Actions</th>
           </tr>
         </thead>
-        <tbody id="sitesTableBody" class="divide-y divide-[var(--border,#1e293b)]">
-          <!-- Rows dynamically rendered here -->
+        <tbody id="sitesTableBody" class="divide-y divide-white/5 font-mono">
+          <!-- Dynamic Table Rows -->
         </tbody>
       </table>
     </div>
 
-    <footer class="text-center text-xs text-[var(--muted-foreground,#94a3b8)] py-6 border-t border-[var(--border,#1e293b)]">
-      ColoPlus Field Support Engineering & Fuel Management Subsystem • Operational Master Registry: 76 Tower Sites • Generated November 2026
-    </footer>
-  </div>
+  </main>
 
-  <!-- Interactive Simulation & Refuel Modal -->
-  <div id="simModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-[var(--card,#131b2e)] border border-[var(--border,#334155)] rounded-2xl max-w-xl w-full p-5 md:p-6 shadow-2xl relative">
-      <button onclick="closeSimulationModal()" class="absolute top-4 right-4 text-[var(--muted-foreground,#94a3b8)] hover:text-white text-lg">✕</button>
-      
-      <div class="flex items-center gap-2 mb-2">
-        <span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">FUEL ENGINE</span>
-        <h2 id="modalSiteTitle" class="text-lg font-bold text-white">Site Fuel Simulation & Refuel Logger</h2>
+  <!-- Side Flyout Telemetry & Inspection Drawer -->
+  <div id="drawerOverlay" onclick="closeDrawer()" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden transition-opacity duration-300 opacity-0"></div>
+  <aside id="siteDrawer" class="fixed top-0 right-0 z-50 w-full max-w-md h-full glass-panel border-l border-white/10 p-6 flex flex-col justify-between transform translate-x-full transition-transform duration-300 ease-out shadow-2xl overflow-y-auto">
+    <div>
+      <!-- Drawer Header -->
+      <div class="flex items-start justify-between pb-4 border-b border-white/10 mb-5">
+        <div>
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Node Telemetry</span>
+          <h3 id="drawerSiteId" class="text-xl font-extrabold text-white mt-1">CP/CP/EK/002</h3>
+          <p id="drawerTenant" class="text-xs text-blue-400 font-mono">EK0474 • Airtel</p>
+        </div>
+        <button onclick="closeDrawer()" class="p-2 rounded-xl text-slate-400 hover:text-white bg-white/5 border border-white/10">✕</button>
       </div>
-      <p id="modalSiteSubtitle" class="text-xs text-[var(--muted-foreground,#94a3b8)] mb-5">Adjust consumption rates or record new diesel deliveries to preview updated dry dates.</p>
+
+      <!-- Quick Metrics Ribbon -->
+      <div class="grid grid-cols-3 gap-2.5 mb-5 text-center">
+        <div class="bg-black/40 p-3 rounded-xl border border-white/5">
+          <div class="text-[11px] text-slate-400">Current Level</div>
+          <div id="drawerDL" class="text-lg font-black text-cyan-400 font-mono mt-0.5">140 L</div>
+        </div>
+        <div class="bg-black/40 p-3 rounded-xl border border-white/5">
+          <div class="text-[11px] text-slate-400">Daily Burn</div>
+          <div id="drawerCPD" class="text-lg font-black text-amber-400 font-mono mt-0.5">55 L/d</div>
+        </div>
+        <div class="bg-black/40 p-3 rounded-xl border border-white/5">
+          <div class="text-[11px] text-slate-400">Autonomy</div>
+          <div id="drawerAutonomy" class="text-lg font-black text-rose-400 font-mono mt-0.5">2.5 d</div>
+        </div>
+      </div>
+
+      <!-- Generator & Power Specs -->
+      <div class="bg-black/40 p-4 rounded-xl border border-white/5 mb-5 space-y-2.5 text-xs">
+        <div class="font-bold text-white text-xs flex items-center justify-between border-b border-white/10 pb-2">
+          <span>⚙️ Infrastructure & Generator Telemetry</span>
+          <span id="drawerGridBadge" class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-400">Non PHCN</span>
+        </div>
+        <div class="flex justify-between text-slate-300">
+          <span>Tank Capacity:</span>
+          <span id="drawerTankCap" class="font-mono font-bold text-white">1,000 Litres</span>
+        </div>
+        <div class="flex justify-between text-slate-300">
+          <span>Electrical Site Load:</span>
+          <span id="drawerLoad" class="font-mono text-cyan-300">6.5 kW (AC) / 48A</span>
+        </div>
+        <div class="flex justify-between text-slate-300">
+          <span>Hourly Fuel Burn:</span>
+          <span id="drawerCPH" class="font-mono text-amber-300">2.29 Litres / Hour</span>
+        </div>
+        <div class="flex justify-between text-slate-300">
+          <span>Engine Runtime Interval:</span>
+          <span id="drawerPpmStatus" class="font-mono text-rose-300">PPM Due in 38 Hours</span>
+        </div>
+      </div>
+
+      <!-- Personnel & Field Support -->
+      <div class="bg-black/40 p-4 rounded-xl border border-white/5 mb-5 text-xs space-y-3">
+        <div class="font-bold text-white flex items-center gap-1.5 border-b border-white/10 pb-2">
+          <span>👷 Field Support & Security Desk</span>
+        </div>
+        <div>
+          <div class="text-[11px] text-slate-400">Assigned FSE Officer:</div>
+          <div id="drawerFseName" class="font-bold text-white text-sm">Opeyemi Lawani</div>
+          <div class="flex items-center gap-2 mt-1.5">
+            <span id="drawerFsePhone" class="font-mono text-slate-300">09160185834</span>
+            <div id="drawerFseActions" class="flex gap-1.5"></div>
+          </div>
+        </div>
+        <div class="pt-2 border-t border-white/5">
+          <div class="text-[11px] text-slate-400">On-Site Security Guard (CLO):</div>
+          <div id="drawerSecurity" class="font-semibold text-slate-200">Peter Odinma (CLO)</div>
+          <div id="drawerSecurityPhone" class="font-mono text-slate-400 text-[11px]">09024024245</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Drawer Footer Actions -->
+    <div class="space-y-2 pt-4 border-t border-white/10">
+      <button id="drawerSimBtn" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-gradient-to-r from-cyan-500 to-emerald-500 text-black hover:opacity-90 transition shadow-lg shadow-cyan-500/20">
+        ⚡ Open Refuel & Burn Simulator
+      </button>
+      <button id="drawerCopyBtn" class="w-full py-2.5 px-4 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 border border-white/10 text-white transition">
+        📋 Copy WhatsApp Emergency Dispatch
+      </button>
+    </div>
+  </aside>
+
+  <!-- Interactive Refuel Simulation Modal -->
+  <div id="simModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="glass-panel border border-white/15 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative">
+      <button onclick="closeSimulationModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white text-lg">✕</button>
+      
+      <div class="flex items-center gap-2 mb-1.5">
+        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">NOC DYNAMICS</span>
+        <h2 id="modalSiteTitle" class="text-base font-extrabold text-white">Fuel Delivery & Burn Rate Simulator</h2>
+      </div>
+      <p id="modalSiteSubtitle" class="text-xs text-slate-400 mb-5">Simulate load fluctuations or dispatch fuel batches to forecast revised dry dates.</p>
 
       <div class="space-y-4">
-        <!-- Site Info Summary -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl bg-[var(--background,#0b0f19)] border border-[var(--border,#1e293b)] text-xs">
+        <!-- Live Tank Status Mini Banner -->
+        <div class="grid grid-cols-4 gap-2 p-3 rounded-2xl bg-black/40 border border-white/10 text-center text-xs">
           <div>
-            <span class="text-[var(--muted-foreground,#94a3b8)] block">Tank Capacity</span>
-            <span id="modalTankCap" class="font-bold text-white">1,000 L</span>
+            <span class="text-slate-400 block text-[10px]">Tank Cap</span>
+            <span id="modalTankCap" class="font-bold font-mono text-white">1,000 L</span>
           </div>
           <div>
-            <span class="text-[var(--muted-foreground,#94a3b8)] block">Current Level</span>
-            <span id="modalCurrentDL" class="font-bold text-blue-400">140 L</span>
+            <span class="text-slate-400 block text-[10px]">Current DL</span>
+            <span id="modalCurrentDL" class="font-bold font-mono text-cyan-400">140 L</span>
           </div>
           <div>
-            <span class="text-[var(--muted-foreground,#94a3b8)] block">Daily CPD</span>
-            <span id="modalCPD" class="font-bold text-amber-400">55.0 L/d</span>
+            <span class="text-slate-400 block text-[10px]">Daily CPD</span>
+            <span id="modalCPD" class="font-bold font-mono text-amber-400">55 L/d</span>
           </div>
           <div>
-            <span class="text-[var(--muted-foreground,#94a3b8)] block">Hours Left</span>
-            <span id="modalHoursLeft" class="font-bold text-red-400">60 hrs</span>
+            <span class="text-slate-400 block text-[10px]">Autonomy</span>
+            <span id="modalAutonomy" class="font-bold font-mono text-rose-400">2.5 d</span>
           </div>
         </div>
 
-        <!-- CPD Slider Simulation -->
-        <div class="p-3.5 rounded-xl bg-[var(--background,#0b0f19)] border border-[var(--border,#1e293b)]">
-          <div class="flex items-center justify-between mb-1.5 text-xs">
-            <span class="font-semibold text-white">Simulate Daily Consumption (CPD)</span>
+        <!-- Slider CPD Simulation -->
+        <div class="p-4 rounded-2xl bg-black/40 border border-white/10">
+          <div class="flex items-center justify-between mb-2 text-xs">
+            <span class="font-bold text-white">Simulate Daily Consumption (CPD)</span>
             <span id="simCpdValue" class="font-mono font-bold text-amber-400">55.0 L/day</span>
           </div>
-          <input type="range" id="simCpdSlider" min="10" max="150" step="1" oninput="updateSimulation()" class="w-full accent-emerald-500">
-          <div class="flex justify-between text-[11px] text-[var(--muted-foreground,#94a3b8)] mt-1">
-            <span>Low (10 L/d - High Solar/Grid)</span>
-            <span>Avg (50 L/d)</span>
-            <span>Heavy (150 L/d - 24/7 DG)</span>
+          <input type="range" id="simCpdSlider" min="10" max="150" step="1" oninput="updateSimulation()" class="w-full accent-cyan-400 cursor-pointer">
+          <div class="flex justify-between text-[10px] text-slate-400 mt-1 font-mono">
+            <span>10 L/d (Solar/Grid)</span>
+            <span>50 L/d (Normal)</span>
+            <span>150 L/d (24/7 DG)</span>
           </div>
         </div>
 
-        <!-- Add Fuel Delivery -->
-        <div class="p-3.5 rounded-xl bg-[var(--background,#0b0f19)] border border-[var(--border,#1e293b)]">
-          <span class="font-semibold text-white text-xs block mb-2">Simulate / Log Diesel Delivery</span>
-          <div class="grid grid-cols-4 gap-2 mb-2">
-            <button onclick="setAddFuel(200)" class="py-1.5 px-2 text-xs rounded border border-[var(--border,#334155)] hover:bg-[var(--border,#334155)] font-medium">+200 L</button>
-            <button onclick="setAddFuel(500)" class="py-1.5 px-2 text-xs rounded border border-emerald-500/40 bg-emerald-950/20 text-emerald-400 font-medium">+500 L</button>
-            <button onclick="setAddFuel(1000)" class="py-1.5 px-2 text-xs rounded border border-[var(--border,#334155)] hover:bg-[var(--border,#334155)] font-medium">+1,000 L</button>
-            <button onclick="setAddFuel('full')" class="py-1.5 px-2 text-xs rounded border border-blue-500/40 bg-blue-950/20 text-blue-400 font-medium">Fill Tank</button>
+        <!-- Batch Delivery Buttons -->
+        <div class="p-4 rounded-2xl bg-black/40 border border-white/10">
+          <span class="font-bold text-white text-xs block mb-2.5">Simulate Fuel Batch Delivery</span>
+          <div class="grid grid-cols-4 gap-2 mb-3">
+            <button onclick="setAddFuel(200)" class="py-2 px-2 text-xs rounded-xl border border-white/10 hover:border-cyan-400 bg-white/5 font-bold transition">+200 L</button>
+            <button onclick="setAddFuel(500)" class="py-2 px-2 text-xs rounded-xl border border-cyan-500/40 bg-cyan-950/30 text-cyan-300 font-bold transition">+500 L</button>
+            <button onclick="setAddFuel(1000)" class="py-2 px-2 text-xs rounded-xl border border-white/10 hover:border-cyan-400 bg-white/5 font-bold transition">+1,000 L</button>
+            <button onclick="setAddFuel('full')" class="py-2 px-2 text-xs rounded-xl border border-emerald-500/40 bg-emerald-950/30 text-emerald-300 font-bold transition">Fill Tank</button>
           </div>
-          <div class="flex items-center gap-2 mt-2">
-            <span class="text-xs text-[var(--muted-foreground,#94a3b8)]">Custom Litres:</span>
-            <input type="number" id="simFuelAddInput" value="0" oninput="updateSimulation()" class="w-28 py-1 px-2 text-xs rounded bg-[var(--card,#131b2e)] border border-[var(--border,#334155)] text-white">
-            <span class="text-xs text-[var(--muted-foreground,#94a3b8)]">Litres</span>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-400">Or Custom Quantity:</span>
+            <input type="number" id="simFuelAddInput" value="0" oninput="updateSimulation()" class="w-28 py-1.5 px-3 text-xs rounded-xl bg-black/50 border border-white/20 text-white font-mono focus:outline-none focus:border-cyan-400">
+            <span class="text-xs text-slate-400 font-mono">Litres</span>
           </div>
         </div>
 
-        <!-- Simulation Results Banner -->
-        <div class="p-4 rounded-xl border border-emerald-500/30 bg-emerald-950/30">
+        <!-- Projected New Runway Banner -->
+        <div class="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-950/30">
           <div class="flex items-center justify-between text-xs mb-1">
-            <span class="text-emerald-400 font-semibold">Predicted New Autonomy:</span>
-            <span id="simNewAutonomy" class="text-sm font-extrabold text-emerald-300">11.6 Days Remaining</span>
+            <span class="text-emerald-400 font-bold uppercase tracking-wider">Projected New Autonomy:</span>
+            <span id="simNewAutonomy" class="text-sm font-black text-emerald-300 font-mono">11.6 Days</span>
           </div>
-          <div class="flex items-center justify-between text-xs text-[var(--muted-foreground,#94a3b8)]">
+          <div class="flex items-center justify-between text-xs text-slate-300">
             <span>New Predicted Dry Date:</span>
-            <span id="simNewDryDate" class="text-white font-medium">14-Nov-2026 14:00</span>
+            <span id="simNewDryDate" class="text-white font-mono font-medium">14-Nov-2026 14:00</span>
           </div>
-          <div class="flex items-center justify-between text-xs text-[var(--muted-foreground,#94a3b8)] mt-1">
+          <div class="flex items-center justify-between text-xs text-slate-300 mt-1">
             <span>Resulting Tank Level:</span>
-            <span id="simNewLevel" class="text-blue-300 font-medium">640 L (64% Full)</span>
+            <span id="simNewLevel" class="text-cyan-300 font-mono">640 L (64% Full)</span>
           </div>
         </div>
 
-        <!-- Buttons -->
-        <div class="flex items-center justify-end gap-2 pt-2">
-          <button onclick="closeSimulationModal()" class="px-3.5 py-1.5 text-xs rounded-lg border border-[var(--border,#334155)] text-gray-300 hover:bg-[var(--border,#334155)]">Close</button>
-          <button onclick="applySimulationToSite()" class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow">Apply to Live Dashboard</button>
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-end gap-2.5 pt-2">
+          <button onclick="closeSimulationModal()" class="px-4 py-2 text-xs rounded-xl border border-white/10 text-slate-300 hover:bg-white/5 transition">Cancel</button>
+          <button onclick="applySimulationToSite()" class="px-5 py-2 text-xs font-bold rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black shadow-lg shadow-cyan-500/25 transition">Save & Apply to Node</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Notification Toast -->
-  <div id="toast" class="fixed bottom-5 right-5 z-50 transform transition-all duration-300 translate-y-20 opacity-0 pointer-events-none px-4 py-3 rounded-xl bg-emerald-600 text-white text-xs font-semibold shadow-xl flex items-center gap-2">
-    <span>✅</span> <span id="toastMsg">Notification</span>
+  <!-- Bulk Supplier Dispatch Modal -->
+  <div id="dispatchModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="glass-panel border border-white/15 rounded-3xl max-w-2xl w-full p-6 shadow-2xl relative max-h-[90vh] flex flex-col">
+      <button onclick="closeDispatchModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white text-lg">✕</button>
+      
+      <div class="flex items-center gap-2 mb-1">
+        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">SUPPLY CHAIN</span>
+        <h2 class="text-base font-extrabold text-white">Consolidated Supplier Dispatch Plan</h2>
+      </div>
+      <p class="text-xs text-slate-400 mb-4">Auto-grouped replenishment orders for sites with &le; 5 days autonomy.</p>
+
+      <div class="overflow-y-auto flex-1 mb-4 border border-white/10 rounded-2xl bg-black/40">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-white/5 text-slate-400 font-mono">
+            <tr>
+              <th class="py-2.5 px-3">Site ID</th>
+              <th class="py-2.5 px-3">State</th>
+              <th class="py-2.5 px-3">Days Left</th>
+              <th class="py-2.5 px-3">Recommended Refuel</th>
+              <th class="py-2.5 px-3">Supplier</th>
+            </tr>
+          </thead>
+          <tbody id="dispatchTableBody" class="divide-y divide-white/5 font-mono">
+            <!-- Dynamic Supplier Orders -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
+        <span id="dispatchSummaryText" class="text-slate-300 font-mono">Total Required: 0 Litres</span>
+        <div class="flex gap-2">
+          <button onclick="copyDispatchSummary()" class="px-4 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/15 text-white transition">📋 Copy PO Text</button>
+          <button onclick="closeDispatchModal()" class="px-4 py-2 rounded-xl text-xs font-bold bg-cyan-500 text-black hover:bg-cyan-400 transition">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform transition-all duration-300 translate-y-20 opacity-0 pointer-events-none px-4 py-3 rounded-2xl bg-cyan-500 text-black text-xs font-extrabold shadow-2xl flex items-center gap-2 font-mono">
+    <span>✅</span> <span id="toastMsg">Notification Message</span>
   </div>
 
   <script>
-    // Master Live Dataset
-    let masterSites = [
+    // Live dataset with localStorage persistence
+    const INITIAL_SITES = [
     {
         "siteId":  "CP/CP/AN/001",
         "tenantId":  "61 ()",
@@ -2332,14 +2602,51 @@
     }
 ]
 ;
+    
+    // Check localStorage
+    let masterSites = [];
+    const savedData = localStorage.getItem('coloplus_sites_data_v2');
+    if (savedData) {
+      try { masterSites = JSON.parse(savedData); } catch (e) { masterSites = INITIAL_SITES; }
+    } else {
+      masterSites = INITIAL_SITES;
+    }
 
     let currentFilter = 'ALL';
     let currentView = 'grid';
     let activeSimSiteId = null;
+    let activeDrawerSiteId = null;
 
     function init() {
+      // Calculate PPM maintenance intervals (simulated engine hours between 60 and 240 hrs)
+      masterSites.forEach((s, idx) => {
+        if (!s.currentRH) s.currentRH = 70 + (idx * 17) % 175;
+        s.hoursToPpm = Math.max(0, 250 - s.currentRH);
+      });
+
       updateKpis();
+      renderAnalytics();
       renderSites();
+    }
+
+    function saveState() {
+      localStorage.setItem('coloplus_sites_data_v2', JSON.stringify(masterSites));
+    }
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      if (html.classList.contains('dark')) {
+        html.classList.remove('dark');
+        document.getElementById('themeIcon').innerText = '🌙';
+      } else {
+        html.classList.add('dark');
+        document.getElementById('themeIcon').innerText = '☀️';
+      }
+    }
+
+    function toggleAnalyticsView() {
+      const hub = document.getElementById('analyticsHub');
+      hub.classList.toggle('hidden');
     }
 
     function updateKpis() {
@@ -2347,10 +2654,12 @@
       let warning = 0;
       let healthy = 0;
       let totalLiters = 0;
+      let totalCapacity = 0;
       let totalCpd = 0;
 
       masterSites.forEach(s => {
         totalLiters += s.currentDL;
+        totalCapacity += s.tankCap;
         totalCpd += s.cpd;
         if (s.status === 'CRITICAL') critical++;
         else if (s.status === 'WARNING') warning++;
@@ -2362,10 +2671,13 @@
       document.getElementById('kpiWarningSites').innerText = warning;
       document.getElementById('kpiHealthySites').innerText = healthy;
       document.getElementById('kpiTotalLiters').innerText = totalLiters.toLocaleString() + ' L';
-      document.getElementById('kpiDailyBurn').innerText = Math.round(totalCpd).toLocaleString() + ' L/d';
       
-      const totalDailyCost = Math.round(totalCpd * 2100);
-      document.getElementById('kpiDailyCost').innerText = '₦' + (totalDailyCost / 1000000).toFixed(2) + 'M / day';
+      const avgFill = Math.round((totalLiters / totalCapacity) * 100);
+      document.getElementById('kpiAvgFill').innerText = avgFill + '% Portfolio Capacity';
+
+      document.getElementById('kpiDailyBurn').innerText = Math.round(totalCpd).toLocaleString() + ' L/d';
+      const dailyCostNgn = Math.round(totalCpd * 2100);
+      document.getElementById('kpiDailyCost').innerText = '₦' + (dailyCostNgn / 1000000).toFixed(2) + 'M / day';
 
       document.getElementById('countALL').innerText = masterSites.length;
       document.getElementById('countCRITICAL').innerText = critical;
@@ -2373,19 +2685,74 @@
       document.getElementById('countHEALTHY').innerText = healthy;
     }
 
+    function renderAnalytics() {
+      // 1. Runway Chart Bars (Top 8 most critical sites)
+      const sortedByAutonomy = [...masterSites].sort((a,b) => a.daysRemaining - b.daysRemaining).slice(0, 8);
+      const runwayContainer = document.getElementById('runwayChartBars');
+      let runwayHtml = '';
+
+      sortedByAutonomy.forEach(s => {
+        const barColor = s.status === 'CRITICAL' ? 'bg-rose-500' : (s.status === 'WARNING' ? 'bg-amber-500' : 'bg-emerald-500');
+        const pctWidth = Math.min(100, Math.max(8, (s.daysRemaining / 15) * 100));
+
+        runwayHtml += `
+          <div class="flex items-center gap-3 text-xs font-mono">
+            <span class="w-24 text-slate-300 font-bold truncate">${s.siteId}</span>
+            <div class="flex-1 bg-white/5 h-4 rounded-full overflow-hidden p-0.5">
+              <div class="${barColor} h-3 rounded-full transition-all duration-500 flex items-center justify-end pr-2 text-[10px] text-black font-extrabold" style="width: ${pctWidth}%">
+                ${s.daysRemaining}d
+              </div>
+            </div>
+            <span class="w-28 text-right text-[11px] text-slate-400">${s.currentDL}L / ${s.cpd}Ld</span>
+          </div>
+        `;
+      });
+      runwayContainer.innerHTML = runwayHtml;
+
+      // 2. Regional Breakdown
+      const stateCounts = {};
+      masterSites.forEach(s => {
+        stateCounts[s.state] = (stateCounts[s.state] || 0) + s.currentDL;
+      });
+
+      const topStates = Object.keys(stateCounts).sort((a,b) => stateCounts[b] - stateCounts[a]).slice(0, 5);
+      const maxLiters = Math.max(...Object.values(stateCounts));
+      const regContainer = document.getElementById('regionalBars');
+      let regHtml = '';
+
+      topStates.forEach(st => {
+        const lit = stateCounts[st];
+        const barWidth = Math.round((lit / maxLiters) * 100);
+        regHtml += `
+          <div class="text-xs">
+            <div class="flex justify-between text-[11px] font-mono text-slate-300 mb-1">
+              <span>${st}</span>
+              <span class="text-cyan-400 font-bold">${lit.toLocaleString()} Litres</span>
+            </div>
+            <div class="w-full bg-white/5 h-2 rounded-full overflow-hidden">
+              <div class="bg-gradient-to-r from-cyan-500 to-emerald-400 h-2 rounded-full" style="width: ${barWidth}%"></div>
+            </div>
+          </div>
+        `;
+      });
+      regContainer.innerHTML = regHtml;
+    }
+
     function setFilter(filter) {
       currentFilter = filter;
       document.querySelectorAll('.filter-tab').forEach(b => {
-        b.className = 'filter-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--background,#0b0f19)] border border-[var(--border,#334155)] text-[var(--muted-foreground,#94a3b8)] hover:bg-[var(--border,#334155)] transition';
+        b.className = 'filter-tab px-3.5 py-2 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 transition';
       });
 
       const activeBtn = document.getElementById('filter' + filter);
       if (filter === 'CRITICAL') {
-        activeBtn.className = 'filter-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-600 text-white transition';
+        activeBtn.className = 'filter-tab px-3.5 py-2 rounded-xl text-xs font-bold bg-rose-600 text-white shadow-lg shadow-rose-600/30 transition';
       } else if (filter === 'WARNING') {
-        activeBtn.className = 'filter-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-600 text-white transition';
+        activeBtn.className = 'filter-tab px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-500 text-black shadow-lg shadow-amber-500/30 transition';
+      } else if (filter === 'HEALTHY') {
+        activeBtn.className = 'filter-tab px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-500 text-black shadow-lg shadow-emerald-500/30 transition';
       } else {
-        activeBtn.className = 'filter-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white transition';
+        activeBtn.className = 'filter-tab px-3.5 py-2 rounded-xl text-xs font-bold bg-cyan-500 text-black shadow-lg shadow-cyan-500/30 transition';
       }
 
       renderSites();
@@ -2396,13 +2763,13 @@
       if (view === 'grid') {
         document.getElementById('sitesGrid').classList.remove('hidden');
         document.getElementById('sitesTableContainer').classList.add('hidden');
-        document.getElementById('viewGridBtn').className = 'p-2 text-xs bg-emerald-600 text-white';
-        document.getElementById('viewTableBtn').className = 'p-2 text-xs bg-[var(--background,#0b0f19)] text-[var(--muted-foreground,#94a3b8)]';
+        document.getElementById('viewGridBtn').className = 'px-2.5 py-1.5 text-xs rounded-lg bg-cyan-500 text-black font-bold';
+        document.getElementById('viewTableBtn').className = 'px-2.5 py-1.5 text-xs rounded-lg text-slate-400 hover:text-white';
       } else {
         document.getElementById('sitesGrid').classList.add('hidden');
         document.getElementById('sitesTableContainer').classList.remove('hidden');
-        document.getElementById('viewGridBtn').className = 'p-2 text-xs bg-[var(--background,#0b0f19)] text-[var(--muted-foreground,#94a3b8)]';
-        document.getElementById('viewTableBtn').className = 'p-2 text-xs bg-emerald-600 text-white';
+        document.getElementById('viewGridBtn').className = 'px-2.5 py-1.5 text-xs rounded-lg text-slate-400 hover:text-white';
+        document.getElementById('viewTableBtn').className = 'px-2.5 py-1.5 text-xs rounded-lg bg-cyan-500 text-black font-bold';
       }
     }
 
@@ -2442,114 +2809,132 @@
       const tableBody = document.getElementById('sitesTableBody');
 
       if (list.length === 0) {
-        grid.innerHTML = '<div class="col-span-full text-center py-12 text-[var(--muted-foreground,#94a3b8)] text-sm">No tower sites match your filter criteria.</div>';
-        tableBody.innerHTML = '<tr><td colspan="10" class="text-center py-8 text-[var(--muted-foreground,#94a3b8)]">No tower sites match your filter criteria.</td></tr>';
+        grid.innerHTML = '<div class="col-span-full text-center py-16 text-slate-400 text-sm glass-panel rounded-2xl">No telecom sites match your filter criteria.</div>';
+        tableBody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-slate-400">No telecom sites match your filter criteria.</td></tr>';
         return;
       }
 
-      // Render Grid
+      // Render Rich Cards with Liquid Tank Visualizer
       let cardsHtml = '';
       list.forEach(s => {
-        let badgeClass = 'badge-healthy';
-        let barClass = 'tank-bar-healthy';
-        let statusIcon = '🟢';
+        let badgeClass = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30';
+        let waveColor = 'rgba(16, 185, 129, 0.4)';
+        let liquidColor = '#10b981';
+        let statusBadge = '🟢 ' + s.daysRemaining + 'd Left';
+
         if (s.status === 'CRITICAL') {
-          badgeClass = 'badge-critical';
-          barClass = 'tank-bar-critical';
-          statusIcon = '🚨';
+          badgeClass = 'bg-rose-500/20 text-rose-400 border-rose-500/40 glow-critical';
+          waveColor = 'rgba(244, 63, 94, 0.45)';
+          liquidColor = '#f43f5e';
+          statusBadge = '🚨 ' + s.daysRemaining + 'd CRITICAL';
         } else if (s.status === 'WARNING') {
-          badgeClass = 'badge-warning';
-          barClass = 'tank-bar-warning';
-          statusIcon = '⚠️';
+          badgeClass = 'bg-amber-500/20 text-amber-400 border-amber-500/40 glow-warning';
+          waveColor = 'rgba(245, 158, 11, 0.45)';
+          liquidColor = '#f59e0b';
+          statusBadge = '⚠️ ' + s.daysRemaining + 'd REORDER';
         }
 
+        const tankFillHeight = Math.min(100, Math.max(12, s.fillPct));
+
         cardsHtml += `
-          <div class="rounded-xl border border-[var(--border,#1e293b)] bg-[var(--card,#131b2e)] p-4 shadow-sm hover:border-[var(--border,#334155)] transition flex flex-col justify-between">
+          <div class="glass-card rounded-2xl p-5 relative overflow-hidden flex flex-col justify-between group">
+            
             <div>
-              <!-- Header Row -->
-              <div class="flex items-start justify-between gap-2 mb-2.5">
+              <!-- Top Row -->
+              <div class="flex items-start justify-between gap-3 mb-4">
                 <div>
-                  <div class="flex items-center gap-1.5 flex-wrap">
-                    <span class="font-extrabold text-sm text-white">${s.siteId}</span>
-                    <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">${s.tenantId}</span>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-extrabold text-base text-white tracking-tight">${s.siteId}</span>
+                    <span class="px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                      ${s.tenantId}
+                    </span>
                   </div>
-                  <p class="text-xs text-[var(--muted-foreground,#94a3b8)] mt-0.5 line-clamp-1" title="${s.address}">${s.state} • ${s.address}</p>
+                  <p class="text-xs text-slate-400 mt-1 line-clamp-1" title="${s.address}">
+                    📍 ${s.state} • ${s.address}
+                  </p>
                 </div>
-                <span class="px-2.5 py-1 rounded-full text-xs font-bold ${badgeClass} whitespace-nowrap">
-                  ${statusIcon} ${s.daysRemaining}d Left
+                <span class="px-2.5 py-1 rounded-xl text-xs font-mono font-bold border whitespace-nowrap ${badgeClass}">
+                  ${statusBadge}
                 </span>
               </div>
 
-              <!-- Tank Progress Bar -->
-              <div class="mb-3.5 bg-[var(--background,#0b0f19)] p-2.5 rounded-lg border border-[var(--border,#1e293b)]">
-                <div class="flex justify-between items-center text-xs mb-1">
-                  <span class="text-[var(--muted-foreground,#94a3b8)]">Diesel Tank Level:</span>
-                  <span class="font-bold text-white">${s.currentDL.toLocaleString()} L <span class="text-[var(--muted-foreground,#94a3b8)] font-normal">/ ${s.tankCap.toLocaleString()} L (${s.fillPct}%)</span></span>
+              <!-- Interactive Liquid Tank Gauge & Primary Specs -->
+              <div class="grid grid-cols-12 gap-3.5 mb-4 bg-black/40 p-3.5 rounded-xl border border-white/5">
+                
+                <!-- Tank Cylinder Graphic -->
+                <div class="col-span-4 flex flex-col items-center justify-center">
+                  <div class="w-16 h-28 rounded-xl border-2 border-slate-600 bg-slate-900/90 relative overflow-hidden flex flex-col justify-end shadow-inner">
+                    <!-- Gauge lines -->
+                    <div class="absolute inset-0 flex flex-col justify-between p-1 pointer-events-none opacity-30 text-[9px] font-mono text-white">
+                      <span>100%</span>
+                      <span>50%</span>
+                      <span>0%</span>
+                    </div>
+
+                    <!-- Liquid Container -->
+                    <div class="w-full relative transition-all duration-700 overflow-hidden" style="height: ${tankFillHeight}%; background-color: ${liquidColor};">
+                      <!-- Wave SVG -->
+                      <div class="w-[200%] h-3 absolute -top-2 left-0 liquid-wave opacity-50">
+                        <svg viewBox="0 0 1200 120" preserveAspectRatio="none" class="w-full h-full fill-white">
+                          <path d="M0,0 C150,90 350,-40 500,45 C650,130 900,10 1200,50 L1200,120 L0,120 Z"></path>
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                  <span class="text-[11px] font-mono font-bold text-white mt-1.5">${s.fillPct}% FULL</span>
                 </div>
-                <div class="w-full bg-[var(--border,#1e293b)] h-2 rounded-full overflow-hidden">
-                  <div class="${barClass} h-2 rounded-full transition-all duration-500" style="width: ${Math.min(100, s.fillPct)}%"></div>
+
+                <!-- Metrics & Autonomy -->
+                <div class="col-span-8 flex flex-col justify-between text-xs space-y-2">
+                  <div>
+                    <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Tank Volume Level</span>
+                    <span class="font-mono text-base font-black text-cyan-300">${s.currentDL.toLocaleString()} <span class="text-xs text-slate-400 font-normal">/ ${s.tankCap} L</span></span>
+                  </div>
+
+                  <div>
+                    <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Daily Consumption (CPD)</span>
+                    <span class="font-mono font-bold text-amber-400">${s.cpd} L/day <span class="text-[11px] text-slate-400">(${s.cph} L/h)</span></span>
+                  </div>
+
+                  <div class="pt-1 border-t border-white/5">
+                    <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Predicted Empty Timestamp</span>
+                    <span class="font-mono font-bold ${s.status === 'CRITICAL' ? 'text-rose-400' : 'text-emerald-400'}">
+                      ${s.predictedDryDate}
+                    </span>
+                  </div>
                 </div>
+
               </div>
 
-              <!-- Metrics Grid -->
-              <div class="grid grid-cols-2 gap-2 mb-3.5 text-xs">
-                <div class="bg-[var(--background,#0b0f19)] p-2 rounded border border-[var(--border,#1e293b)]">
-                  <span class="text-[var(--muted-foreground,#94a3b8)] block text-[11px]">Daily Burn (CPD)</span>
-                  <span class="font-bold text-amber-400">${s.cpd} L/day</span>
-                  <span class="text-[var(--muted-foreground,#94a3b8)] text-[11px] block mt-0.5">${s.cph} L/hr (₦${Math.round(s.dailyCostNgn).toLocaleString()})</span>
+              <!-- Personnel & Quick Call Strip -->
+              <div class="pt-2 border-t border-white/5 mb-4 text-xs">
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-400 text-[11px]">Field Support:</span>
+                  <span class="font-bold text-slate-200">${s.fse}</span>
                 </div>
-
-                <div class="bg-[var(--background,#0b0f19)] p-2 rounded border border-[var(--border,#1e293b)]">
-                  <span class="text-[var(--muted-foreground,#94a3b8)] block text-[11px]">Predicted Dry Date</span>
-                  <span class="font-bold ${s.status === 'CRITICAL' ? 'text-red-400' : 'text-emerald-400'}">${s.predictedDryDate.split(' ')[0]}</span>
-                  <span class="text-[var(--muted-foreground,#94a3b8)] text-[11px] block mt-0.5">${s.predictedDryDate.split(' ')[1] || ''} (~ ${s.hoursRemaining} hrs)</span>
-                </div>
-
-                <div class="bg-[var(--background,#0b0f19)] p-2 rounded border border-[var(--border,#1e293b)]">
-                  <span class="text-[var(--muted-foreground,#94a3b8)] block text-[11px]">Last Diesel Bought</span>
-                  <span class="font-medium text-white">${s.lastSupplyQty > 0 ? s.lastSupplyQty + ' L' : 'Audit Ref'}</span>
-                  <span class="text-[var(--muted-foreground,#94a3b8)] text-[11px] block mt-0.5">${s.lastSupplyDate} (${s.supplier})</span>
-                </div>
-
-                <div class="bg-[var(--background,#0b0f19)] p-2 rounded border border-[var(--border,#1e293b)]">
-                  <span class="text-[var(--muted-foreground,#94a3b8)] block text-[11px]">200L Reorder Point</span>
-                  <span class="font-semibold text-rose-400">${s.refuelDate}</span>
-                  <span class="text-[var(--muted-foreground,#94a3b8)] text-[11px] block mt-0.5">Emergency Threshold</span>
-                </div>
-              </div>
-
-              <!-- Personnel & Contact Section -->
-              <div class="border-t border-[var(--border,#1e293b)] pt-2.5 mb-3 text-xs">
-                <div class="flex items-center justify-between mb-1">
-                  <span class="text-[var(--muted-foreground,#94a3b8)]">Assigned FSE:</span>
-                  <span class="font-bold text-white">${s.fse}</span>
-                </div>
-                <div class="flex items-center justify-between mb-1">
-                  <span class="text-[var(--muted-foreground,#94a3b8)]">FSE Contact:</span>
+                <div class="flex items-center justify-between mt-1">
+                  <span class="text-slate-400 text-[11px]">Direct Contact:</span>
                   <div class="flex items-center gap-1.5">
-                    <span class="font-mono text-white">${s.fsePhone}</span>
+                    <span class="font-mono text-slate-200 text-xs">${s.fsePhone}</span>
                     ${s.fsePhone.match(/^[0-9]/) ? `
-                      <a href="tel:${s.fsePhone}" class="text-xs px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30" title="Call FSE">📞</a>
-                      <a href="https://wa.me/234${s.fsePhone.replace(/^0/, '')}" target="_blank" class="text-xs px-1.5 py-0.5 rounded bg-green-500/20 text-green-400 hover:bg-green-500/30" title="WhatsApp FSE">💬</a>
+                      <a href="tel:${s.fsePhone}" class="p-1 rounded bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 text-xs" title="Call FSE">📞</a>
+                      <a href="https://wa.me/234${s.fsePhone.replace(/^0/, '')}" target="_blank" class="p-1 rounded bg-green-500/20 text-green-400 hover:bg-green-500/30 text-xs" title="WhatsApp FSE">💬</a>
                     ` : ''}
                   </div>
                 </div>
-                <div class="flex items-center justify-between text-[11px] text-[var(--muted-foreground,#94a3b8)]">
-                  <span>Security / CLO:</span>
-                  <span class="text-gray-300 truncate max-w-[170px]" title="${s.securityPhone}">${s.security} (${s.securityPhone})</span>
-                </div>
               </div>
             </div>
 
-            <!-- Card Actions -->
-            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-[var(--border,#1e293b)]">
-              <button onclick="copySiteAlert('${s.siteId}')" class="py-1.5 px-2 text-xs font-semibold rounded bg-[var(--background,#0b0f19)] hover:bg-[var(--border,#1e293b)] border border-[var(--border,#334155)] text-gray-300 hover:text-white transition flex items-center justify-center gap-1">
-                📋 Copy Alert
+            <!-- Footer Buttons -->
+            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
+              <button onclick="openDrawer('${s.siteId}')" class="py-2 px-3 text-xs font-bold rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white transition flex items-center justify-center gap-1">
+                🔍 Details & Diagnostics
               </button>
-              <button onclick="openSimulationModal('${s.siteId}')" class="py-1.5 px-2 text-xs font-semibold rounded bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-300 transition flex items-center justify-center gap-1">
-                ⚡ Simulate / Refuel
+              <button onclick="openSimulationModal('${s.siteId}')" class="py-2 px-3 text-xs font-bold rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 transition flex items-center justify-center gap-1">
+                ⚡ Refuel / Simulate
               </button>
             </div>
+
           </div>
         `;
       });
@@ -2559,52 +2944,102 @@
       let tableRows = '';
       list.forEach(s => {
         tableRows += `
-          <tr class="hover:bg-[var(--border,#1e293b)]/30 transition">
-            <td class="py-2.5 px-3">
+          <tr class="hover:bg-white/5 transition">
+            <td class="py-3 px-4">
               <div class="font-bold text-white">${s.siteId}</div>
               <div class="text-[11px] text-blue-400">${s.tenantId}</div>
             </td>
-            <td class="py-2.5 px-3">
+            <td class="py-3 px-4">
               <div class="text-white">${s.state}</div>
-              <div class="text-[11px] text-[var(--muted-foreground,#94a3b8)] truncate max-w-[150px]">${s.address}</div>
+              <div class="text-[11px] text-slate-400 truncate max-w-[140px]">${s.address}</div>
             </td>
-            <td class="py-2.5 px-3">
-              <div class="font-bold text-white">${s.currentDL} L</div>
-              <div class="text-[11px] text-[var(--muted-foreground,#94a3b8)]">${s.fillPct}% of ${s.tankCap}L</div>
+            <td class="py-3 px-4">
+              <div class="font-bold text-cyan-300">${s.currentDL} L</div>
+              <div class="text-[11px] text-slate-400">${s.fillPct}% of ${s.tankCap}L</div>
             </td>
-            <td class="py-2.5 px-3">
+            <td class="py-3 px-4">
               <div class="font-bold text-amber-400">${s.cpd} L/d</div>
-              <div class="text-[11px] text-[var(--muted-foreground,#94a3b8)]">${s.cph} L/h</div>
+              <div class="text-[11px] text-slate-400">${s.cph} L/h</div>
             </td>
-            <td class="py-2.5 px-3">
-              <span class="px-2 py-0.5 rounded text-xs font-bold ${s.status === 'CRITICAL' ? 'badge-critical' : (s.status === 'WARNING' ? 'badge-warning' : 'badge-healthy')}">
+            <td class="py-3 px-4">
+              <span class="px-2.5 py-0.5 rounded-lg text-xs font-bold ${s.status === 'CRITICAL' ? 'bg-rose-500/20 text-rose-400' : (s.status === 'WARNING' ? 'bg-amber-500/20 text-amber-400' : 'bg-emerald-500/20 text-emerald-400')}">
                 ${s.daysRemaining} days
               </span>
             </td>
-            <td class="py-2.5 px-3">
+            <td class="py-3 px-4">
               <div class="text-white">${s.predictedDryDate.split(' ')[0]}</div>
-              <div class="text-[11px] text-[var(--muted-foreground,#94a3b8)]">${s.predictedDryDate.split(' ')[1] || ''}</div>
+              <div class="text-[11px] text-slate-400">${s.predictedDryDate.split(' ')[1] || ''}</div>
             </td>
-            <td class="py-2.5 px-3">
-              <div class="text-white">${s.lastSupplyQty > 0 ? s.lastSupplyQty + ' L' : 'Audit'}</div>
-              <div class="text-[11px] text-[var(--muted-foreground,#94a3b8)]">${s.lastSupplyDate}</div>
+            <td class="py-3 px-4">
+              <div class="${s.hoursToPpm < 40 ? 'text-rose-400 font-bold' : 'text-slate-300'}">${s.hoursToPpm} hrs left</div>
             </td>
-            <td class="py-2.5 px-3">
-              <div class="font-semibold text-white">${s.fse}</div>
+            <td class="py-3 px-4">
+              <div class="font-bold text-white">${s.fse}</div>
+              <div class="text-[11px] text-slate-400">${s.fsePhone}</div>
             </td>
-            <td class="py-2.5 px-3">
-              <div class="font-mono text-white">${s.fsePhone}</div>
-            </td>
-            <td class="py-2.5 px-3 text-right">
+            <td class="py-3 px-4 text-right">
               <div class="flex items-center justify-end gap-1.5">
-                <button onclick="copySiteAlert('${s.siteId}')" class="p-1 rounded bg-[var(--background,#0b0f19)] border border-[var(--border,#334155)] text-gray-300" title="Copy Alert">📋</button>
-                <button onclick="openSimulationModal('${s.siteId}')" class="p-1 rounded bg-emerald-600/20 text-emerald-400 border border-emerald-500/30" title="Refuel/Simulate">⚡</button>
+                <button onclick="openDrawer('${s.siteId}')" class="p-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-300 hover:text-white" title="View Diagnostics">🔍</button>
+                <button onclick="openSimulationModal('${s.siteId}')" class="p-1.5 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/30" title="Refuel Simulator">⚡</button>
               </div>
             </td>
           </tr>
         `;
       });
       tableBody.innerHTML = tableRows;
+    }
+
+    // Drawer Logic
+    function openDrawer(siteId) {
+      activeDrawerSiteId = siteId;
+      const s = masterSites.find(item => item.siteId === siteId);
+      if (!s) return;
+
+      document.getElementById('drawerSiteId').innerText = s.siteId;
+      document.getElementById('drawerTenant').innerText = s.tenantId + ' • ' + s.state;
+      document.getElementById('drawerDL').innerText = s.currentDL + ' L';
+      document.getElementById('drawerCPD').innerText = s.cpd + ' L/d';
+      document.getElementById('drawerAutonomy').innerText = s.daysRemaining + ' d';
+      document.getElementById('drawerTankCap').innerText = s.tankCap.toLocaleString() + ' Litres';
+      document.getElementById('drawerLoad').innerText = s.loadKw + ' kW • ' + s.powerSource;
+      document.getElementById('drawerCPH').innerText = s.cph + ' Litres/Hour';
+      document.getElementById('drawerGridBadge').innerText = s.gridStatus;
+      document.getElementById('drawerPpmStatus').innerText = 'Next Service in ~ ' + s.hoursToPpm + ' Engine Hours';
+      document.getElementById('drawerFseName').innerText = s.fse;
+      document.getElementById('drawerFsePhone').innerText = s.fsePhone;
+      document.getElementById('drawerSecurity').innerText = s.security;
+      document.getElementById('drawerSecurityPhone').innerText = s.securityPhone;
+
+      const fseActions = document.getElementById('drawerFseActions');
+      if (s.fsePhone.match(/^[0-9]/)) {
+        fseActions.innerHTML = `
+          <a href="tel:${s.fsePhone}" class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-xs font-bold" title="Call">📞 Call</a>
+          <a href="https://wa.me/234${s.fsePhone.replace(/^0/, '')}" target="_blank" class="px-2 py-0.5 rounded bg-green-500/20 text-green-400 text-xs font-bold" title="WhatsApp">💬 WhatsApp</a>
+        `;
+      } else {
+        fseActions.innerHTML = '';
+      }
+
+      document.getElementById('drawerSimBtn').onclick = () => { closeDrawer(); openSimulationModal(s.siteId); };
+      document.getElementById('drawerCopyBtn').onclick = () => { copySiteAlert(s.siteId); };
+
+      const overlay = document.getElementById('drawerOverlay');
+      const drawer = document.getElementById('siteDrawer');
+      overlay.classList.remove('hidden');
+      setTimeout(() => {
+        overlay.classList.remove('opacity-0');
+        drawer.classList.remove('translate-x-full');
+      }, 10);
+    }
+
+    function closeDrawer() {
+      const overlay = document.getElementById('drawerOverlay');
+      const drawer = document.getElementById('siteDrawer');
+      overlay.classList.add('opacity-0');
+      drawer.classList.add('translate-x-full');
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+      }, 300);
     }
 
     // Modal Simulation Logic
@@ -2620,7 +3055,7 @@
       document.getElementById('modalTankCap').innerText = site.tankCap.toLocaleString() + ' L';
       document.getElementById('modalCurrentDL').innerText = site.currentDL.toLocaleString() + ' L';
       document.getElementById('modalCPD').innerText = site.cpd + ' L/d';
-      document.getElementById('modalHoursLeft').innerText = site.hoursRemaining + ' hrs';
+      document.getElementById('modalAutonomy').innerText = site.daysRemaining + ' d';
 
       document.getElementById('simCpdSlider').value = site.cpd;
       document.getElementById('simCpdValue').innerText = site.cpd + ' L/day';
@@ -2656,7 +3091,6 @@
 
       const newLevel = Math.min(site.tankCap, site.currentDL + addFuel);
       const newDays = parseFloat((newLevel / cpd).toFixed(1));
-      const newHours = Math.round(newDays * 24);
       const fillPct = Math.min(100, Math.round((newLevel / site.tankCap) * 100));
 
       const now = new Date();
@@ -2664,7 +3098,7 @@
       const dryDateStr = dryDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + 
                          dryDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
-      document.getElementById('simNewAutonomy').innerText = newDays + ' Days (' + newHours + ' Hours)';
+      document.getElementById('simNewAutonomy').innerText = newDays + ' Days';
       document.getElementById('simNewDryDate').innerText = dryDateStr;
       document.getElementById('simNewLevel').innerText = newLevel.toLocaleString() + ' L (' + fillPct + '% Full)';
     }
@@ -2699,28 +3133,72 @@
       else if (site.currentDL <= 400 || site.daysRemaining <= 6) site.status = 'WARNING';
       else site.status = 'HEALTHY';
 
+      saveState();
       closeSimulationModal();
       updateKpis();
+      renderAnalytics();
       renderSites();
-      showToast('Updated ' + site.siteId + ' fuel status successfully!');
+      showToast('Updated ' + site.siteId + ' telemetry successfully!');
     }
 
-    // Alerts & Clipboard
+    // Consolidated Supplier Dispatch Modal
+    function openDispatchBatchModal() {
+      const urgentSites = masterSites.filter(s => s.daysRemaining <= 5);
+      const tbody = document.getElementById('dispatchTableBody');
+      let rows = '';
+      let totalLiters = 0;
+
+      urgentSites.forEach(s => {
+        const orderQty = Math.max(300, s.tankCap - s.currentDL);
+        totalLiters += orderQty;
+        rows += `
+          <tr class="hover:bg-white/5">
+            <td class="py-2 px-3 font-bold text-white">${s.siteId}</td>
+            <td class="py-2 px-3 text-slate-300">${s.state}</td>
+            <td class="py-2 px-3 text-rose-400 font-bold">${s.daysRemaining} d</td>
+            <td class="py-2 px-3 font-bold text-cyan-300">${orderQty.toLocaleString()} Litres</td>
+            <td class="py-2 px-3 text-slate-300">${s.supplier}</td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = rows;
+      document.getElementById('dispatchSummaryText').innerText = 'Urgent Nodes: ' + urgentSites.length + ' Sites | Total Diesel Needed: ' + totalLiters.toLocaleString() + ' Litres';
+      document.getElementById('dispatchModal').classList.remove('hidden');
+    }
+
+    function closeDispatchModal() {
+      document.getElementById('dispatchModal').classList.add('hidden');
+    }
+
+    function copyDispatchSummary() {
+      const urgentSites = masterSites.filter(s => s.daysRemaining <= 5);
+      let text = "COLOPLUS DIESEL PURCHASE ORDER DISPATCH (" + new Date().toISOString().slice(0, 10) + ")\n";
+      text += "---------------------------------------------------------\n";
+      urgentSites.forEach(s => {
+        const orderQty = Math.max(300, s.tankCap - s.currentDL);
+        text += `${s.siteId} (${s.tenantId}) | ${s.state} | Current: ${s.currentDL}L | Required: ${orderQty}L | FSE: ${s.fse} (${s.fsePhone})\n`;
+      });
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('Supplier PO Dispatch copied to clipboard!');
+      });
+    }
+
+    // Clipboard & Export
     function copySiteAlert(siteId) {
       const site = masterSites.find(s => s.siteId === siteId);
       if (!site) return;
 
-      const alertMsg = `[COLOPLUS DIESEL ALERT - ${site.status}]
+      const alertMsg = `[COLOPLUS NOC DIESEL ALERT - ${site.status}]
 Site: ${site.siteId} (${site.tenantId})
 Location: ${site.state} - ${site.address}
 Current Diesel Level: ${site.currentDL} Litres (${site.fillPct}% of ${site.tankCap}L)
 Daily Burn Rate: ${site.cpd} L/day (${site.cph} L/hr)
 Autonomy Remaining: ${site.daysRemaining} Days (~ ${site.hoursRemaining} Hours)
 Predicted Dry Date: ${site.predictedDryDate}
-Emergency 200L Date: ${site.refuelDate}
 Assigned FSE: ${site.fse} (Tel: ${site.fsePhone})
 Security Contact: ${site.security} (${site.securityPhone})
-Action Required: Dispatch refuel before predicted dry date to prevent telecom outage.`;
+Action Required: Dispatch refuel before predicted dry date to prevent off-air outage.`;
 
       navigator.clipboard.writeText(alertMsg).then(() => {
         showToast('Alert for ' + site.siteId + ' copied to clipboard!');
@@ -2731,7 +3209,7 @@ Action Required: Dispatch refuel before predicted dry date to prevent telecom ou
 
     function exportToCsv() {
       let csvContent = 'data:text/csv;charset=utf-8,';
-      csvContent += 'Site ID,Tenant ID,State,Address,Current DL (L),Tank Cap (L),Fill %,CPD (L/d),CPH (L/h),Days Left,Predicted Dry Date,200L Reorder Date,Last Supply (L),Last Supply Date,Supplier,FSE In Charge,FSE Phone,Security,Security Phone,Status\r\n';
+      csvContent += 'Site ID,Tenant ID,State,Address,Current DL (L),Tank Cap (L),Fill %,CPD (L/d),CPH (L/h),Days Left,Predicted Dry Date,200L Reorder Date,Supplier,FSE In Charge,FSE Phone,Security,Security Phone,Status\r\n';
 
       masterSites.forEach(s => {
         const row = [
@@ -2747,8 +3225,6 @@ Action Required: Dispatch refuel before predicted dry date to prevent telecom ou
           s.daysRemaining,
           `"${s.predictedDryDate}"`,
           `"${s.refuelDate}"`,
-          s.lastSupplyQty,
-          `"${s.lastSupplyDate}"`,
           `"${s.supplier}"`,
           `"${s.fse}"`,
           `"${s.fsePhone}"`,
@@ -2762,7 +3238,7 @@ Action Required: Dispatch refuel before predicted dry date to prevent telecom ou
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement('a');
       link.setAttribute('href', encodedUri);
-      link.setAttribute('download', 'ColoPlus_Diesel_Autonomy_Audit_' + new Date().toISOString().slice(0, 10) + '.csv');
+      link.setAttribute('download', 'ColoPlus_NOC_Diesel_Audit_' + new Date().toISOString().slice(0, 10) + '.csv');
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
