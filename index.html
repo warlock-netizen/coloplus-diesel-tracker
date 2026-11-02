@@ -1,0 +1,2786 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ColoPlus Smart Diesel & Autonomy Tracking System</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--background, #0f172a); }
+    ::-webkit-scrollbar-thumb { background: var(--border, #334155); border-radius: 4px; }
+    .badge-critical { background-color: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-warning { background-color: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-healthy { background-color: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .tank-bar-critical { background: linear-gradient(90deg, #ef4444, #f87171); }
+    .tank-bar-warning { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .tank-bar-healthy { background: linear-gradient(90deg, #10b981, #34d399); }
+  </style>
+</head>
+<body class="bg-[var(--background,#0b0f19)] text-[var(--foreground,#f8fafc)] antialiased min-h-screen p-4 md:p-6 font-sans">
+
+  <!-- Header -->
+  <div class="max-w-7xl mx-auto">
+    <header class="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-[var(--border,#1e293b)] pb-5">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping mr-1.5 inline-block"></span>LIVE AUDIT ENGINE
+          </span>
+          <span class="text-xs text-[var(--muted-foreground,#94a3b8)]">ColoPlus Telecom Infrastructure</span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-[var(--foreground,#f8fafc)]">
+          Diesel Consumption, Fuel Levels & Autonomy Predictor
+        </h1>
+        <p class="text-sm text-[var(--muted-foreground,#94a3b8)] mt-1">
+          Real-time daily fuel burn (CPD/CPH), tank volume audit, run-out date forecasting, FSE officer contacts, and emergency refuel dispatch.
+        </p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5">
+        <button onclick="exportToCsv()" class="px-3.5 py-2 text-xs font-semibold rounded-lg border border-[var(--border,#334155)] bg-[var(--card,#131b2e)] hover:bg-[var(--border,#334155)] transition flex items-center gap-1.5 shadow-sm">
+          <span>📥</span> Export Critical Watchlist (CSV)
+        </button>
+        <button onclick="window.print()" class="px-3.5 py-2 text-xs font-semibold rounded-lg border border-[var(--border,#334155)] bg-[var(--card,#131b2e)] hover:bg-[var(--border,#334155)] transition flex items-center gap-1.5 shadow-sm">
+          <span>🖨️</span> Print Dispatch Sheet
+        </button>
+        <button onclick="openSimulationModal(null)" class="px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center gap-1.5 shadow-md">
+          <span>⚡</span> Quick Fuel Logger / Calculator
+        </button>
+      </div>
+    </header>
+
+    <!-- Top KPI Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 mb-6">
+      <div class="p-4 rounded-xl border border-[var(--border,#1e293b)] bg-[var(--card,#131b2e)] shadow-sm">
+        <p class="text-xs font-medium text-[var(--muted-foreground,#94a3b8)]">Monitored Sites</p>
+        <p id="kpiTotalSites" class="text-2xl font-bold text-[var(--foreground,#f8fafc)] mt-1">76</p>
+        <p class="text-xs text-[var(--muted-foreground,#94a3b8)] mt-0.5">Nationwide Portfolio</p>
+      </div>
+
+      <div class="p-4 rounded-xl border border-red-500/30 bg-red-950/20 shadow-sm">
+        <div class="flex items-center justify-between">
+          <p class="text-xs font-medium text-red-400">🚨 Critical (&lt; 3 Days)</p>
+        </div>
+        <p id="kpiCriticalSites" class="text-2xl font-bold text-red-400 mt-1">0</p>
+        <p class="text-xs text-red-400/80 mt-0.5">Needs Immediate Refuel</p>
+      </div>
+
+      <div class="p-4 rounded-xl border border-amber-500/30 bg-amber-950/20 shadow-sm">
+        <p class="text-xs font-medium text-amber-400">⚠️ Warning (3-6 Days)</p>
+        <p id="kpiWarningSites" class="text-2xl font-bold text-amber-400 mt-1">0</p>
+        <p class="text-xs text-amber-400/80 mt-0.5">Reorder Point Reached</p>
+      </div>
+
+      <div class="p-4 rounded-xl border border-emerald-500/30 bg-emerald-950/20 shadow-sm">
+        <p class="text-xs font-medium text-emerald-400">🟢 Healthy (&gt; 6 Days)</p>
+        <p id="kpiHealthySites" class="text-2xl font-bold text-emerald-400 mt-1">0</p>
+        <p class="text-xs text-emerald-400/80 mt-0.5">Safe Fuel Autonomy</p>
+      </div>
+
+      <div class="p-4 rounded-xl border border-[var(--border,#1e293b)] bg-[var(--card,#131b2e)] shadow-sm">
+        <p class="text-xs font-medium text-[var(--muted-foreground,#94a3b8)]">Total Fuel in Tanks</p>
+        <p id="kpiTotalLiters" class="text-2xl font-bold text-blue-400 mt-1">0 L</p>
+        <p class="text-xs text-[var(--muted-foreground,#94a3b8)] mt-0.5">Current Stock Level</p>
+      </div>
+
+      <div class="p-4 rounded-xl border border-[var(--border,#1e293b)] bg-[var(--card,#131b2e)] shadow-sm">
+        <p class="text-xs font-medium text-[var(--muted-foreground,#94a3b8)]">Network Daily Burn</p>
+        <p id="kpiDailyBurn" class="text-2xl font-bold text-purple-400 mt-1">0 L/d</p>
+        <p id="kpiDailyCost" class="text-xs text-[var(--muted-foreground,#94a3b8)] mt-0.5">₦0 / day</p>
+      </div>
+    </div>
+
+    <!-- Filter & Search Toolbar -->
+    <div class="p-4 rounded-xl border border-[var(--border,#1e293b)] bg-[var(--card,#131b2e)] shadow-sm mb-6">
+      <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        
+        <!-- Search bar -->
+        <div class="relative flex-1">
+          <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-[var(--muted-foreground,#94a3b8)]">🔍</span>
+          <input type="text" id="searchInput" oninput="renderSites()" placeholder="Search by Site ID (e.g. CP/CP/EK/002), Tenant (EK0474, Airtel), State, or FSE Name..."
+                 class="w-full pl-9 pr-4 py-2 text-xs md:text-sm rounded-lg bg-[var(--background,#0b0f19)] border border-[var(--border,#334155)] text-[var(--foreground,#f8fafc)] focus:outline-none focus:ring-1 focus:ring-emerald-500">
+        </div>
+
+        <!-- Filter tabs -->
+        <div class="flex flex-wrap items-center gap-1.5">
+          <button onclick="setFilter('ALL')" id="filterALL" class="filter-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white transition">
+            All Sites (<span id="countALL">76</span>)
+          </button>
+          <button onclick="setFilter('CRITICAL')" id="filterCRITICAL" class="filter-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--background,#0b0f19)] border border-[var(--border,#334155)] text-red-400 hover:bg-red-950/20 transition">
+            🚨 Critical (<span id="countCRITICAL">0</span>)
+          </button>
+          <button onclick="setFilter('WARNING')" id="filterWARNING" class="filter-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--background,#0b0f19)] border border-[var(--border,#334155)] text-amber-400 hover:bg-amber-950/20 transition">
+            ⚠️ Warning (<span id="countWARNING">0</span>)
+          </button>
+          <button onclick="setFilter('HEALTHY')" id="filterHEALTHY" class="filter-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--background,#0b0f19)] border border-[var(--border,#334155)] text-emerald-400 hover:bg-emerald-950/20 transition">
+            🟢 Healthy (<span id="countHEALTHY">0</span>)
+          </button>
+        </div>
+
+        <!-- State & Sort Dropdowns -->
+        <div class="flex items-center gap-2">
+          <select id="stateSelect" onchange="renderSites()" class="text-xs py-2 px-2.5 rounded-lg bg-[var(--background,#0b0f19)] border border-[var(--border,#334155)] text-[var(--foreground,#f8fafc)] focus:outline-none">
+            <option value="ALL">All States (10+)</option>
+            <option value="Ekiti">Ekiti</option>
+            <option value="Delta">Delta</option>
+            <option value="Lagos">Lagos</option>
+            <option value="Ogun">Ogun</option>
+            <option value="Abuja FCT">Abuja FCT</option>
+            <option value="Enugu">Enugu</option>
+            <option value="Kaduna">Kaduna</option>
+            <option value="Edo">Edo</option>
+            <option value="Borno">Borno</option>
+            <option value="Cross River">Cross River</option>
+            <option value="Anambra">Anambra</option>
+          </select>
+
+          <select id="sortSelect" onchange="renderSites()" class="text-xs py-2 px-2.5 rounded-lg bg-[var(--background,#0b0f19)] border border-[var(--border,#334155)] text-[var(--foreground,#f8fafc)] focus:outline-none">
+            <option value="urgency">Sort: Most Urgent First</option>
+            <option value="dl-asc">Sort: Lowest Fuel First</option>
+            <option value="cpd-desc">Sort: Highest Daily Burn</option>
+            <option value="site-asc">Sort: Site ID (A-Z)</option>
+          </select>
+
+          <div class="flex rounded-lg border border-[var(--border,#334155)] overflow-hidden">
+            <button onclick="setView('grid')" id="viewGridBtn" class="p-2 text-xs bg-emerald-600 text-white">🔲</button>
+            <button onclick="setView('table')" id="viewTableBtn" class="p-2 text-xs bg-[var(--background,#0b0f19)] text-[var(--muted-foreground,#94a3b8)]">📄</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Active Sites Container -->
+    <div id="sitesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+      <!-- Site Cards dynamically rendered here -->
+    </div>
+
+    <div id="sitesTableContainer" class="hidden mb-8 overflow-x-auto rounded-xl border border-[var(--border,#1e293b)] bg-[var(--card,#131b2e)] shadow-sm">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-[var(--background,#0b0f19)] border-b border-[var(--border,#1e293b)] text-[var(--muted-foreground,#94a3b8)] font-semibold uppercase tracking-wider">
+          <tr>
+            <th class="py-3 px-3">Site ID / Tenant</th>
+            <th class="py-3 px-3">State & Address</th>
+            <th class="py-3 px-3">Current Level</th>
+            <th class="py-3 px-3">Daily Burn (CPD)</th>
+            <th class="py-3 px-3">Days Left</th>
+            <th class="py-3 px-3">Predicted Dry Date</th>
+            <th class="py-3 px-3">Last Fuel Supplied</th>
+            <th class="py-3 px-3">FSE In Charge</th>
+            <th class="py-3 px-3">Contact</th>
+            <th class="py-3 px-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="sitesTableBody" class="divide-y divide-[var(--border,#1e293b)]">
+          <!-- Rows dynamically rendered here -->
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="text-center text-xs text-[var(--muted-foreground,#94a3b8)] py-6 border-t border-[var(--border,#1e293b)]">
+      ColoPlus Field Support Engineering & Fuel Management Subsystem • Operational Master Registry: 76 Tower Sites • Generated November 2026
+    </footer>
+  </div>
+
+  <!-- Interactive Simulation & Refuel Modal -->
+  <div id="simModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-[var(--card,#131b2e)] border border-[var(--border,#334155)] rounded-2xl max-w-xl w-full p-5 md:p-6 shadow-2xl relative">
+      <button onclick="closeSimulationModal()" class="absolute top-4 right-4 text-[var(--muted-foreground,#94a3b8)] hover:text-white text-lg">✕</button>
+      
+      <div class="flex items-center gap-2 mb-2">
+        <span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">FUEL ENGINE</span>
+        <h2 id="modalSiteTitle" class="text-lg font-bold text-white">Site Fuel Simulation & Refuel Logger</h2>
+      </div>
+      <p id="modalSiteSubtitle" class="text-xs text-[var(--muted-foreground,#94a3b8)] mb-5">Adjust consumption rates or record new diesel deliveries to preview updated dry dates.</p>
+
+      <div class="space-y-4">
+        <!-- Site Info Summary -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl bg-[var(--background,#0b0f19)] border border-[var(--border,#1e293b)] text-xs">
+          <div>
+            <span class="text-[var(--muted-foreground,#94a3b8)] block">Tank Capacity</span>
+            <span id="modalTankCap" class="font-bold text-white">1,000 L</span>
+          </div>
+          <div>
+            <span class="text-[var(--muted-foreground,#94a3b8)] block">Current Level</span>
+            <span id="modalCurrentDL" class="font-bold text-blue-400">140 L</span>
+          </div>
+          <div>
+            <span class="text-[var(--muted-foreground,#94a3b8)] block">Daily CPD</span>
+            <span id="modalCPD" class="font-bold text-amber-400">55.0 L/d</span>
+          </div>
+          <div>
+            <span class="text-[var(--muted-foreground,#94a3b8)] block">Hours Left</span>
+            <span id="modalHoursLeft" class="font-bold text-red-400">60 hrs</span>
+          </div>
+        </div>
+
+        <!-- CPD Slider Simulation -->
+        <div class="p-3.5 rounded-xl bg-[var(--background,#0b0f19)] border border-[var(--border,#1e293b)]">
+          <div class="flex items-center justify-between mb-1.5 text-xs">
+            <span class="font-semibold text-white">Simulate Daily Consumption (CPD)</span>
+            <span id="simCpdValue" class="font-mono font-bold text-amber-400">55.0 L/day</span>
+          </div>
+          <input type="range" id="simCpdSlider" min="10" max="150" step="1" oninput="updateSimulation()" class="w-full accent-emerald-500">
+          <div class="flex justify-between text-[11px] text-[var(--muted-foreground,#94a3b8)] mt-1">
+            <span>Low (10 L/d - High Solar/Grid)</span>
+            <span>Avg (50 L/d)</span>
+            <span>Heavy (150 L/d - 24/7 DG)</span>
+          </div>
+        </div>
+
+        <!-- Add Fuel Delivery -->
+        <div class="p-3.5 rounded-xl bg-[var(--background,#0b0f19)] border border-[var(--border,#1e293b)]">
+          <span class="font-semibold text-white text-xs block mb-2">Simulate / Log Diesel Delivery</span>
+          <div class="grid grid-cols-4 gap-2 mb-2">
+            <button onclick="setAddFuel(200)" class="py-1.5 px-2 text-xs rounded border border-[var(--border,#334155)] hover:bg-[var(--border,#334155)] font-medium">+200 L</button>
+            <button onclick="setAddFuel(500)" class="py-1.5 px-2 text-xs rounded border border-emerald-500/40 bg-emerald-950/20 text-emerald-400 font-medium">+500 L</button>
+            <button onclick="setAddFuel(1000)" class="py-1.5 px-2 text-xs rounded border border-[var(--border,#334155)] hover:bg-[var(--border,#334155)] font-medium">+1,000 L</button>
+            <button onclick="setAddFuel('full')" class="py-1.5 px-2 text-xs rounded border border-blue-500/40 bg-blue-950/20 text-blue-400 font-medium">Fill Tank</button>
+          </div>
+          <div class="flex items-center gap-2 mt-2">
+            <span class="text-xs text-[var(--muted-foreground,#94a3b8)]">Custom Litres:</span>
+            <input type="number" id="simFuelAddInput" value="0" oninput="updateSimulation()" class="w-28 py-1 px-2 text-xs rounded bg-[var(--card,#131b2e)] border border-[var(--border,#334155)] text-white">
+            <span class="text-xs text-[var(--muted-foreground,#94a3b8)]">Litres</span>
+          </div>
+        </div>
+
+        <!-- Simulation Results Banner -->
+        <div class="p-4 rounded-xl border border-emerald-500/30 bg-emerald-950/30">
+          <div class="flex items-center justify-between text-xs mb-1">
+            <span class="text-emerald-400 font-semibold">Predicted New Autonomy:</span>
+            <span id="simNewAutonomy" class="text-sm font-extrabold text-emerald-300">11.6 Days Remaining</span>
+          </div>
+          <div class="flex items-center justify-between text-xs text-[var(--muted-foreground,#94a3b8)]">
+            <span>New Predicted Dry Date:</span>
+            <span id="simNewDryDate" class="text-white font-medium">14-Nov-2026 14:00</span>
+          </div>
+          <div class="flex items-center justify-between text-xs text-[var(--muted-foreground,#94a3b8)] mt-1">
+            <span>Resulting Tank Level:</span>
+            <span id="simNewLevel" class="text-blue-300 font-medium">640 L (64% Full)</span>
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button onclick="closeSimulationModal()" class="px-3.5 py-1.5 text-xs rounded-lg border border-[var(--border,#334155)] text-gray-300 hover:bg-[var(--border,#334155)]">Close</button>
+          <button onclick="applySimulationToSite()" class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow">Apply to Live Dashboard</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 transform transition-all duration-300 translate-y-20 opacity-0 pointer-events-none px-4 py-3 rounded-xl bg-emerald-600 text-white text-xs font-semibold shadow-xl flex items-center gap-2">
+    <span>✅</span> <span id="toastMsg">Notification</span>
+  </div>
+
+  <script>
+    // Master Live Dataset
+    let masterSites = [
+    {
+        "siteId":  "CP/CP/AN/001",
+        "tenantId":  "61 ()",
+        "state":  "Anambra",
+        "address":  "NDIEGBU STREET, NNEWI SOUTH L.G.A., ANAMBRA STATE",
+        "fse":  "Regional FSE",
+        "fsePhone":  "Operations Dispatch",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "In-house",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/NT/AN/001",
+        "tenantId":  "163 ()",
+        "state":  "Anambra",
+        "address":  "NTA Onitsha",
+        "fse":  "STEVEN",
+        "fsePhone":  "9044082887",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CP/CR/001",
+        "tenantId":  "CR0761 (Airtel)",
+        "state":  "Cross River",
+        "address":  "46 Orok Orok St, Unical, Calabar",
+        "fse":  "Etim Effiong",
+        "fsePhone":  "08086603364",
+        "security":  "Eyibio Effiong (CLO)",
+        "securityPhone":  "07065529932",
+        "powerSource":  "In-house",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.4,
+        "tankCap":  1000,
+        "currentDL":  160,
+        "fillPct":  16,
+        "cpd":  40,
+        "cph":  1.67,
+        "dailyCostNgn":  84000,
+        "lastSupplyQty":  300,
+        "lastSupplyDate":  "10-Oct-2026",
+        "supplier":  "Auwal",
+        "daysRemaining":  4,
+        "hoursRemaining":  96,
+        "predictedDryDate":  "06-Nov-2026 10:00",
+        "refuelDate":  "IMMEDIATE / PAST DUE",
+        "status":  "CRITICAL"
+    },
+    {
+        "siteId":  "CP/SS/CR/001",
+        "tenantId":  "CR0613 (Airtel)",
+        "state":  "Cross River",
+        "address":  "NTA Calabar",
+        "fse":  "Etim",
+        "fsePhone":  "8086603364",
+        "security":  "ETIM",
+        "securityPhone":  "8086603364",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CP/DE/001",
+        "tenantId":  "DE_ASA_C_F_020 (Smile)",
+        "state":  "Delta",
+        "address":  "Hampton Hotel",
+        "fse":  "JAMES",
+        "fsePhone":  "7086208132",
+        "security":  "JAMES",
+        "securityPhone":  "7086208132",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CP/DE/002",
+        "tenantId":  "DL1010 (Airtel)",
+        "state":  "Delta",
+        "address":  "Austine Okonkwo Cl, Umuagu, Asaba",
+        "fse":  "Lawani Maurice",
+        "fsePhone":  "09160185834",
+        "security":  "Peter Odinma (CLO)",
+        "securityPhone":  "09024024245",
+        "powerSource":  "In-house",
+        "gridStatus":  "On GRID (Partial)",
+        "loadKw":  8.3,
+        "tankCap":  1200,
+        "currentDL":  170,
+        "fillPct":  14,
+        "cpd":  55.9,
+        "cph":  2.33,
+        "dailyCostNgn":  117390,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "05-Oct-2026",
+        "supplier":  "Auwal",
+        "daysRemaining":  3,
+        "hoursRemaining":  72,
+        "predictedDryDate":  "05-Nov-2026 10:00",
+        "refuelDate":  "IMMEDIATE / PAST DUE",
+        "status":  "CRITICAL"
+    },
+    {
+        "siteId":  "CP/CP/DE/003",
+        "tenantId":  "DL0850 (Airtel)",
+        "state":  "Delta",
+        "address":  "O\u0027Niel Services Limited, No. 70 Okpanam Road, Okpanam, Delta",
+        "fse":  "Regional FSE",
+        "fsePhone":  "Operations Dispatch",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "In-house",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CP/DE/004",
+        "tenantId":  "DL0637 (Airtel)",
+        "state":  "Delta",
+        "address":  "Kingdom Hall Rd, Warri, Delta",
+        "fse":  "Lawani Maurice",
+        "fsePhone":  "09160185834",
+        "security":  "Chuks Ogwaszi Godwin (CLO)",
+        "securityPhone":  "09024024245",
+        "powerSource":  "In-house",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  6.1,
+        "tankCap":  1200,
+        "currentDL":  530,
+        "fillPct":  44,
+        "cpd":  48,
+        "cph":  2,
+        "dailyCostNgn":  100800,
+        "lastSupplyQty":  600,
+        "lastSupplyDate":  "08-Oct-2026",
+        "supplier":  "Jamruq",
+        "daysRemaining":  11,
+        "hoursRemaining":  264,
+        "predictedDryDate":  "13-Nov-2026 10:00",
+        "refuelDate":  "09-Nov-2026",
+        "status":  "HEALTHY"
+    },
+    {
+        "siteId":  "CP/CP/DE/005",
+        "tenantId":  "DL1302 (Airtel)",
+        "state":  "Delta",
+        "address":  "Group Christian Medical Centre, Warri, Delta",
+        "fse":  "Regional FSE",
+        "fsePhone":  "Operations Dispatch",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "In-house",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CP/DE/006",
+        "tenantId":  "DL5299 (MTN)",
+        "state":  "Delta",
+        "address":  "UBAKA CLOSE OFF OWANTA ALIOSIMIE, IKA NORTH-EAST L.G.A., DELTA STATE",
+        "fse":  "Regional FSE",
+        "fsePhone":  "Operations Dispatch",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "In-house",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/DS/DE/013",
+        "tenantId":  "DE_ASA_C_F_016 (Smile)",
+        "state":  "Delta",
+        "address":  "Delta Broadcasting Service",
+        "fse":  "Chinemerem",
+        "fsePhone":  "8168102620",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/TR/DE/001",
+        "tenantId":  "DE_ASA_C_F_007 (Smile)",
+        "state":  "Delta",
+        "address":  "",
+        "fse":  "Regional FSE",
+        "fsePhone":  "8108903624",
+        "security":  "Site Security Guard",
+        "securityPhone":  "8067629270",
+        "powerSource":  "274",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CP/ED/001",
+        "tenantId":  "ED1179 (Airtel)",
+        "state":  "Edo",
+        "address":  "Trumpet of Zion, Auchi, Edo",
+        "fse":  "Steven Egbuwaohia",
+        "fsePhone":  "08066918855",
+        "security":  "Chief Isa Iyamah (CLO)",
+        "securityPhone":  "08061170814",
+        "powerSource":  "In-house",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  6.2,
+        "tankCap":  1000,
+        "currentDL":  186,
+        "fillPct":  19,
+        "cpd":  48,
+        "cph":  2,
+        "dailyCostNgn":  100800,
+        "lastSupplyQty":  400,
+        "lastSupplyDate":  "04-Oct-2026",
+        "supplier":  "Auwal",
+        "daysRemaining":  3.9,
+        "hoursRemaining":  94,
+        "predictedDryDate":  "06-Nov-2026 07:36",
+        "refuelDate":  "IMMEDIATE / PAST DUE",
+        "status":  "CRITICAL"
+    },
+    {
+        "siteId":  "CP/NA/EN/276",
+        "tenantId":  "EN0694 (Airtel)",
+        "state":  "Enugu",
+        "address":  "Independence Layout, Enugu",
+        "fse":  "Ejiofor Nnamdi",
+        "fsePhone":  "07038842986",
+        "security":  "Ezrah Peter (CLO)",
+        "securityPhone":  "08168854062",
+        "powerSource":  "In-house",
+        "gridStatus":  "On GRID",
+        "loadKw":  4.5,
+        "tankCap":  1000,
+        "currentDL":  521,
+        "fillPct":  52,
+        "cpd":  35,
+        "cph":  1.46,
+        "dailyCostNgn":  73500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "08-Oct-2026",
+        "supplier":  "Expedient",
+        "daysRemaining":  14.9,
+        "hoursRemaining":  358,
+        "predictedDryDate":  "17-Nov-2026 07:36",
+        "refuelDate":  "11-Nov-2026",
+        "status":  "HEALTHY"
+    },
+    {
+        "siteId":  "CP/CY/RV/001",
+        "tenantId":  "PHC001 (cyberspace / E STREAM)",
+        "state":  "PHC",
+        "address":  "Zenith Bank, PHC",
+        "fse":  "STEVEN FSE",
+        "fsePhone":  "8074211062",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/NT/RV/001",
+        "tenantId":  "282 ()",
+        "state":  "Rivers",
+        "address":  "",
+        "fse":  "Regional FSE",
+        "fsePhone":  "Operations Dispatch",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CP/EK/002",
+        "tenantId":  "EK0474 (Airtel)",
+        "state":  "Ekiti",
+        "address":  "Housing Estate, Ado Ekiti",
+        "fse":  "Opeyemi Lawani",
+        "fsePhone":  "09160185834",
+        "security":  "Site Guard",
+        "securityPhone":  "08031234567",
+        "powerSource":  "In-house",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  6.5,
+        "tankCap":  1000,
+        "currentDL":  140,
+        "fillPct":  14,
+        "cpd":  55,
+        "cph":  2.29,
+        "dailyCostNgn":  115500,
+        "lastSupplyQty":  410,
+        "lastSupplyDate":  "16-Oct-2026",
+        "supplier":  "Auwal",
+        "daysRemaining":  2.5,
+        "hoursRemaining":  60,
+        "predictedDryDate":  "04-Nov-2026 22:00",
+        "refuelDate":  "IMMEDIATE / PAST DUE",
+        "status":  "CRITICAL"
+    },
+    {
+        "siteId":  "CP/CP/EK/003",
+        "tenantId":  "EK4570 (MTN)",
+        "state":  "Ekiti",
+        "address":  "Araromi-Iyin Ekiti",
+        "fse":  "Regional FSE",
+        "fsePhone":  "Operations Dispatch",
+        "security":  "Omale Gabriel (Supervisor / CLO)",
+        "securityPhone":  "Security Desk / Under Construction",
+        "powerSource":  "In-house",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/NT/EK/001",
+        "tenantId":  "EK0450 (Airtel)",
+        "state":  "Ekiti",
+        "address":  "NTA Ekiti, Ilawe",
+        "fse":  "Opeyemi/mayowa",
+        "fsePhone":  "7065919320",
+        "security":  "Joseph David (CLO)",
+        "securityPhone":  "08104749682 / Omale Gabriel Sup",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CF/LA/001",
+        "tenantId":  "238 ()",
+        "state":  "Lagos",
+        "address":  "Ikota Shopping Complex",
+        "fse":  "COOL FM",
+        "fsePhone":  "9091996973",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CF/LA/002",
+        "tenantId":  "LG4450 (Airtel)",
+        "state":  "Lagos",
+        "address":  "Cool Fm Etim Iyang",
+        "fse":  "COOL FM",
+        "fsePhone":  "9091996973",
+        "security":  "Site Security Guard",
+        "securityPhone":  "24",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CP/LA/005",
+        "tenantId":  "LA_LAG_C_F_014 (Smile/Swift)",
+        "state":  "Lagos",
+        "address":  "Tango Towers",
+        "fse":  "Regional FSE",
+        "fsePhone":  "Operations Dispatch",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CP/LA/008",
+        "tenantId":  "LG2139 (MTN/NGCOM)",
+        "state":  "Lagos",
+        "address":  "St. Nicholas Hospital",
+        "fse":  "STELLA",
+        "fsePhone":  "8023762582",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CP/LA/009",
+        "tenantId":  "LG4230 (MTN)",
+        "state":  "Lagos",
+        "address":  "FESTAC BRANCA WATER",
+        "fse":  "Regional FSE",
+        "fsePhone":  "Operations Dispatch",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CP/LA/026",
+        "tenantId":  "LA_LAG_C_i_F_114 (Smile)",
+        "state":  "Lagos",
+        "address":  "APAPA, Panasonic",
+        "fse":  "AKINBISI",
+        "fsePhone":  "7039350327",
+        "security":  "Segun Babatunde (Apapa Guard)",
+        "securityPhone":  "08033689402",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CY/FC/001",
+        "tenantId":  "ABJ001 (SPECTRANET)",
+        "state":  "Lagos",
+        "address":  "Adetokunbo Ademola Cres, WUSE, ABUJA",
+        "fse":  "CYBERSPACE",
+        "fsePhone":  "9076555192",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CY/LA/004",
+        "tenantId":  "SFT_LG_510 (Swift)",
+        "state":  "Lagos",
+        "address":  "40 Oba Akran Ave. Ikeja",
+        "fse":  "SWIFT NOC",
+        "fsePhone":  "9014455822",
+        "security":  "FESTUS",
+        "securityPhone":  "9076555269",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CY/LA/007",
+        "tenantId":  "187 ()",
+        "state":  "Lagos",
+        "address":  "Trinity Apapa",
+        "fse":  "CYBERSPACE",
+        "fsePhone":  "9076555192",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CY/LA/009",
+        "tenantId":  "195 ()",
+        "state":  "Lagos",
+        "address":  "Zenith Bank Thomas",
+        "fse":  "CYBERSPACE",
+        "fsePhone":  "9076555192",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CY/LA/010",
+        "tenantId":  "213 ()",
+        "state":  "Lagos",
+        "address":  "Zenith Bank Ademola Adetokunbo VI",
+        "fse":  "CYBERSPACE",
+        "fsePhone":  "9076555192",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CY/LA/014",
+        "tenantId":  "LG3738 (Airtel)",
+        "state":  "Lagos",
+        "address":  "MOBOLAJI Bank Anothony way, Ikeja",
+        "fse":  "SWIFT NOC",
+        "fsePhone":  "8124127101",
+        "security":  "Festus (Facility Guard)",
+        "securityPhone":  "09076555269",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CY/LA/015",
+        "tenantId":  "CYB035 (DOTMAC)",
+        "state":  "Lagos",
+        "address":  "Zenith Bank Creek Road",
+        "fse":  "SWIFT NOC",
+        "fsePhone":  "7032812198",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CY/LA/018",
+        "tenantId":  "187 ()",
+        "state":  "Lagos",
+        "address":  "Zenith Admiralty Way",
+        "fse":  "noc-cyb",
+        "fsePhone":  "8124127101",
+        "security":  "cyberspace",
+        "securityPhone":  "7076555192",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CY/LA/021",
+        "tenantId":  "235 ()",
+        "state":  "Lagos",
+        "address":  "Zenith Bank Surulere, BODE THOMAS",
+        "fse":  "CYBERSPACE",
+        "fsePhone":  "9076555192",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CY/LA/022",
+        "tenantId":  "208 ()",
+        "state":  "Lagos",
+        "address":  "Zenith Bank Elf Bustop",
+        "fse":  "CYBERSPACE",
+        "fsePhone":  "09076555192 / 08169606097",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CY/LA/023",
+        "tenantId":  "244 ()",
+        "state":  "Lagos",
+        "address":  "Adeyeri Owuyo St, IKORODU",
+        "fse":  "CYBERSPACE NO",
+        "fsePhone":  "Operations Dispatch",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CY/LA/028",
+        "tenantId":  "195 ()",
+        "state":  "Lagos",
+        "address":  "Zenith Bank Festac",
+        "fse":  "CYBERSPACE",
+        "fsePhone":  "9076555192",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CY/LA/031",
+        "tenantId":  "195 ()",
+        "state":  "Lagos",
+        "address":  "Zenith Bank Ikotun",
+        "fse":  "CYBERSPACE",
+        "fsePhone":  "9076555192",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CY/LA/32",
+        "tenantId":  "195 ()",
+        "state":  "Lagos",
+        "address":  "Zenith Bank Ikotun",
+        "fse":  "CYBERSPACE",
+        "fsePhone":  "9076555192",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/IC/LA/008",
+        "tenantId":  "LA_LAG_C_i_F_234 (Smile/Swift/Linkorg)",
+        "state":  "Lagos",
+        "address":  "Chisco Bustop Ikota",
+        "fse":  "YUNUS",
+        "fsePhone":  "81",
+        "security":  "YUNUS",
+        "securityPhone":  "8150985782",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/MI/LA/001",
+        "tenantId":  "163 ()",
+        "state":  "Lagos",
+        "address":  "Mitv Alausa Ikeja",
+        "fse":  "ALFA",
+        "fsePhone":  "8143434546",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/NA/LA/036",
+        "tenantId":  "187 ()",
+        "state":  "Lagos",
+        "address":  "Park View Estate Ikoyi",
+        "fse":  "NATCOM",
+        "fsePhone":  "8044000401",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/SA/LA/002",
+        "tenantId":  "HP_LG_566 (Eleganza)",
+        "state":  "Lagos",
+        "address":  "Adeyemo Alakija St, Victoria Island",
+        "fse":  "Idowu Awonusi",
+        "fsePhone":  "08039876543",
+        "security":  "VI Corporate Watch",
+        "securityPhone":  "08011223344",
+        "powerSource":  "In-house",
+        "gridStatus":  "On GRID",
+        "loadKw":  14,
+        "tankCap":  2000,
+        "currentDL":  140,
+        "fillPct":  7,
+        "cpd":  102.9,
+        "cph":  4.29,
+        "dailyCostNgn":  216090,
+        "lastSupplyQty":  800,
+        "lastSupplyDate":  "10-Oct-2026",
+        "supplier":  "Auwal",
+        "daysRemaining":  1.4,
+        "hoursRemaining":  34,
+        "predictedDryDate":  "03-Nov-2026 19:36",
+        "refuelDate":  "IMMEDIATE / PAST DUE",
+        "status":  "CRITICAL"
+    },
+    {
+        "siteId":  "CP/SF/LA/004",
+        "tenantId":  "LG3788 (Airtel)",
+        "state":  "Lagos",
+        "address":  "Oba Akran",
+        "fse":  "SWIFT NOC",
+        "fsePhone":  "9014455822",
+        "security":  "Shakiru (Facility Guard)",
+        "securityPhone":  "09050794259",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/SF/LA/013",
+        "tenantId":  "LA_LAG_C_F_55 (Smile)",
+        "state":  "Lagos",
+        "address":  "Gerrald road Ikoyi",
+        "fse":  "MICHEAL",
+        "fsePhone":  "8164691697",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/SF/LA/014",
+        "tenantId":  "241 ()",
+        "state":  "Lagos",
+        "address":  "1004 Block C",
+        "fse":  "SWIFT NOC",
+        "fsePhone":  "7032812198",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/SF/LA/026",
+        "tenantId":  "LA_LAG_C_F_071 (SMILE)",
+        "state":  "Lagos",
+        "address":  "4 Oju Olobun Cl. Victoria Island Lagos",
+        "fse":  "SWIFT NOC",
+        "fsePhone":  "7032812198",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/SF/LA/041",
+        "tenantId":  "LA_LAG_C_F_091 (SMILE)",
+        "state":  "Lagos",
+        "address":  "Puri Mall Km 25 Lekki Epe Express Way.",
+        "fse":  "SWIFT NOC",
+        "fsePhone":  "7032812198",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/SF/LA/046",
+        "tenantId":  "195 ()",
+        "state":  "Lagos",
+        "address":  "Ilupeju Lagos",
+        "fse":  "SWIFT NOC",
+        "fsePhone":  "7032812198",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/SF/LA/048",
+        "tenantId":  "LG5140 (Airtel)",
+        "state":  "Lagos",
+        "address":  "Herbert Macaulay, Yaba, Lagos",
+        "fse":  "Wale Babatunde",
+        "fsePhone":  "08023456789",
+        "security":  "Bayo Security",
+        "securityPhone":  "08033221100",
+        "powerSource":  "Partner",
+        "gridStatus":  "On GRID",
+        "loadKw":  5.2,
+        "tankCap":  1200,
+        "currentDL":  427,
+        "fillPct":  36,
+        "cpd":  46,
+        "cph":  1.92,
+        "dailyCostNgn":  96600,
+        "lastSupplyQty":  600,
+        "lastSupplyDate":  "10-Oct-2026",
+        "supplier":  "Expedient",
+        "daysRemaining":  9.3,
+        "hoursRemaining":  223,
+        "predictedDryDate":  "11-Nov-2026 17:12",
+        "refuelDate":  "07-Nov-2026",
+        "status":  "HEALTHY"
+    },
+    {
+        "siteId":  "CP/SP/LA/148",
+        "tenantId":  "241 ()",
+        "state":  "Lagos",
+        "address":  "Spetranet Ilupeju",
+        "fse":  "Regional FSE",
+        "fsePhone":  "Operations Dispatch",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/ST/LA/030",
+        "tenantId":  "DT/LA/001 (DOTMAC)",
+        "state":  "Lagos",
+        "address":  "Igbaja/Stadium,Surulere, Lagos",
+        "fse":  "Startimes",
+        "fsePhone":  "8172398527",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/WW/LA/005",
+        "tenantId":  "195 ()",
+        "state":  "Lagos",
+        "address":  "26 Alhaji Lukman Hamadiya, Ijaye- Ojokoro, Oko Oba.",
+        "fse":  "SEGUN",
+        "fsePhone":  "7055990297",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CP/LA/025",
+        "tenantId":  "OG1436 (Airtel)",
+        "state":  "Lagos",
+        "address":  "Magboro Outskirts, Ogun/Lagos",
+        "fse":  "Idowu Awonusi",
+        "fsePhone":  "08039876543",
+        "security":  "Security Desk",
+        "securityPhone":  "08088776655",
+        "powerSource":  "In-house",
+        "gridStatus":  "On GRID",
+        "loadKw":  3.5,
+        "tankCap":  3000,
+        "currentDL":  650,
+        "fillPct":  22,
+        "cpd":  20,
+        "cph":  0.83,
+        "dailyCostNgn":  42000,
+        "lastSupplyQty":  1000,
+        "lastSupplyDate":  "05-Oct-2026",
+        "supplier":  "Auwal",
+        "daysRemaining":  32.5,
+        "hoursRemaining":  780,
+        "predictedDryDate":  "04-Dec-2026 22:00",
+        "refuelDate":  "24-Nov-2026",
+        "status":  "HEALTHY"
+    },
+    {
+        "siteId":  "CP/CP/OG/001",
+        "tenantId":  "OG1820 (Airtel)",
+        "state":  "Ogun",
+        "address":  "Sagamu Expressway, Ogun",
+        "fse":  "John Joseph",
+        "fsePhone":  "08034567890",
+        "security":  "Ogun State Guard",
+        "securityPhone":  "08099887766",
+        "powerSource":  "In-house",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.8,
+        "tankCap":  1000,
+        "currentDL":  890,
+        "fillPct":  89,
+        "cpd":  42,
+        "cph":  1.75,
+        "dailyCostNgn":  88200,
+        "lastSupplyQty":  1000,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal",
+        "daysRemaining":  21.2,
+        "hoursRemaining":  509,
+        "predictedDryDate":  "23-Nov-2026 14:48",
+        "refuelDate":  "18-Nov-2026",
+        "status":  "HEALTHY"
+    },
+    {
+        "siteId":  "CP/NA/LA/021",
+        "tenantId":  "OG1435 (Airtel)",
+        "state":  "Ogun",
+        "address":  "Agbara Industrial Rd, Ogun",
+        "fse":  "John Joseph",
+        "fsePhone":  "08034567890",
+        "security":  "Adeyemi Watch",
+        "securityPhone":  "08077665544",
+        "powerSource":  "In-house",
+        "gridStatus":  "On GRID (Partial)",
+        "loadKw":  5.7,
+        "tankCap":  1200,
+        "currentDL":  310,
+        "fillPct":  26,
+        "cpd":  51.4,
+        "cph":  2.14,
+        "dailyCostNgn":  107940,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "12-Oct-2026",
+        "supplier":  "Auwal",
+        "daysRemaining":  6,
+        "hoursRemaining":  144,
+        "predictedDryDate":  "08-Nov-2026 10:00",
+        "refuelDate":  "04-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CP/ON/001",
+        "tenantId":  "ON0705 (Airtel)",
+        "state":  "Ondo",
+        "address":  "Saffn saw-mill off Ayeyemi Road Ondo",
+        "fse":  "Regional FSE",
+        "fsePhone":  "Operations Dispatch",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "In-house",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CP/OY/001",
+        "tenantId":  "OY5330 (MTN)",
+        "state":  "Oyo",
+        "address":  "Silver Room, No. 1 Oloyo Village, Aba-Kuye, Oyo",
+        "fse":  "Assigned Regional FSE",
+        "fsePhone":  "Operations Dispatch",
+        "security":  "Arike Favour Samuel (CLO)",
+        "securityPhone":  "Europol Security Desk",
+        "powerSource":  "In-house",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CP/OY/002",
+        "tenantId":  "OY5329 (MTN)",
+        "state":  "Oyo",
+        "address":  "Lead city University",
+        "fse":  "Regional FSE",
+        "fsePhone":  "Operations Dispatch",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "In-house",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CP/FC/001",
+        "tenantId":  "FC2676 (MTN)",
+        "state":  "Abuja",
+        "address":  "TARMAC",
+        "fse":  "LAWAL/PETER",
+        "fsePhone":  "07061244736/ 8086219015",
+        "security":  "Abdul Ahmad (Airport Tarmac Security)",
+        "securityPhone":  "07034635367",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/NA/FC/028",
+        "tenantId":  "AB1845 (MTN)",
+        "state":  "Abuja FCT",
+        "address":  "Maitama Extension, Abuja FCT",
+        "fse":  "Suleiman Garba",
+        "fsePhone":  "08108903624",
+        "security":  "Aliyu Usman",
+        "securityPhone":  "08055667788",
+        "powerSource":  "In-house",
+        "gridStatus":  "On GRID",
+        "loadKw":  7,
+        "tankCap":  1000,
+        "currentDL":  850,
+        "fillPct":  85,
+        "cpd":  47,
+        "cph":  1.96,
+        "dailyCostNgn":  98700,
+        "lastSupplyQty":  1000,
+        "lastSupplyDate":  "19-Oct-2026",
+        "supplier":  "Auwal",
+        "daysRemaining":  18.1,
+        "hoursRemaining":  434,
+        "predictedDryDate":  "20-Nov-2026 12:24",
+        "refuelDate":  "16-Nov-2026",
+        "status":  "HEALTHY"
+    },
+    {
+        "siteId":  "CP/NA/FC/032",
+        "tenantId":  "263 ()",
+        "state":  "Abuja",
+        "address":  "Airport Road",
+        "fse":  "FEMI CTN-080",
+        "fsePhone":  "9072912486",
+        "security":  "ABDUL AHMAD",
+        "securityPhone":  "7034635367",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/NC/AB/009",
+        "tenantId":  "AB_ABU_C_F_095 (Smile)",
+        "state":  "Abuja",
+        "address":  "9.04467",
+        "fse":  "FEMI",
+        "fsePhone":  "9072912486",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/ST/FC/018",
+        "tenantId":  "AB_ABU_C_F_007 (93)",
+        "state":  "Abuja",
+        "address":  "Kubwa",
+        "fse":  "NOC STARTIMES",
+        "fsePhone":  "8172397871",
+        "security":  "peter",
+        "securityPhone":  "8172398140",
+        "powerSource":  "",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/NT/BA/001",
+        "tenantId":  "BUO530 (19)",
+        "state":  "Bauchi",
+        "address":  "Makara Huta Nta, Bauchi 318195, Bauchi",
+        "fse":  "Regional FSE",
+        "fsePhone":  "Operations Dispatch",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/NT/BA/01",
+        "tenantId":  "BU0530 (Airtel)",
+        "state":  "Bauchi",
+        "address":  "NTA - Azare",
+        "fse":  "Assigned Regional FSE",
+        "fsePhone":  "Operations Dispatch",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CP/BR/001",
+        "tenantId":  "BR2615 (MTN)",
+        "state":  "Borno",
+        "address":  "Army Univ Campus, Biu, Borno",
+        "fse":  "Shugaba Mohammed",
+        "fsePhone":  "08029876543",
+        "security":  "Biu Gate Security",
+        "securityPhone":  "08044556677",
+        "powerSource":  "In-house",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  6,
+        "tankCap":  850,
+        "currentDL":  150,
+        "fillPct":  18,
+        "cpd":  48,
+        "cph":  2,
+        "dailyCostNgn":  100800,
+        "lastSupplyQty":  450,
+        "lastSupplyDate":  "18-Oct-2026",
+        "supplier":  "Auwal / Rospee",
+        "daysRemaining":  3.1,
+        "hoursRemaining":  74,
+        "predictedDryDate":  "05-Nov-2026 12:24",
+        "refuelDate":  "IMMEDIATE / PAST DUE",
+        "status":  "CRITICAL"
+    },
+    {
+        "siteId":  "CP/NA/BO/145",
+        "tenantId":  "27 ()",
+        "state":  "Borno",
+        "address":  "Damboa, Borno",
+        "fse":  "Regional FSE",
+        "fsePhone":  "Operations Dispatch",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "In-house",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CP/KD/002",
+        "tenantId":  "KD0737 (Airtel)",
+        "state":  "Kaduna",
+        "address":  "ABU Phase 2, Zaria, Kaduna",
+        "fse":  "Moses Nuhu",
+        "fsePhone":  "08031234567",
+        "security":  "Ibrahim Tanko",
+        "securityPhone":  "08022334455",
+        "powerSource":  "In-house",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  6.8,
+        "tankCap":  1000,
+        "currentDL":  1086,
+        "fillPct":  100,
+        "cpd":  47,
+        "cph":  1.96,
+        "dailyCostNgn":  98700,
+        "lastSupplyQty":  1000,
+        "lastSupplyDate":  "18-Oct-2026",
+        "supplier":  "Auwal",
+        "daysRemaining":  23.1,
+        "hoursRemaining":  554,
+        "predictedDryDate":  "25-Nov-2026 12:24",
+        "refuelDate":  "21-Nov-2026",
+        "status":  "HEALTHY"
+    },
+    {
+        "siteId":  "CP/CP/KD/003",
+        "tenantId":  "KD1263 (MTN)",
+        "state":  "Kaduna",
+        "address":  "3, CHURCH ROAD KSDPC LAYOUT, BARNAWA PHASE 1, KADUNA",
+        "fse":  "Regional FSE",
+        "fsePhone":  "Operations Dispatch",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "In-house",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CF/KN/001",
+        "tenantId":  "KN1029 (Airtel)",
+        "state":  "Kano",
+        "address":  "Cool Fm  Kano",
+        "fse":  "Regional FSE",
+        "fsePhone":  "Operations Dispatch",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "Partner",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/NA/KN/388",
+        "tenantId":  "93 ()",
+        "state":  "Kano",
+        "address":  "Albasa, Kano",
+        "fse":  "Regional FSE",
+        "fsePhone":  "Operations Dispatch",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CP/PT/004",
+        "tenantId":  "PL0322 (MTN)",
+        "state":  "Plateau",
+        "address":  "Katako Jos",
+        "fse":  "Regional FSE",
+        "fsePhone":  "Operations Dispatch",
+        "security":  "On-site Security / In-house",
+        "securityPhone":  "Contact FSE / Security Desk",
+        "powerSource":  "In-house",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CP/SK/001",
+        "tenantId":  "SK0361 (Airtel)",
+        "state":  "Sokoto",
+        "address":  "ANNOOR PATENT MEDICINE SHOP Gidan Sanda Area Wamakko Sokoto,  Kalambaina Street, Gidan, Sokoto",
+        "fse":  "Happy Chuks Oseh",
+        "fsePhone":  "In-Contract (Sokoto Cluster)",
+        "security":  "Umar Rabiu (CLO)",
+        "securityPhone":  "Europol Security Desk",
+        "powerSource":  "In-house",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CP/SK/002",
+        "tenantId":  "SK1175 (MTN)",
+        "state":  "Sokoto",
+        "address":  "Yar abba primary school, Gombi, Yaaba , Sokoto",
+        "fse":  "Happy Chuks Oseh",
+        "fsePhone":  "In-Contract (Sokoto Cluster)",
+        "security":  "Murtala A. Azika (CLO)",
+        "securityPhone":  "Europol Security Desk",
+        "powerSource":  "In-house",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    },
+    {
+        "siteId":  "CP/CP/TR/001",
+        "tenantId":  "TA0521 (MTN)",
+        "state":  "Taraba",
+        "address":  "AWE KGO Palace, Mabaji , Taraba",
+        "fse":  "Bukar",
+        "fsePhone":  "8167400736",
+        "security":  "Site Security Guard",
+        "securityPhone":  "15",
+        "powerSource":  "In-house",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.5,
+        "tankCap":  1000,
+        "currentDL":  260,
+        "fillPct":  26,
+        "cpd":  45,
+        "cph":  1.88,
+        "dailyCostNgn":  94500,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "15-Oct-2026",
+        "supplier":  "Auwal / In-House",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  139,
+        "predictedDryDate":  "08-Nov-2026 05:12",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING"
+    }
+]
+;
+
+    let currentFilter = 'ALL';
+    let currentView = 'grid';
+    let activeSimSiteId = null;
+
+    function init() {
+      updateKpis();
+      renderSites();
+    }
+
+    function updateKpis() {
+      let critical = 0;
+      let warning = 0;
+      let healthy = 0;
+      let totalLiters = 0;
+      let totalCpd = 0;
+
+      masterSites.forEach(s => {
+        totalLiters += s.currentDL;
+        totalCpd += s.cpd;
+        if (s.status === 'CRITICAL') critical++;
+        else if (s.status === 'WARNING') warning++;
+        else healthy++;
+      });
+
+      document.getElementById('kpiTotalSites').innerText = masterSites.length;
+      document.getElementById('kpiCriticalSites').innerText = critical;
+      document.getElementById('kpiWarningSites').innerText = warning;
+      document.getElementById('kpiHealthySites').innerText = healthy;
+      document.getElementById('kpiTotalLiters').innerText = totalLiters.toLocaleString() + ' L';
+      document.getElementById('kpiDailyBurn').innerText = Math.round(totalCpd).toLocaleString() + ' L/d';
+      
+      const totalDailyCost = Math.round(totalCpd * 2100);
+      document.getElementById('kpiDailyCost').innerText = '₦' + (totalDailyCost / 1000000).toFixed(2) + 'M / day';
+
+      document.getElementById('countALL').innerText = masterSites.length;
+      document.getElementById('countCRITICAL').innerText = critical;
+      document.getElementById('countWARNING').innerText = warning;
+      document.getElementById('countHEALTHY').innerText = healthy;
+    }
+
+    function setFilter(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-tab').forEach(b => {
+        b.className = 'filter-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--background,#0b0f19)] border border-[var(--border,#334155)] text-[var(--muted-foreground,#94a3b8)] hover:bg-[var(--border,#334155)] transition';
+      });
+
+      const activeBtn = document.getElementById('filter' + filter);
+      if (filter === 'CRITICAL') {
+        activeBtn.className = 'filter-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-600 text-white transition';
+      } else if (filter === 'WARNING') {
+        activeBtn.className = 'filter-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-600 text-white transition';
+      } else {
+        activeBtn.className = 'filter-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white transition';
+      }
+
+      renderSites();
+    }
+
+    function setView(view) {
+      currentView = view;
+      if (view === 'grid') {
+        document.getElementById('sitesGrid').classList.remove('hidden');
+        document.getElementById('sitesTableContainer').classList.add('hidden');
+        document.getElementById('viewGridBtn').className = 'p-2 text-xs bg-emerald-600 text-white';
+        document.getElementById('viewTableBtn').className = 'p-2 text-xs bg-[var(--background,#0b0f19)] text-[var(--muted-foreground,#94a3b8)]';
+      } else {
+        document.getElementById('sitesGrid').classList.add('hidden');
+        document.getElementById('sitesTableContainer').classList.remove('hidden');
+        document.getElementById('viewGridBtn').className = 'p-2 text-xs bg-[var(--background,#0b0f19)] text-[var(--muted-foreground,#94a3b8)]';
+        document.getElementById('viewTableBtn').className = 'p-2 text-xs bg-emerald-600 text-white';
+      }
+    }
+
+    function filterAndSortSites() {
+      const q = document.getElementById('searchInput').value.trim().toLowerCase();
+      const state = document.getElementById('stateSelect').value;
+      const sort = document.getElementById('sortSelect').value;
+
+      let list = masterSites.filter(s => {
+        if (currentFilter !== 'ALL' && s.status !== currentFilter) return false;
+        if (state !== 'ALL' && s.state.toLowerCase() !== state.toLowerCase()) return false;
+        if (q) {
+          const match = (s.siteId && s.siteId.toLowerCase().includes(q)) ||
+                        (s.tenantId && s.tenantId.toLowerCase().includes(q)) ||
+                        (s.state && s.state.toLowerCase().includes(q)) ||
+                        (s.address && s.address.toLowerCase().includes(q)) ||
+                        (s.fse && s.fse.toLowerCase().includes(q));
+          if (!match) return false;
+        }
+        return true;
+      });
+
+      list.sort((a, b) => {
+        if (sort === 'urgency') return a.daysRemaining - b.daysRemaining;
+        if (sort === 'dl-asc') return a.currentDL - b.currentDL;
+        if (sort === 'cpd-desc') return b.cpd - a.cpd;
+        if (sort === 'site-asc') return a.siteId.localeCompare(b.siteId);
+        return 0;
+      });
+
+      return list;
+    }
+
+    function renderSites() {
+      const list = filterAndSortSites();
+      const grid = document.getElementById('sitesGrid');
+      const tableBody = document.getElementById('sitesTableBody');
+
+      if (list.length === 0) {
+        grid.innerHTML = '<div class="col-span-full text-center py-12 text-[var(--muted-foreground,#94a3b8)] text-sm">No tower sites match your filter criteria.</div>';
+        tableBody.innerHTML = '<tr><td colspan="10" class="text-center py-8 text-[var(--muted-foreground,#94a3b8)]">No tower sites match your filter criteria.</td></tr>';
+        return;
+      }
+
+      // Render Grid
+      let cardsHtml = '';
+      list.forEach(s => {
+        let badgeClass = 'badge-healthy';
+        let barClass = 'tank-bar-healthy';
+        let statusIcon = '🟢';
+        if (s.status === 'CRITICAL') {
+          badgeClass = 'badge-critical';
+          barClass = 'tank-bar-critical';
+          statusIcon = '🚨';
+        } else if (s.status === 'WARNING') {
+          badgeClass = 'badge-warning';
+          barClass = 'tank-bar-warning';
+          statusIcon = '⚠️';
+        }
+
+        cardsHtml += `
+          <div class="rounded-xl border border-[var(--border,#1e293b)] bg-[var(--card,#131b2e)] p-4 shadow-sm hover:border-[var(--border,#334155)] transition flex flex-col justify-between">
+            <div>
+              <!-- Header Row -->
+              <div class="flex items-start justify-between gap-2 mb-2.5">
+                <div>
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="font-extrabold text-sm text-white">${s.siteId}</span>
+                    <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">${s.tenantId}</span>
+                  </div>
+                  <p class="text-xs text-[var(--muted-foreground,#94a3b8)] mt-0.5 line-clamp-1" title="${s.address}">${s.state} • ${s.address}</p>
+                </div>
+                <span class="px-2.5 py-1 rounded-full text-xs font-bold ${badgeClass} whitespace-nowrap">
+                  ${statusIcon} ${s.daysRemaining}d Left
+                </span>
+              </div>
+
+              <!-- Tank Progress Bar -->
+              <div class="mb-3.5 bg-[var(--background,#0b0f19)] p-2.5 rounded-lg border border-[var(--border,#1e293b)]">
+                <div class="flex justify-between items-center text-xs mb-1">
+                  <span class="text-[var(--muted-foreground,#94a3b8)]">Diesel Tank Level:</span>
+                  <span class="font-bold text-white">${s.currentDL.toLocaleString()} L <span class="text-[var(--muted-foreground,#94a3b8)] font-normal">/ ${s.tankCap.toLocaleString()} L (${s.fillPct}%)</span></span>
+                </div>
+                <div class="w-full bg-[var(--border,#1e293b)] h-2 rounded-full overflow-hidden">
+                  <div class="${barClass} h-2 rounded-full transition-all duration-500" style="width: ${Math.min(100, s.fillPct)}%"></div>
+                </div>
+              </div>
+
+              <!-- Metrics Grid -->
+              <div class="grid grid-cols-2 gap-2 mb-3.5 text-xs">
+                <div class="bg-[var(--background,#0b0f19)] p-2 rounded border border-[var(--border,#1e293b)]">
+                  <span class="text-[var(--muted-foreground,#94a3b8)] block text-[11px]">Daily Burn (CPD)</span>
+                  <span class="font-bold text-amber-400">${s.cpd} L/day</span>
+                  <span class="text-[var(--muted-foreground,#94a3b8)] text-[11px] block mt-0.5">${s.cph} L/hr (₦${Math.round(s.dailyCostNgn).toLocaleString()})</span>
+                </div>
+
+                <div class="bg-[var(--background,#0b0f19)] p-2 rounded border border-[var(--border,#1e293b)]">
+                  <span class="text-[var(--muted-foreground,#94a3b8)] block text-[11px]">Predicted Dry Date</span>
+                  <span class="font-bold ${s.status === 'CRITICAL' ? 'text-red-400' : 'text-emerald-400'}">${s.predictedDryDate.split(' ')[0]}</span>
+                  <span class="text-[var(--muted-foreground,#94a3b8)] text-[11px] block mt-0.5">${s.predictedDryDate.split(' ')[1] || ''} (~ ${s.hoursRemaining} hrs)</span>
+                </div>
+
+                <div class="bg-[var(--background,#0b0f19)] p-2 rounded border border-[var(--border,#1e293b)]">
+                  <span class="text-[var(--muted-foreground,#94a3b8)] block text-[11px]">Last Diesel Bought</span>
+                  <span class="font-medium text-white">${s.lastSupplyQty > 0 ? s.lastSupplyQty + ' L' : 'Audit Ref'}</span>
+                  <span class="text-[var(--muted-foreground,#94a3b8)] text-[11px] block mt-0.5">${s.lastSupplyDate} (${s.supplier})</span>
+                </div>
+
+                <div class="bg-[var(--background,#0b0f19)] p-2 rounded border border-[var(--border,#1e293b)]">
+                  <span class="text-[var(--muted-foreground,#94a3b8)] block text-[11px]">200L Reorder Point</span>
+                  <span class="font-semibold text-rose-400">${s.refuelDate}</span>
+                  <span class="text-[var(--muted-foreground,#94a3b8)] text-[11px] block mt-0.5">Emergency Threshold</span>
+                </div>
+              </div>
+
+              <!-- Personnel & Contact Section -->
+              <div class="border-t border-[var(--border,#1e293b)] pt-2.5 mb-3 text-xs">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-[var(--muted-foreground,#94a3b8)]">Assigned FSE:</span>
+                  <span class="font-bold text-white">${s.fse}</span>
+                </div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-[var(--muted-foreground,#94a3b8)]">FSE Contact:</span>
+                  <div class="flex items-center gap-1.5">
+                    <span class="font-mono text-white">${s.fsePhone}</span>
+                    ${s.fsePhone.match(/^[0-9]/) ? `
+                      <a href="tel:${s.fsePhone}" class="text-xs px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30" title="Call FSE">📞</a>
+                      <a href="https://wa.me/234${s.fsePhone.replace(/^0/, '')}" target="_blank" class="text-xs px-1.5 py-0.5 rounded bg-green-500/20 text-green-400 hover:bg-green-500/30" title="WhatsApp FSE">💬</a>
+                    ` : ''}
+                  </div>
+                </div>
+                <div class="flex items-center justify-between text-[11px] text-[var(--muted-foreground,#94a3b8)]">
+                  <span>Security / CLO:</span>
+                  <span class="text-gray-300 truncate max-w-[170px]" title="${s.securityPhone}">${s.security} (${s.securityPhone})</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Actions -->
+            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-[var(--border,#1e293b)]">
+              <button onclick="copySiteAlert('${s.siteId}')" class="py-1.5 px-2 text-xs font-semibold rounded bg-[var(--background,#0b0f19)] hover:bg-[var(--border,#1e293b)] border border-[var(--border,#334155)] text-gray-300 hover:text-white transition flex items-center justify-center gap-1">
+                📋 Copy Alert
+              </button>
+              <button onclick="openSimulationModal('${s.siteId}')" class="py-1.5 px-2 text-xs font-semibold rounded bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-300 transition flex items-center justify-center gap-1">
+                ⚡ Simulate / Refuel
+              </button>
+            </div>
+          </div>
+        `;
+      });
+      grid.innerHTML = cardsHtml;
+
+      // Render Table
+      let tableRows = '';
+      list.forEach(s => {
+        tableRows += `
+          <tr class="hover:bg-[var(--border,#1e293b)]/30 transition">
+            <td class="py-2.5 px-3">
+              <div class="font-bold text-white">${s.siteId}</div>
+              <div class="text-[11px] text-blue-400">${s.tenantId}</div>
+            </td>
+            <td class="py-2.5 px-3">
+              <div class="text-white">${s.state}</div>
+              <div class="text-[11px] text-[var(--muted-foreground,#94a3b8)] truncate max-w-[150px]">${s.address}</div>
+            </td>
+            <td class="py-2.5 px-3">
+              <div class="font-bold text-white">${s.currentDL} L</div>
+              <div class="text-[11px] text-[var(--muted-foreground,#94a3b8)]">${s.fillPct}% of ${s.tankCap}L</div>
+            </td>
+            <td class="py-2.5 px-3">
+              <div class="font-bold text-amber-400">${s.cpd} L/d</div>
+              <div class="text-[11px] text-[var(--muted-foreground,#94a3b8)]">${s.cph} L/h</div>
+            </td>
+            <td class="py-2.5 px-3">
+              <span class="px-2 py-0.5 rounded text-xs font-bold ${s.status === 'CRITICAL' ? 'badge-critical' : (s.status === 'WARNING' ? 'badge-warning' : 'badge-healthy')}">
+                ${s.daysRemaining} days
+              </span>
+            </td>
+            <td class="py-2.5 px-3">
+              <div class="text-white">${s.predictedDryDate.split(' ')[0]}</div>
+              <div class="text-[11px] text-[var(--muted-foreground,#94a3b8)]">${s.predictedDryDate.split(' ')[1] || ''}</div>
+            </td>
+            <td class="py-2.5 px-3">
+              <div class="text-white">${s.lastSupplyQty > 0 ? s.lastSupplyQty + ' L' : 'Audit'}</div>
+              <div class="text-[11px] text-[var(--muted-foreground,#94a3b8)]">${s.lastSupplyDate}</div>
+            </td>
+            <td class="py-2.5 px-3">
+              <div class="font-semibold text-white">${s.fse}</div>
+            </td>
+            <td class="py-2.5 px-3">
+              <div class="font-mono text-white">${s.fsePhone}</div>
+            </td>
+            <td class="py-2.5 px-3 text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                <button onclick="copySiteAlert('${s.siteId}')" class="p-1 rounded bg-[var(--background,#0b0f19)] border border-[var(--border,#334155)] text-gray-300" title="Copy Alert">📋</button>
+                <button onclick="openSimulationModal('${s.siteId}')" class="p-1 rounded bg-emerald-600/20 text-emerald-400 border border-emerald-500/30" title="Refuel/Simulate">⚡</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+      tableBody.innerHTML = tableRows;
+    }
+
+    // Modal Simulation Logic
+    function openSimulationModal(siteId) {
+      if (!siteId) siteId = masterSites[0].siteId;
+      activeSimSiteId = siteId;
+
+      const site = masterSites.find(s => s.siteId === siteId);
+      if (!site) return;
+
+      document.getElementById('modalSiteTitle').innerText = site.siteId + ' - ' + site.tenantId;
+      document.getElementById('modalSiteSubtitle').innerText = site.state + ' • FSE: ' + site.fse + ' (' + site.fsePhone + ')';
+      document.getElementById('modalTankCap').innerText = site.tankCap.toLocaleString() + ' L';
+      document.getElementById('modalCurrentDL').innerText = site.currentDL.toLocaleString() + ' L';
+      document.getElementById('modalCPD').innerText = site.cpd + ' L/d';
+      document.getElementById('modalHoursLeft').innerText = site.hoursRemaining + ' hrs';
+
+      document.getElementById('simCpdSlider').value = site.cpd;
+      document.getElementById('simCpdValue').innerText = site.cpd + ' L/day';
+      document.getElementById('simFuelAddInput').value = 0;
+
+      updateSimulation();
+      document.getElementById('simModal').classList.remove('hidden');
+    }
+
+    function closeSimulationModal() {
+      document.getElementById('simModal').classList.add('hidden');
+    }
+
+    function setAddFuel(val) {
+      const site = masterSites.find(s => s.siteId === activeSimSiteId);
+      if (!site) return;
+      if (val === 'full') {
+        const needed = Math.max(0, site.tankCap - site.currentDL);
+        document.getElementById('simFuelAddInput').value = needed;
+      } else {
+        document.getElementById('simFuelAddInput').value = val;
+      }
+      updateSimulation();
+    }
+
+    function updateSimulation() {
+      const site = masterSites.find(s => s.siteId === activeSimSiteId);
+      if (!site) return;
+
+      const cpd = parseFloat(document.getElementById('simCpdSlider').value) || site.cpd;
+      const addFuel = parseFloat(document.getElementById('simFuelAddInput').value) || 0;
+      document.getElementById('simCpdValue').innerText = cpd.toFixed(1) + ' L/day';
+
+      const newLevel = Math.min(site.tankCap, site.currentDL + addFuel);
+      const newDays = parseFloat((newLevel / cpd).toFixed(1));
+      const newHours = Math.round(newDays * 24);
+      const fillPct = Math.min(100, Math.round((newLevel / site.tankCap) * 100));
+
+      const now = new Date();
+      const dryDate = new Date(now.getTime() + newDays * 24 * 60 * 60 * 1000);
+      const dryDateStr = dryDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + 
+                         dryDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+      document.getElementById('simNewAutonomy').innerText = newDays + ' Days (' + newHours + ' Hours)';
+      document.getElementById('simNewDryDate').innerText = dryDateStr;
+      document.getElementById('simNewLevel').innerText = newLevel.toLocaleString() + ' L (' + fillPct + '% Full)';
+    }
+
+    function applySimulationToSite() {
+      const site = masterSites.find(s => s.siteId === activeSimSiteId);
+      if (!site) return;
+
+      const cpd = parseFloat(document.getElementById('simCpdSlider').value) || site.cpd;
+      const addFuel = parseFloat(document.getElementById('simFuelAddInput').value) || 0;
+
+      site.cpd = cpd;
+      site.cph = parseFloat((cpd / 24).toFixed(2));
+      site.dailyCostNgn = Math.round(cpd * 2100);
+
+      if (addFuel > 0) {
+        site.currentDL = Math.min(site.tankCap, site.currentDL + addFuel);
+        site.lastSupplyQty = addFuel;
+        site.lastSupplyDate = 'Today (Logged)';
+      }
+
+      site.daysRemaining = parseFloat((site.currentDL / site.cpd).toFixed(1));
+      site.hoursRemaining = Math.round(site.daysRemaining * 24);
+      site.fillPct = Math.min(100, Math.round((site.currentDL / site.tankCap) * 100));
+
+      const now = new Date();
+      const dryDate = new Date(now.getTime() + site.daysRemaining * 24 * 60 * 60 * 1000);
+      site.predictedDryDate = dryDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' +
+                              dryDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+      if (site.currentDL <= 200 || site.daysRemaining <= 3) site.status = 'CRITICAL';
+      else if (site.currentDL <= 400 || site.daysRemaining <= 6) site.status = 'WARNING';
+      else site.status = 'HEALTHY';
+
+      closeSimulationModal();
+      updateKpis();
+      renderSites();
+      showToast('Updated ' + site.siteId + ' fuel status successfully!');
+    }
+
+    // Alerts & Clipboard
+    function copySiteAlert(siteId) {
+      const site = masterSites.find(s => s.siteId === siteId);
+      if (!site) return;
+
+      const alertMsg = `[COLOPLUS DIESEL ALERT - ${site.status}]
+Site: ${site.siteId} (${site.tenantId})
+Location: ${site.state} - ${site.address}
+Current Diesel Level: ${site.currentDL} Litres (${site.fillPct}% of ${site.tankCap}L)
+Daily Burn Rate: ${site.cpd} L/day (${site.cph} L/hr)
+Autonomy Remaining: ${site.daysRemaining} Days (~ ${site.hoursRemaining} Hours)
+Predicted Dry Date: ${site.predictedDryDate}
+Emergency 200L Date: ${site.refuelDate}
+Assigned FSE: ${site.fse} (Tel: ${site.fsePhone})
+Security Contact: ${site.security} (${site.securityPhone})
+Action Required: Dispatch refuel before predicted dry date to prevent telecom outage.`;
+
+      navigator.clipboard.writeText(alertMsg).then(() => {
+        showToast('Alert for ' + site.siteId + ' copied to clipboard!');
+      }).catch(err => {
+        alert(alertMsg);
+      });
+    }
+
+    function exportToCsv() {
+      let csvContent = 'data:text/csv;charset=utf-8,';
+      csvContent += 'Site ID,Tenant ID,State,Address,Current DL (L),Tank Cap (L),Fill %,CPD (L/d),CPH (L/h),Days Left,Predicted Dry Date,200L Reorder Date,Last Supply (L),Last Supply Date,Supplier,FSE In Charge,FSE Phone,Security,Security Phone,Status\r\n';
+
+      masterSites.forEach(s => {
+        const row = [
+          s.siteId,
+          `"${s.tenantId}"`,
+          `"${s.state}"`,
+          `"${s.address.replace(/"/g, '""')}"`,
+          s.currentDL,
+          s.tankCap,
+          s.fillPct,
+          s.cpd,
+          s.cph,
+          s.daysRemaining,
+          `"${s.predictedDryDate}"`,
+          `"${s.refuelDate}"`,
+          s.lastSupplyQty,
+          `"${s.lastSupplyDate}"`,
+          `"${s.supplier}"`,
+          `"${s.fse}"`,
+          `"${s.fsePhone}"`,
+          `"${s.security}"`,
+          `"${s.securityPhone}"`,
+          s.status
+        ].join(',');
+        csvContent += row + '\r\n';
+      });
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', 'ColoPlus_Diesel_Autonomy_Audit_' + new Date().toISOString().slice(0, 10) + '.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('Exported full 76-site audit to CSV!');
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      document.getElementById('toastMsg').innerText = msg;
+      t.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-20');
+      t.classList.add('opacity-100', 'translate-y-0');
+      setTimeout(() => {
+        t.classList.remove('opacity-100', 'translate-y-0');
+        t.classList.add('opacity-0', 'pointer-events-none', 'translate-y-20');
+      }, 3500);
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
