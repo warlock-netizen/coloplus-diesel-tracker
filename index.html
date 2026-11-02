@@ -24,7 +24,7 @@
 
     /* Glassmorphism & Cyber Accents */
     .glass-panel {
-      background: rgba(15, 23, 42, 0.75);
+      background: rgba(15, 23, 42, 0.8);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.08);
@@ -37,8 +37,8 @@
       transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .glass-card:hover {
-      background: rgba(30, 41, 59, 0.75);
-      border-color: rgba(56, 189, 248, 0.3);
+      background: rgba(30, 41, 59, 0.8);
+      border-color: rgba(56, 189, 248, 0.35);
       transform: translateY(-2px);
       box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5), 0 0 20px -5px rgba(56, 189, 248, 0.15);
     }
@@ -53,81 +53,75 @@
     }
 
     /* Pulse Glow */
-    .glow-critical {
-      box-shadow: 0 0 15px rgba(239, 68, 68, 0.35);
-    }
-    .glow-warning {
-      box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
-    }
-    .glow-emerald {
-      box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
-    }
+    .glow-critical { box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+    .glow-warning { box-shadow: 0 0 15px rgba(245, 158, 11, 0.35); }
+    .glow-emerald { box-shadow: 0 0 15px rgba(16, 185, 129, 0.35); }
 
-    /* Light mode adaptations */
-    html:not(.dark) body {
-      background-color: #f8fafc;
-      color: #0f172a;
-    }
-    html:not(.dark) .glass-panel {
-      background: rgba(255, 255, 255, 0.85);
-      border: 1px solid rgba(226, 232, 240, 0.8);
-      box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
-    }
-    html:not(.dark) .glass-card {
-      background: rgba(255, 255, 255, 0.95);
-      border: 1px solid rgba(226, 232, 240, 0.9);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-    }
-    html:not(.dark) .glass-card:hover {
-      background: #ffffff;
-      border-color: rgba(14, 165, 233, 0.4);
-      box-shadow: 0 10px 25px -5px rgba(14, 165, 233, 0.12);
-    }
+    /* Light mode */
+    html:not(.dark) body { background-color: #f8fafc; color: #0f172a; }
+    html:not(.dark) .glass-panel { background: rgba(255, 255, 255, 0.9); border: 1px solid rgba(226, 232, 240, 0.9); box-shadow: 0 4px 20px -2px rgba(0,0,0,0.05); }
+    html:not(.dark) .glass-card { background: rgba(255, 255, 255, 0.95); border: 1px solid rgba(226, 232, 240, 0.9); }
+    html:not(.dark) .glass-card:hover { background: #ffffff; border-color: rgba(14, 165, 233, 0.4); }
   </style>
 </head>
 <body class="bg-[#070b14] text-slate-100 min-h-screen antialiased flex flex-col transition-colors duration-300">
 
-  <!-- Ambient Background Glows -->
+  <!-- Ambient Glows -->
   <div class="fixed top-0 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
   <div class="fixed bottom-0 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
-  <div class="fixed top-1/2 left-3/4 w-80 h-80 bg-rose-500/5 rounded-full blur-3xl pointer-events-none -z-10"></div>
 
   <!-- Top Navigation & Brand Header -->
-  <header class="sticky top-0 z-40 glass-panel border-b border-white/10 px-4 lg:px-8 py-3.5">
-    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+  <header class="sticky top-0 z-40 glass-panel border-b border-white/10 px-4 lg:px-8 py-3">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
       
+      <!-- Brand & Live Clock -->
       <div class="flex items-center gap-3.5">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-emerald-400 p-0.5 shadow-lg shadow-cyan-500/20 flex items-center justify-center">
-          <div class="w-full h-full bg-[#0b1120] rounded-[10px] flex items-center justify-center text-lg">
-            ⚡
-          </div>
+          <div class="w-full h-full bg-[#0b1120] rounded-[10px] flex items-center justify-center text-lg">⚡</div>
         </div>
         <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-lg md:text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
-              COLOPLUS <span class="bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">NOC FUEL PULSE</span>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h1 class="text-base md:text-lg font-extrabold tracking-tight text-white">
+              COLOPLUS <span class="bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">NOC COMMAND CENTER</span>
             </h1>
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              Live Telemetry
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1 font-mono">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+              LIVE PULSE
             </span>
           </div>
-          <p class="text-xs text-slate-400">Autonomous Fuel Depletion Forecaster • 76 Active Infrastructure Nodes</p>
+          <div class="flex items-center gap-2 text-[11px] text-slate-400 font-mono mt-0.5">
+            <span id="liveClock">2026-11-02 12:00:00</span>
+            <span>•</span>
+            <span class="text-cyan-400">WK 43 Priority Review</span>
+          </div>
         </div>
       </div>
 
-      <!-- Action Utilities -->
+      <!-- Main Navigation Tabs & Action Buttons -->
       <div class="flex items-center gap-2 flex-wrap">
-        <button onclick="toggleAnalyticsView()" id="toggleAnalyticsBtn" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/5 hover:bg-white/10 border border-white/10 transition flex items-center gap-1.5">
-          <span>📊</span> Analytics Hub
+        <!-- Main Hub Tabs -->
+        <div class="flex rounded-xl border border-white/10 p-0.5 bg-black/40">
+          <button onclick="switchHub('fuel')" id="tabFuelBtn" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-cyan-500 text-black shadow transition">
+            ⛽ Fuel & Autonomy Hub
+          </button>
+          <button onclick="switchHub('repairs')" id="tabRepairsBtn" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition">
+            🔧 Repairs & RCA Hub (<span id="repairBadgeCount">7</span>)
+          </button>
+        </div>
+
+        <button onclick="openAddSiteModal()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center gap-1 shadow-md">
+          <span>➕</span> Add Site
         </button>
-        <button onclick="openDispatchBatchModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 transition flex items-center gap-1.5">
-          <span>🚚</span> Supplier PO Dispatch
+
+        <button onclick="toggleAnalyticsView()" id="toggleAnalyticsBtn" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/5 hover:bg-white/10 border border-white/10 transition">
+          📊 Charts
         </button>
-        <button onclick="exportToCsv()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/5 hover:bg-white/10 border border-white/10 transition flex items-center gap-1.5">
-          <span>📥</span> Export CSV
+
+        <button onclick="exportToCsv()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/5 hover:bg-white/10 border border-white/10 transition">
+          📥 CSV
         </button>
-        <button onclick="toggleTheme()" class="p-2 rounded-lg text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 transition" title="Toggle Dark/Light Mode">
+
+        <button onclick="toggleTheme()" class="p-2 rounded-lg text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 transition">
           <span id="themeIcon">☀️</span>
         </button>
       </div>
@@ -138,284 +132,500 @@
   <!-- Main Content Container -->
   <main class="max-w-7xl mx-auto w-full p-4 lg:p-8 flex-1">
 
-    <!-- KPI Overview Strip -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 mb-6">
+    <!-- ==================== VIEW 1: FUEL & AUTONOMY HUB ==================== -->
+    <div id="fuelHubSection">
       
-      <div class="glass-panel p-4 rounded-2xl relative overflow-hidden group">
-        <div class="absolute -right-4 -bottom-4 w-16 h-16 bg-blue-500/10 rounded-full blur-xl group-hover:bg-blue-500/20 transition"></div>
-        <div class="flex items-center justify-between text-xs text-slate-400 font-medium">
-          <span>Network Sites</span>
-          <span class="text-blue-400">📡</span>
-        </div>
-        <div id="kpiTotalSites" class="text-2xl font-black text-white mt-1.5 font-mono">76</div>
-        <div class="text-[11px] text-slate-400 mt-0.5">100% Monitored</div>
-      </div>
-
-      <div class="glass-panel p-4 rounded-2xl border-rose-500/30 bg-rose-950/20 relative overflow-hidden group">
-        <div class="absolute -right-4 -bottom-4 w-16 h-16 bg-rose-500/20 rounded-full blur-xl"></div>
-        <div class="flex items-center justify-between text-xs text-rose-400 font-semibold">
-          <span>Critical Outage Risk</span>
-          <span class="animate-bounce">🚨</span>
-        </div>
-        <div id="kpiCriticalSites" class="text-2xl font-black text-rose-400 mt-1.5 font-mono">0</div>
-        <div class="text-[11px] text-rose-400/80 mt-0.5">&le; 3 Days Autonomy</div>
-      </div>
-
-      <div class="glass-panel p-4 rounded-2xl border-amber-500/30 bg-amber-950/20 relative overflow-hidden group">
-        <div class="absolute -right-4 -bottom-4 w-16 h-16 bg-amber-500/20 rounded-full blur-xl"></div>
-        <div class="flex items-center justify-between text-xs text-amber-400 font-semibold">
-          <span>Reorder Warning</span>
-          <span>⚠️</span>
-        </div>
-        <div id="kpiWarningSites" class="text-2xl font-black text-amber-400 mt-1.5 font-mono">0</div>
-        <div class="text-[11px] text-amber-400/80 mt-0.5">3 to 6 Days Autonomy</div>
-      </div>
-
-      <div class="glass-panel p-4 rounded-2xl border-emerald-500/30 bg-emerald-950/20 relative overflow-hidden group">
-        <div class="absolute -right-4 -bottom-4 w-16 h-16 bg-emerald-500/20 rounded-full blur-xl"></div>
-        <div class="flex items-center justify-between text-xs text-emerald-400 font-semibold">
-          <span>Safe Autonomy</span>
-          <span>🟢</span>
-        </div>
-        <div id="kpiHealthySites" class="text-2xl font-black text-emerald-400 mt-1.5 font-mono">0</div>
-        <div class="text-[11px] text-emerald-400/80 mt-0.5">&gt; 6 Days Buffer</div>
-      </div>
-
-      <div class="glass-panel p-4 rounded-2xl relative overflow-hidden group">
-        <div class="absolute -right-4 -bottom-4 w-16 h-16 bg-cyan-500/10 rounded-full blur-xl"></div>
-        <div class="flex items-center justify-between text-xs text-slate-400 font-medium">
-          <span>Total Fuel in Tanks</span>
-          <span class="text-cyan-400">🛢️</span>
-        </div>
-        <div id="kpiTotalLiters" class="text-2xl font-black text-cyan-300 mt-1.5 font-mono">0 L</div>
-        <div id="kpiAvgFill" class="text-[11px] text-slate-400 mt-0.5">0% Average Fill</div>
-      </div>
-
-      <div class="glass-panel p-4 rounded-2xl relative overflow-hidden group">
-        <div class="absolute -right-4 -bottom-4 w-16 h-16 bg-purple-500/10 rounded-full blur-xl"></div>
-        <div class="flex items-center justify-between text-xs text-slate-400 font-medium">
-          <span>Daily Network Burn</span>
-          <span class="text-purple-400">🔥</span>
-        </div>
-        <div id="kpiDailyBurn" class="text-2xl font-black text-purple-300 mt-1.5 font-mono">0 L/d</div>
-        <div id="kpiDailyCost" class="text-[11px] text-slate-400 mt-0.5 font-mono">₦0 / day</div>
-      </div>
-
-    </div>
-
-    <!-- Collapsible Analytics Hub (Visual Charts) -->
-    <div id="analyticsHub" class="hidden mb-6 glass-panel p-5 rounded-2xl border border-white/10 transition-all duration-300">
-      <div class="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
+      <!-- Top Fleet Scope Switcher & Live Burn Ticker -->
+      <div class="mb-5 flex flex-col sm:flex-row items-center justify-between gap-3 bg-gradient-to-r from-cyan-950/30 to-black/40 p-3 rounded-2xl border border-cyan-500/20">
         <div class="flex items-center gap-2">
-          <span class="text-cyan-400 text-lg">📈</span>
-          <h2 class="text-sm font-bold uppercase tracking-wider text-white">Fleet Autonomy & Fuel Velocity Analytics</h2>
-        </div>
-        <button onclick="toggleAnalyticsView()" class="text-xs text-slate-400 hover:text-white">✕ Minimize</button>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Runway Timeline Ranking -->
-        <div class="lg:col-span-2 bg-[#090e1c] p-4 rounded-xl border border-white/5">
-          <div class="flex items-center justify-between mb-3 text-xs">
-            <span class="font-bold text-white">Top 8 Most Urgent Sites (Days Until Depletion)</span>
-            <span class="text-slate-400">Autonomy Countdown</span>
-          </div>
-          <div id="runwayChartBars" class="space-y-2.5">
-            <!-- Dynamic SVG/HTML horizontal bars -->
-          </div>
+          <span class="text-xs font-bold text-slate-300 uppercase tracking-wider font-mono">Fleet Scope:</span>
+          <button onclick="setFleetScope('focus')" id="scopeFocusBtn" class="px-3 py-1 rounded-xl text-xs font-bold bg-cyan-500 text-black shadow transition">
+            🔥 Current Focus Sites (14 Nodes • WK 43)
+          </button>
+          <button onclick="setFleetScope('all')" id="scopeAllBtn" class="px-3 py-1 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-slate-400 hover:text-white transition">
+            🌐 All Network Sites (<span id="scopeAllCount">76</span>)
+          </button>
         </div>
 
-        <!-- Regional Distribution Breakdown -->
-        <div class="bg-[#090e1c] p-4 rounded-xl border border-white/5 flex flex-col justify-between">
-          <div class="text-xs font-bold text-white mb-2">Regional Fuel Stock Breakdown</div>
-          <div id="regionalBars" class="space-y-2 my-auto">
-            <!-- Regional Bars -->
-          </div>
-          <div class="text-[11px] text-slate-500 pt-2 border-t border-white/5 mt-2">
-            Top clusters: Lagos, Ogun, Delta & Edo represent 72% of daily diesel consumption.
-          </div>
+        <div class="flex items-center gap-2 text-xs font-mono text-slate-300">
+          <span class="text-amber-400">⚡ Live Network Burn:</span>
+          <span id="liveBurnTicker" class="font-bold text-cyan-300">0.00 Litres</span>
+          <span class="text-[10px] text-slate-400">(Ticking live)</span>
         </div>
       </div>
-    </div>
 
-    <!-- Search & Control Toolbar -->
-    <div class="glass-panel p-4 rounded-2xl mb-6 shadow-xl">
-      <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+      <!-- KPI Overview Strip -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 mb-6">
         
-        <!-- Live Search Field -->
-        <div class="relative flex-1">
-          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        <div class="glass-panel p-4 rounded-2xl relative overflow-hidden group">
+          <div class="flex items-center justify-between text-xs text-slate-400 font-medium">
+            <span>Monitored Sites</span>
+            <span class="text-blue-400">📡</span>
           </div>
-          <input type="text" id="searchInput" oninput="renderSites()" placeholder="Search site ID (CP/CP/EK/002), tenant (EK0474, MTN, Airtel), state, FSE engineer..."
-                 class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-black/40 border border-white/10 text-white placeholder-slate-400 text-xs md:text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition">
+          <div id="kpiTotalSites" class="text-2xl font-black text-white mt-1.5 font-mono">14</div>
+          <div id="kpiScopeSub" class="text-[11px] text-slate-400 mt-0.5">WK 43 Priority Fleet</div>
         </div>
 
-        <!-- Filter Tabs -->
-        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0">
-          <button onclick="setFilter('ALL')" id="filterALL" class="filter-tab px-3.5 py-2 rounded-xl text-xs font-bold bg-cyan-500 text-black shadow-lg shadow-cyan-500/25 transition">
-            All Sites (<span id="countALL">76</span>)
-          </button>
-          <button onclick="setFilter('CRITICAL')" id="filterCRITICAL" class="filter-tab px-3.5 py-2 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-rose-400 hover:bg-rose-950/20 transition">
-            🚨 Critical (<span id="countCRITICAL">0</span>)
-          </button>
-          <button onclick="setFilter('WARNING')" id="filterWARNING" class="filter-tab px-3.5 py-2 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-amber-400 hover:bg-amber-950/20 transition">
-            ⚠️ Warning (<span id="countWARNING">0</span>)
-          </button>
-          <button onclick="setFilter('HEALTHY')" id="filterHEALTHY" class="filter-tab px-3.5 py-2 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-emerald-400 hover:bg-emerald-950/20 transition">
-            🟢 Healthy (<span id="countHEALTHY">0</span>)
-          </button>
+        <div class="glass-panel p-4 rounded-2xl border-rose-500/30 bg-rose-950/20 relative overflow-hidden group">
+          <div class="flex items-center justify-between text-xs text-rose-400 font-semibold">
+            <span>Critical Outage Risk</span>
+            <span class="animate-bounce">🚨</span>
+          </div>
+          <div id="kpiCriticalSites" class="text-2xl font-black text-rose-400 mt-1.5 font-mono">1</div>
+          <div class="text-[11px] text-rose-400/80 mt-0.5">&le; 3 Days Autonomy</div>
         </div>
 
-        <!-- Dropdown Controls -->
-        <div class="flex items-center gap-2">
-          <select id="stateSelect" onchange="renderSites()" class="text-xs py-2.5 px-3 rounded-xl bg-black/40 border border-white/10 text-slate-200 focus:outline-none focus:border-cyan-500">
-            <option value="ALL">All States (10+)</option>
-            <option value="Lagos">Lagos</option>
-            <option value="Ogun">Ogun</option>
-            <option value="Delta">Delta</option>
-            <option value="Edo">Edo</option>
-            <option value="Ekiti">Ekiti</option>
-            <option value="Kaduna">Kaduna</option>
-            <option value="Enugu">Enugu</option>
-            <option value="Borno">Borno</option>
-            <option value="Cross River">Cross River</option>
-            <option value="Abuja FCT">Abuja FCT</option>
-            <option value="Anambra">Anambra</option>
-          </select>
-
-          <select id="sortSelect" onchange="renderSites()" class="text-xs py-2.5 px-3 rounded-xl bg-black/40 border border-white/10 text-slate-200 focus:outline-none focus:border-cyan-500">
-            <option value="urgency">⚡ Sort: Run-Out Urgency</option>
-            <option value="dl-asc">🛢️ Sort: Lowest Fuel First</option>
-            <option value="cpd-desc">🔥 Sort: Highest Burn Rate</option>
-            <option value="site-asc">🔤 Sort: Site ID (A-Z)</option>
-          </select>
-
-          <div class="flex rounded-xl border border-white/10 overflow-hidden bg-black/40 p-0.5">
-            <button onclick="setView('grid')" id="viewGridBtn" class="px-2.5 py-1.5 text-xs rounded-lg bg-cyan-500 text-black font-bold">🔲 Cards</button>
-            <button onclick="setView('table')" id="viewTableBtn" class="px-2.5 py-1.5 text-xs rounded-lg text-slate-400 hover:text-white">📄 Table</button>
+        <div class="glass-panel p-4 rounded-2xl border-amber-500/30 bg-amber-950/20 relative overflow-hidden group">
+          <div class="flex items-center justify-between text-xs text-amber-400 font-semibold">
+            <span>Reorder Warning</span>
+            <span>⚠️</span>
           </div>
+          <div id="kpiWarningSites" class="text-2xl font-black text-amber-400 mt-1.5 font-mono">3</div>
+          <div class="text-[11px] text-amber-400/80 mt-0.5">3 to 6 Days Autonomy</div>
+        </div>
+
+        <div class="glass-panel p-4 rounded-2xl border-emerald-500/30 bg-emerald-950/20 relative overflow-hidden group">
+          <div class="flex items-center justify-between text-xs text-emerald-400 font-semibold">
+            <span>Safe Autonomy</span>
+            <span>🟢</span>
+          </div>
+          <div id="kpiHealthySites" class="text-2xl font-black text-emerald-400 mt-1.5 font-mono">10</div>
+          <div class="text-[11px] text-emerald-400/80 mt-0.5">&gt; 6 Days Buffer</div>
+        </div>
+
+        <div class="glass-panel p-4 rounded-2xl relative overflow-hidden group">
+          <div class="flex items-center justify-between text-xs text-slate-400 font-medium">
+            <span>Total Fuel in Tanks</span>
+            <span class="text-cyan-400">🛢️</span>
+          </div>
+          <div id="kpiTotalLiters" class="text-2xl font-black text-cyan-300 mt-1.5 font-mono">0 L</div>
+          <div id="kpiAvgFill" class="text-[11px] text-slate-400 mt-0.5">0% Average Fill</div>
+        </div>
+
+        <div class="glass-panel p-4 rounded-2xl relative overflow-hidden group">
+          <div class="flex items-center justify-between text-xs text-slate-400 font-medium">
+            <span>Daily Burn (24h)</span>
+            <span class="text-purple-400">🔥</span>
+          </div>
+          <div id="kpiDailyBurn" class="text-2xl font-black text-purple-300 mt-1.5 font-mono">0 L/d</div>
+          <div id="kpi12hBurn" class="text-[11px] text-slate-400 mt-0.5 font-mono">12h Burn: 0 L</div>
         </div>
 
       </div>
+
+      <!-- Collapsible Analytics Hub -->
+      <div id="analyticsHub" class="hidden mb-6 glass-panel p-5 rounded-2xl border border-white/10">
+        <div class="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-cyan-400 text-lg">📈</span>
+            <h2 class="text-sm font-bold uppercase tracking-wider text-white">Autonomy Countdown & Regional Fuel Velocity</h2>
+          </div>
+          <button onclick="toggleAnalyticsView()" class="text-xs text-slate-400 hover:text-white">✕ Minimize</button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2 bg-[#090e1c] p-4 rounded-xl border border-white/5">
+            <div class="text-xs font-bold text-white mb-3">Top Sites Facing Fuel Depletion (Autonomy Days Left)</div>
+            <div id="runwayChartBars" class="space-y-2.5 font-mono"></div>
+          </div>
+          <div class="bg-[#090e1c] p-4 rounded-xl border border-white/5">
+            <div class="text-xs font-bold text-white mb-3">Regional Fuel Stock Breakdown</div>
+            <div id="regionalBars" class="space-y-2 font-mono"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search & Control Toolbar -->
+      <div class="glass-panel p-4 rounded-2xl mb-6 shadow-xl">
+        <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+          
+          <div class="relative flex-1">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+            <input type="text" id="searchInput" oninput="renderSites()" placeholder="Search site ID (CP/CP/EK/002), tenant (EK0474, MTN, Airtel), state, FSE engineer..."
+                   class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-black/40 border border-white/10 text-white placeholder-slate-400 text-xs md:text-sm focus:outline-none focus:border-cyan-500">
+          </div>
+
+          <div class="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0">
+            <button onclick="setFilter('ALL')" id="filterALL" class="filter-tab px-3.5 py-2 rounded-xl text-xs font-bold bg-cyan-500 text-black shadow transition">
+              All (<span id="countALL">14</span>)
+            </button>
+            <button onclick="setFilter('CRITICAL')" id="filterCRITICAL" class="filter-tab px-3.5 py-2 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-rose-400 hover:bg-rose-950/20 transition">
+              🚨 Critical (<span id="countCRITICAL">0</span>)
+            </button>
+            <button onclick="setFilter('WARNING')" id="filterWARNING" class="filter-tab px-3.5 py-2 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-amber-400 hover:bg-amber-950/20 transition">
+              ⚠️ Warning (<span id="countWARNING">0</span>)
+            </button>
+            <button onclick="setFilter('HEALTHY')" id="filterHEALTHY" class="filter-tab px-3.5 py-2 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-emerald-400 hover:bg-emerald-950/20 transition">
+              🟢 Healthy (<span id="countHEALTHY">0</span>)
+            </button>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <select id="stateSelect" onchange="renderSites()" class="text-xs py-2.5 px-3 rounded-xl bg-black/40 border border-white/10 text-slate-200 focus:outline-none">
+              <option value="ALL">All States</option>
+              <option value="Ekiti">Ekiti</option>
+              <option value="Delta">Delta</option>
+              <option value="Lagos">Lagos</option>
+              <option value="Ogun">Ogun</option>
+              <option value="Abuja FCT">Abuja FCT</option>
+              <option value="Enugu">Enugu</option>
+              <option value="Kaduna">Kaduna</option>
+              <option value="Edo">Edo</option>
+              <option value="Borno">Borno</option>
+              <option value="Cross River">Cross River</option>
+            </select>
+
+            <select id="sortSelect" onchange="renderSites()" class="text-xs py-2.5 px-3 rounded-xl bg-black/40 border border-white/10 text-slate-200 focus:outline-none">
+              <option value="urgency">⚡ Run-Out Urgency</option>
+              <option value="dl-asc">🛢️ Lowest Fuel First</option>
+              <option value="cpd-desc">🔥 Highest Burn Rate</option>
+              <option value="site-asc">🔤 Site ID (A-Z)</option>
+            </select>
+
+            <div class="flex rounded-xl border border-white/10 overflow-hidden bg-black/40 p-0.5">
+              <button onclick="setView('grid')" id="viewGridBtn" class="px-2.5 py-1.5 text-xs rounded-lg bg-cyan-500 text-black font-bold">🔲 Cards</button>
+              <button onclick="setView('table')" id="viewTableBtn" class="px-2.5 py-1.5 text-xs rounded-lg text-slate-400 hover:text-white">📄 Table</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Sites Grid View -->
+      <div id="sitesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8"></div>
+
+      <!-- Sites Table View -->
+      <div id="sitesTableContainer" class="hidden mb-8 overflow-x-auto rounded-2xl glass-panel border border-white/10 shadow-2xl">
+        <table class="w-full text-left text-xs font-mono">
+          <thead class="bg-black/40 border-b border-white/10 text-slate-400 uppercase tracking-wider text-[11px]">
+            <tr>
+              <th class="py-3.5 px-4">Site & Client</th>
+              <th class="py-3.5 px-4">Location</th>
+              <th class="py-3.5 px-4">Tank Volume</th>
+              <th class="py-3.5 px-4">Daily CPD (24h)</th>
+              <th class="py-3.5 px-4">12-Hour Burn</th>
+              <th class="py-3.5 px-4">Autonomy Days</th>
+              <th class="py-3.5 px-4">Predicted Dry Date</th>
+              <th class="py-3.5 px-4">Assigned FSE</th>
+              <th class="py-3.5 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="sitesTableBody" class="divide-y divide-white/5"></tbody>
+        </table>
+      </div>
+
     </div>
 
-    <!-- Sites Grid Layout -->
-    <div id="sitesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
-      <!-- Dynamic Cards -->
-    </div>
+    <!-- ==================== VIEW 2: REPAIRS & MAINTENANCE HUB ==================== -->
+    <div id="repairsHubSection" class="hidden">
+      
+      <!-- Repairs Header Strip -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 p-4 rounded-2xl glass-panel border border-white/10">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xl">🔧</span>
+            <h2 class="text-lg font-black text-white">Site Fault Logs, Repairs & Interventions</h2>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">Tracks generator breakdowns, cutovers, battery unit backups (BUB), fuel filter replacements, and PPM services.</p>
+        </div>
 
-    <!-- Sites Table Layout -->
-    <div id="sitesTableContainer" class="hidden mb-8 overflow-x-auto rounded-2xl glass-panel border border-white/10 shadow-2xl">
-      <table class="w-full text-left text-xs">
-        <thead class="bg-black/40 border-b border-white/10 text-slate-400 uppercase font-mono tracking-wider">
-          <tr>
-            <th class="py-3.5 px-4">Site & Client</th>
-            <th class="py-3.5 px-4">State / Location</th>
-            <th class="py-3.5 px-4">Fuel Level</th>
-            <th class="py-3.5 px-4">Daily Burn (CPD)</th>
-            <th class="py-3.5 px-4">Autonomy Days</th>
-            <th class="py-3.5 px-4">Predicted Dry Date</th>
-            <th class="py-3.5 px-4">250hr PPM Service</th>
-            <th class="py-3.5 px-4">Assigned FSE</th>
-            <th class="py-3.5 px-4 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="sitesTableBody" class="divide-y divide-white/5 font-mono">
-          <!-- Dynamic Table Rows -->
-        </tbody>
-      </table>
+        <div class="flex items-center gap-2">
+          <button onclick="openAddRepairModal()" class="px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-amber-500 to-rose-500 text-black hover:opacity-90 transition shadow-lg shadow-amber-500/20 flex items-center gap-1.5">
+            <span>➕</span> Log New Repair / Incident
+          </button>
+        </div>
+      </div>
+
+      <!-- Repairs Summary KPI Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mb-6">
+        <div class="glass-panel p-4 rounded-2xl">
+          <span class="text-xs text-slate-400 block">Total Logged Tickets</span>
+          <span id="kpiTotalRepairs" class="text-2xl font-black text-white font-mono mt-1 block">7</span>
+          <span class="text-[11px] text-slate-500">Fleet Outages & Interventions</span>
+        </div>
+        <div class="glass-panel p-4 rounded-2xl border-rose-500/30 bg-rose-950/20">
+          <span class="text-xs text-rose-400 block">Open Incidents</span>
+          <span id="kpiOpenRepairs" class="text-2xl font-black text-rose-400 font-mono mt-1 block">2</span>
+          <span class="text-[11px] text-rose-400/80">Pending FSE Action</span>
+        </div>
+        <div class="glass-panel p-4 rounded-2xl border-amber-500/30 bg-amber-950/20">
+          <span class="text-xs text-amber-400 block">In Progress</span>
+          <span id="kpiInProgressRepairs" class="text-2xl font-black text-amber-400 font-mono mt-1 block">1</span>
+          <span class="text-[11px] text-amber-400/80">Technician On Site</span>
+        </div>
+        <div class="glass-panel p-4 rounded-2xl border-emerald-500/30 bg-emerald-950/20">
+          <span class="text-xs text-emerald-400 block">Resolved / Closed</span>
+          <span id="kpiResolvedRepairs" class="text-2xl font-black text-emerald-400 font-mono mt-1 block">4</span>
+          <span class="text-[11px] text-emerald-400/80">Service Restored</span>
+        </div>
+      </div>
+
+      <!-- Repairs Filter Strip -->
+      <div class="glass-panel p-3.5 rounded-2xl mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <button onclick="setRepairFilter('ALL')" id="repFilterALL" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-cyan-500 text-black">All Tickets (<span id="repCountAll">7</span>)</button>
+          <button onclick="setRepairFilter('Open')" id="repFilterOpen" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 text-rose-400 hover:bg-white/10">Open (<span id="repCountOpen">2</span>)</button>
+          <button onclick="setRepairFilter('In Progress')" id="repFilterProg" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 text-amber-400 hover:bg-white/10">In Progress (<span id="repCountProg">1</span>)</button>
+          <button onclick="setRepairFilter('Resolved')" id="repFilterRes" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 text-emerald-400 hover:bg-white/10">Resolved (<span id="repCountRes">4</span>)</button>
+        </div>
+        <input type="text" id="repairSearchInput" oninput="renderRepairs()" placeholder="Search repairs by site, technician, or fault..."
+               class="py-1.5 px-3 rounded-xl bg-black/40 border border-white/10 text-xs text-white focus:outline-none w-64">
+      </div>
+
+      <!-- Repairs Table List -->
+      <div class="glass-panel rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+        <table class="w-full text-left text-xs font-mono">
+          <thead class="bg-black/50 text-slate-400 border-b border-white/10 text-[11px] uppercase tracking-wider">
+            <tr>
+              <th class="py-3 px-4">Ticket ID</th>
+              <th class="py-3 px-4">Site & Client</th>
+              <th class="py-3 px-4">Fault Category</th>
+              <th class="py-3 px-4">RCA / Fault Details</th>
+              <th class="py-3 px-4">Action Taken / Required</th>
+              <th class="py-3 px-4">Technician</th>
+              <th class="py-3 px-4">Logged Date</th>
+              <th class="py-3 px-4">Status</th>
+              <th class="py-3 px-4 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody id="repairsTableBody" class="divide-y divide-white/5"></tbody>
+        </table>
+      </div>
+
     </div>
 
   </main>
+
+  <!-- ==================== MODAL 1: ADD NEW SITE ==================== -->
+  <div id="addSiteModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="glass-panel border border-white/15 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeAddSiteModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white text-lg">✕</button>
+      
+      <div class="flex items-center gap-2 mb-1">
+        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">CUSTOM SITE REGISTRY</span>
+        <h2 class="text-base font-extrabold text-white">Enroll New Telecom Tower Site</h2>
+      </div>
+      <p class="text-xs text-slate-400 mb-4">Add a new site to live fuel tracking, daily burn calculations, and run-out predictions.</p>
+
+      <form onsubmit="handleSaveNewSite(event)" class="space-y-3.5 text-xs">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">ColoPlus Site ID *</label>
+            <input type="text" id="newSiteId" required placeholder="e.g. CP/CP/LA/099" class="w-full py-2 px-3 rounded-xl bg-black/50 border border-white/15 text-white font-mono focus:border-cyan-400 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Tenant ID & Client *</label>
+            <input type="text" id="newTenantId" required placeholder="e.g. LG9999 (Airtel)" class="w-full py-2 px-3 rounded-xl bg-black/50 border border-white/15 text-white font-mono focus:border-cyan-400 focus:outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">State / Region *</label>
+            <input type="text" id="newState" required placeholder="e.g. Lagos, Delta, Kano" class="w-full py-2 px-3 rounded-xl bg-black/50 border border-white/15 text-white focus:border-cyan-400 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Location Address</label>
+            <input type="text" id="newAddress" placeholder="e.g. 15 Marina St, Lagos" class="w-full py-2 px-3 rounded-xl bg-black/50 border border-white/15 text-white focus:border-cyan-400 focus:outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">Tank Cap (L) *</label>
+            <input type="number" id="newTankCap" required value="1000" class="w-full py-2 px-3 rounded-xl bg-black/50 border border-white/15 text-white font-mono focus:border-cyan-400 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Current DL (L) *</label>
+            <input type="number" id="newCurrentDL" required value="350" class="w-full py-2 px-3 rounded-xl bg-black/50 border border-white/15 text-white font-mono focus:border-cyan-400 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Daily CPD (24h) *</label>
+            <input type="number" step="0.1" id="newCPD" required value="48.0" class="w-full py-2 px-3 rounded-xl bg-black/50 border border-white/15 text-white font-mono focus:border-cyan-400 focus:outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">Assigned FSE Officer *</label>
+            <input type="text" id="newFse" required placeholder="e.g. Victor Abu" class="w-full py-2 px-3 rounded-xl bg-black/50 border border-white/15 text-white focus:border-cyan-400 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">FSE Phone Contact *</label>
+            <input type="text" id="newFsePhone" required placeholder="e.g. 08012345678" class="w-full py-2 px-3 rounded-xl bg-black/50 border border-white/15 text-white font-mono focus:border-cyan-400 focus:outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">Security / CLO Guard</label>
+            <input type="text" id="newSecurity" placeholder="e.g. Site Guard" class="w-full py-2 px-3 rounded-xl bg-black/50 border border-white/15 text-white focus:border-cyan-400 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Supplier Name</label>
+            <input type="text" id="newSupplier" placeholder="e.g. Auwal, Expedient" value="Auwal" class="w-full py-2 px-3 rounded-xl bg-black/50 border border-white/15 text-white focus:border-cyan-400 focus:outline-none">
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-white/10">
+          <button type="button" onclick="closeAddSiteModal()" class="px-4 py-2 rounded-xl border border-white/10 text-slate-300 hover:bg-white/5 transition">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow transition">Enroll Site</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 2: ADD NEW REPAIR TICKET ==================== -->
+  <div id="addRepairModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="glass-panel border border-white/15 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeAddRepairModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white text-lg">✕</button>
+      
+      <div class="flex items-center gap-2 mb-1">
+        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">MAINTENANCE DISPATCH</span>
+        <h2 class="text-base font-extrabold text-white">Log Site Repair / Intervention Ticket</h2>
+      </div>
+      <p class="text-xs text-slate-400 mb-4">Record generator breakdowns, BUB sync delays, or scheduled PPM maintenance.</p>
+
+      <form onsubmit="handleSaveNewRepair(event)" class="space-y-3.5 text-xs">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">Target Site *</label>
+            <select id="newRepairSiteId" required class="w-full py-2 px-3 rounded-xl bg-black/50 border border-white/15 text-white font-mono focus:border-cyan-400 focus:outline-none">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Fault Category *</label>
+            <select id="newRepairCat" required class="w-full py-2 px-3 rounded-xl bg-black/50 border border-white/15 text-white focus:border-cyan-400 focus:outline-none">
+              <option value="Generator Shutdown">Generator Shutdown</option>
+              <option value="Battery Unit Backup (BUB)">Battery Unit Backup (BUB)</option>
+              <option value="Diesel Depletion Intervention">Diesel Depletion Intervention</option>
+              <option value="Changeover Switch Fault">Changeover Switch Fault</option>
+              <option value="Fuel Filter & Line Clog">Fuel Filter & Line Clog</option>
+              <option value="PPM 250hr Scheduled Service">PPM 250hr Scheduled Service</option>
+              <option value="Alternator / AVR Failure">Alternator / AVR Failure</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1">Fault Description / Root Cause (RCA) *</label>
+          <input type="text" id="newRepairFault" required placeholder="e.g. DG shutdown due to excitation failure, 15kVA cutover needed" class="w-full py-2 px-3 rounded-xl bg-black/50 border border-white/15 text-white focus:border-cyan-400 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1">Action Taken / Required *</label>
+          <textarea id="newRepairAction" required rows="2" placeholder="e.g. Engineer on site to replace AVR and calibrate sync unit" class="w-full py-2 px-3 rounded-xl bg-black/50 border border-white/15 text-white focus:border-cyan-400 focus:outline-none"></textarea>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">Technician / FSE</label>
+            <input type="text" id="newRepairTech" placeholder="e.g. Opeyemi Lawani" class="w-full py-2 px-3 rounded-xl bg-black/50 border border-white/15 text-white focus:border-cyan-400 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Estimated Cost (₦)</label>
+            <input type="number" id="newRepairCost" value="50000" class="w-full py-2 px-3 rounded-xl bg-black/50 border border-white/15 text-white font-mono focus:border-cyan-400 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Ticket Status</label>
+            <select id="newRepairStatus" class="w-full py-2 px-3 rounded-xl bg-black/50 border border-white/15 text-white focus:border-cyan-400 focus:outline-none">
+              <option value="Open">Open</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Resolved">Resolved</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-white/10">
+          <button type="button" onclick="closeAddRepairModal()" class="px-4 py-2 rounded-xl border border-white/10 text-slate-300 hover:bg-white/5 transition">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl font-bold bg-amber-500 hover:bg-amber-400 text-black shadow transition">Save Ticket</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- Side Flyout Telemetry & Inspection Drawer -->
   <div id="drawerOverlay" onclick="closeDrawer()" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden transition-opacity duration-300 opacity-0"></div>
   <aside id="siteDrawer" class="fixed top-0 right-0 z-50 w-full max-w-md h-full glass-panel border-l border-white/10 p-6 flex flex-col justify-between transform translate-x-full transition-transform duration-300 ease-out shadow-2xl overflow-y-auto">
     <div>
-      <!-- Drawer Header -->
       <div class="flex items-start justify-between pb-4 border-b border-white/10 mb-5">
         <div>
-          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Node Telemetry</span>
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Node Telemetry</span>
           <h3 id="drawerSiteId" class="text-xl font-extrabold text-white mt-1">CP/CP/EK/002</h3>
           <p id="drawerTenant" class="text-xs text-blue-400 font-mono">EK0474 • Airtel</p>
         </div>
         <button onclick="closeDrawer()" class="p-2 rounded-xl text-slate-400 hover:text-white bg-white/5 border border-white/10">✕</button>
       </div>
 
-      <!-- Quick Metrics Ribbon -->
-      <div class="grid grid-cols-3 gap-2.5 mb-5 text-center">
+      <!-- Fuel & Shift Burn Ribbon -->
+      <div class="grid grid-cols-3 gap-2.5 mb-5 text-center font-mono">
         <div class="bg-black/40 p-3 rounded-xl border border-white/5">
-          <div class="text-[11px] text-slate-400">Current Level</div>
-          <div id="drawerDL" class="text-lg font-black text-cyan-400 font-mono mt-0.5">140 L</div>
+          <div class="text-[10px] text-slate-400">Current Level</div>
+          <div id="drawerDL" class="text-base font-black text-cyan-400 mt-0.5">140 L</div>
         </div>
         <div class="bg-black/40 p-3 rounded-xl border border-white/5">
-          <div class="text-[11px] text-slate-400">Daily Burn</div>
-          <div id="drawerCPD" class="text-lg font-black text-amber-400 font-mono mt-0.5">55 L/d</div>
+          <div class="text-[10px] text-slate-400">24h Daily Burn</div>
+          <div id="drawerCPD" class="text-base font-black text-amber-400 mt-0.5">55 L/d</div>
         </div>
         <div class="bg-black/40 p-3 rounded-xl border border-white/5">
-          <div class="text-[11px] text-slate-400">Autonomy</div>
-          <div id="drawerAutonomy" class="text-lg font-black text-rose-400 font-mono mt-0.5">2.5 d</div>
+          <div class="text-[10px] text-slate-400">12h Shift Burn</div>
+          <div id="drawer12h" class="text-base font-black text-purple-300 mt-0.5">27.5 L</div>
         </div>
       </div>
 
-      <!-- Generator & Power Specs -->
+      <!-- Infrastructure Telemetry -->
       <div class="bg-black/40 p-4 rounded-xl border border-white/5 mb-5 space-y-2.5 text-xs">
         <div class="font-bold text-white text-xs flex items-center justify-between border-b border-white/10 pb-2">
-          <span>⚙️ Infrastructure & Generator Telemetry</span>
+          <span>⚙️ Generator & Power Telemetry</span>
           <span id="drawerGridBadge" class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-400">Non PHCN</span>
         </div>
         <div class="flex justify-between text-slate-300">
           <span>Tank Capacity:</span>
-          <span id="drawerTankCap" class="font-mono font-bold text-white">1,000 Litres</span>
+          <span id="drawerTankCap" class="font-mono font-bold text-white">1,000 L</span>
         </div>
         <div class="flex justify-between text-slate-300">
-          <span>Electrical Site Load:</span>
-          <span id="drawerLoad" class="font-mono text-cyan-300">6.5 kW (AC) / 48A</span>
+          <span>Hourly Burn (CPH):</span>
+          <span id="drawerCPH" class="font-mono text-cyan-300">2.29 Litres / Hour</span>
         </div>
         <div class="flex justify-between text-slate-300">
-          <span>Hourly Fuel Burn:</span>
-          <span id="drawerCPH" class="font-mono text-amber-300">2.29 Litres / Hour</span>
-        </div>
-        <div class="flex justify-between text-slate-300">
-          <span>Engine Runtime Interval:</span>
-          <span id="drawerPpmStatus" class="font-mono text-rose-300">PPM Due in 38 Hours</span>
+          <span>250hr PPM Interval:</span>
+          <span id="drawerPpmStatus" class="font-mono text-rose-300">PPM Due in 18 Hours</span>
         </div>
       </div>
 
-      <!-- Personnel & Field Support -->
-      <div class="bg-black/40 p-4 rounded-xl border border-white/5 mb-5 text-xs space-y-3">
-        <div class="font-bold text-white flex items-center gap-1.5 border-b border-white/10 pb-2">
-          <span>👷 Field Support & Security Desk</span>
-        </div>
+      <!-- Personnel profile -->
+      <div class="bg-black/40 p-4 rounded-xl border border-white/5 mb-5 text-xs space-y-2.5">
+        <div class="font-bold text-white border-b border-white/10 pb-2">Field Support & Contacts</div>
         <div>
-          <div class="text-[11px] text-slate-400">Assigned FSE Officer:</div>
+          <span class="text-[11px] text-slate-400">Assigned FSE:</span>
           <div id="drawerFseName" class="font-bold text-white text-sm">Opeyemi Lawani</div>
-          <div class="flex items-center gap-2 mt-1.5">
+          <div class="flex items-center gap-2 mt-1">
             <span id="drawerFsePhone" class="font-mono text-slate-300">09160185834</span>
             <div id="drawerFseActions" class="flex gap-1.5"></div>
           </div>
         </div>
         <div class="pt-2 border-t border-white/5">
-          <div class="text-[11px] text-slate-400">On-Site Security Guard (CLO):</div>
+          <span class="text-[11px] text-slate-400">On-Site Security (CLO):</span>
           <div id="drawerSecurity" class="font-semibold text-slate-200">Peter Odinma (CLO)</div>
           <div id="drawerSecurityPhone" class="font-mono text-slate-400 text-[11px]">09024024245</div>
         </div>
       </div>
     </div>
 
-    <!-- Drawer Footer Actions -->
     <div class="space-y-2 pt-4 border-t border-white/10">
-      <button id="drawerSimBtn" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-gradient-to-r from-cyan-500 to-emerald-500 text-black hover:opacity-90 transition shadow-lg shadow-cyan-500/20">
+      <button id="drawerSimBtn" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-cyan-500 text-black hover:bg-cyan-400 transition shadow">
         ⚡ Open Refuel & Burn Simulator
       </button>
       <button id="drawerCopyBtn" class="w-full py-2.5 px-4 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 border border-white/10 text-white transition">
-        📋 Copy WhatsApp Emergency Dispatch
+        📋 Copy Alert Dispatch Ticket
       </button>
     </div>
   </aside>
 
-  <!-- Interactive Refuel Simulation Modal -->
+  <!-- Simulation Modal -->
   <div id="simModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
     <div class="glass-panel border border-white/15 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative">
       <button onclick="closeSimulationModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white text-lg">✕</button>
@@ -424,30 +634,28 @@
         <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">NOC DYNAMICS</span>
         <h2 id="modalSiteTitle" class="text-base font-extrabold text-white">Fuel Delivery & Burn Rate Simulator</h2>
       </div>
-      <p id="modalSiteSubtitle" class="text-xs text-slate-400 mb-5">Simulate load fluctuations or dispatch fuel batches to forecast revised dry dates.</p>
+      <p id="modalSiteSubtitle" class="text-xs text-slate-400 mb-4">Simulate load fluctuations or dispatch fuel batches to forecast revised dry dates.</p>
 
       <div class="space-y-4">
-        <!-- Live Tank Status Mini Banner -->
-        <div class="grid grid-cols-4 gap-2 p-3 rounded-2xl bg-black/40 border border-white/10 text-center text-xs">
+        <div class="grid grid-cols-4 gap-2 p-3 rounded-2xl bg-black/40 border border-white/10 text-center text-xs font-mono">
           <div>
             <span class="text-slate-400 block text-[10px]">Tank Cap</span>
-            <span id="modalTankCap" class="font-bold font-mono text-white">1,000 L</span>
+            <span id="modalTankCap" class="font-bold text-white">1,000 L</span>
           </div>
           <div>
             <span class="text-slate-400 block text-[10px]">Current DL</span>
-            <span id="modalCurrentDL" class="font-bold font-mono text-cyan-400">140 L</span>
+            <span id="modalCurrentDL" class="font-bold text-cyan-400">140 L</span>
           </div>
           <div>
-            <span class="text-slate-400 block text-[10px]">Daily CPD</span>
-            <span id="modalCPD" class="font-bold font-mono text-amber-400">55 L/d</span>
+            <span class="text-slate-400 block text-[10px]">Daily (24h)</span>
+            <span id="modalCPD" class="font-bold text-amber-400">55 L/d</span>
           </div>
           <div>
-            <span class="text-slate-400 block text-[10px]">Autonomy</span>
-            <span id="modalAutonomy" class="font-bold font-mono text-rose-400">2.5 d</span>
+            <span class="text-slate-400 block text-[10px]">12h Shift</span>
+            <span id="modal12h" class="font-bold text-purple-300">27.5 L</span>
           </div>
         </div>
 
-        <!-- Slider CPD Simulation -->
         <div class="p-4 rounded-2xl bg-black/40 border border-white/10">
           <div class="flex items-center justify-between mb-2 text-xs">
             <span class="font-bold text-white">Simulate Daily Consumption (CPD)</span>
@@ -461,7 +669,6 @@
           </div>
         </div>
 
-        <!-- Batch Delivery Buttons -->
         <div class="p-4 rounded-2xl bg-black/40 border border-white/10">
           <span class="font-bold text-white text-xs block mb-2.5">Simulate Fuel Batch Delivery</span>
           <div class="grid grid-cols-4 gap-2 mb-3">
@@ -472,12 +679,11 @@
           </div>
           <div class="flex items-center gap-2">
             <span class="text-xs text-slate-400">Or Custom Quantity:</span>
-            <input type="number" id="simFuelAddInput" value="0" oninput="updateSimulation()" class="w-28 py-1.5 px-3 text-xs rounded-xl bg-black/50 border border-white/20 text-white font-mono focus:outline-none focus:border-cyan-400">
+            <input type="number" id="simFuelAddInput" value="0" oninput="updateSimulation()" class="w-28 py-1.5 px-3 text-xs rounded-xl bg-black/50 border border-white/20 text-white font-mono focus:outline-none">
             <span class="text-xs text-slate-400 font-mono">Litres</span>
           </div>
         </div>
 
-        <!-- Projected New Runway Banner -->
         <div class="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-950/30">
           <div class="flex items-center justify-between text-xs mb-1">
             <span class="text-emerald-400 font-bold uppercase tracking-wider">Projected New Autonomy:</span>
@@ -487,67 +693,444 @@
             <span>New Predicted Dry Date:</span>
             <span id="simNewDryDate" class="text-white font-mono font-medium">14-Nov-2026 14:00</span>
           </div>
-          <div class="flex items-center justify-between text-xs text-slate-300 mt-1">
-            <span>Resulting Tank Level:</span>
-            <span id="simNewLevel" class="text-cyan-300 font-mono">640 L (64% Full)</span>
-          </div>
         </div>
 
-        <!-- Action Buttons -->
         <div class="flex items-center justify-end gap-2.5 pt-2">
           <button onclick="closeSimulationModal()" class="px-4 py-2 text-xs rounded-xl border border-white/10 text-slate-300 hover:bg-white/5 transition">Cancel</button>
-          <button onclick="applySimulationToSite()" class="px-5 py-2 text-xs font-bold rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black shadow-lg shadow-cyan-500/25 transition">Save & Apply to Node</button>
+          <button onclick="applySimulationToSite()" class="px-5 py-2 text-xs font-bold rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black shadow transition">Save & Apply</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Bulk Supplier Dispatch Modal -->
-  <div id="dispatchModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
-    <div class="glass-panel border border-white/15 rounded-3xl max-w-2xl w-full p-6 shadow-2xl relative max-h-[90vh] flex flex-col">
-      <button onclick="closeDispatchModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white text-lg">✕</button>
-      
-      <div class="flex items-center gap-2 mb-1">
-        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">SUPPLY CHAIN</span>
-        <h2 class="text-base font-extrabold text-white">Consolidated Supplier Dispatch Plan</h2>
-      </div>
-      <p class="text-xs text-slate-400 mb-4">Auto-grouped replenishment orders for sites with &le; 5 days autonomy.</p>
-
-      <div class="overflow-y-auto flex-1 mb-4 border border-white/10 rounded-2xl bg-black/40">
-        <table class="w-full text-left text-xs">
-          <thead class="bg-white/5 text-slate-400 font-mono">
-            <tr>
-              <th class="py-2.5 px-3">Site ID</th>
-              <th class="py-2.5 px-3">State</th>
-              <th class="py-2.5 px-3">Days Left</th>
-              <th class="py-2.5 px-3">Recommended Refuel</th>
-              <th class="py-2.5 px-3">Supplier</th>
-            </tr>
-          </thead>
-          <tbody id="dispatchTableBody" class="divide-y divide-white/5 font-mono">
-            <!-- Dynamic Supplier Orders -->
-          </tbody>
-        </table>
-      </div>
-
-      <div class="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
-        <span id="dispatchSummaryText" class="text-slate-300 font-mono">Total Required: 0 Litres</span>
-        <div class="flex gap-2">
-          <button onclick="copyDispatchSummary()" class="px-4 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/15 text-white transition">📋 Copy PO Text</button>
-          <button onclick="closeDispatchModal()" class="px-4 py-2 rounded-xl text-xs font-bold bg-cyan-500 text-black hover:bg-cyan-400 transition">Done</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Toast Notification -->
+  <!-- Notification Toast -->
   <div id="toast" class="fixed bottom-6 right-6 z-50 transform transition-all duration-300 translate-y-20 opacity-0 pointer-events-none px-4 py-3 rounded-2xl bg-cyan-500 text-black text-xs font-extrabold shadow-2xl flex items-center gap-2 font-mono">
-    <span>✅</span> <span id="toastMsg">Notification Message</span>
+    <span>✅</span> <span id="toastMsg">Notification</span>
   </div>
 
   <script>
-    // Live dataset with localStorage persistence
+    // Master data
     const INITIAL_SITES = [
+    {
+        "siteId":  "CP/CP/EK/002",
+        "tenantId":  "EK0474 (Airtel)",
+        "state":  "Ekiti",
+        "address":  "Housing Estate, Ado Ekiti",
+        "tankCap":  1000,
+        "currentDL":  78,
+        "fillPct":  7.8,
+        "cpd":  67,
+        "cpd12h":  33.5,
+        "cph":  2.79,
+        "dailyCostNgn":  140700,
+        "lastSupplyQty":  400,
+        "lastSupplyDate":  "28,29,31-10-26",
+        "supplier":  "Auwal",
+        "daysRemaining":  1.2,
+        "hoursRemaining":  28,
+        "predictedDryDate":  "02-Nov-2026 16:00",
+        "refuelDate":  "IMMEDIATE / CRITICAL",
+        "status":  "CRITICAL",
+        "fse":  "Opeyemi Lawani",
+        "fsePhone":  "09160185834",
+        "security":  "Peter Odinma (CLO)",
+        "securityPhone":  "09024024245",
+        "powerSource":  "In-house (DG)",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  6.5,
+        "hoursToPpm":  18,
+        "isFocus":  true
+    },
+    {
+        "siteId":  "CP/CP/DE/002",
+        "tenantId":  "DL1010 (Airtel)",
+        "state":  "Delta",
+        "address":  "Austine Okonkwo Cl, Umuagu, Asaba",
+        "tankCap":  1200,
+        "currentDL":  485,
+        "fillPct":  40.4,
+        "cpd":  55.9,
+        "cpd12h":  27.95,
+        "cph":  2.33,
+        "dailyCostNgn":  117390,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "29-10-2026",
+        "supplier":  "Auwal",
+        "daysRemaining":  8.7,
+        "hoursRemaining":  208,
+        "predictedDryDate":  "10-Nov-2026 18:00",
+        "refuelDate":  "06-Nov-2026",
+        "status":  "HEALTHY",
+        "fse":  "Lawani Maurice",
+        "fsePhone":  "09160185834",
+        "security":  "Peter Odinma (CLO)",
+        "securityPhone":  "09024024245",
+        "powerSource":  "In-house",
+        "gridStatus":  "On GRID (Partial)",
+        "loadKw":  8.3,
+        "hoursToPpm":  95,
+        "isFocus":  true
+    },
+    {
+        "siteId":  "CP/SF/LA/048",
+        "tenantId":  "LG5140 (Airtel)",
+        "state":  "Lagos",
+        "address":  "Herbert Macaulay, Yaba, Lagos",
+        "tankCap":  1200,
+        "currentDL":  854,
+        "fillPct":  71.2,
+        "cpd":  46,
+        "cpd12h":  23,
+        "cph":  1.92,
+        "dailyCostNgn":  96600,
+        "lastSupplyQty":  1000,
+        "lastSupplyDate":  "27-10-2026",
+        "supplier":  "Expedient",
+        "daysRemaining":  18.6,
+        "hoursRemaining":  445,
+        "predictedDryDate":  "22-Nov-2026 12:00",
+        "refuelDate":  "16-Nov-2026",
+        "status":  "HEALTHY",
+        "fse":  "Wale Babatunde",
+        "fsePhone":  "08023456789",
+        "security":  "Bayo Security Desk",
+        "securityPhone":  "08033221100",
+        "powerSource":  "In-house (Hybrid)",
+        "gridStatus":  "On GRID",
+        "loadKw":  5.2,
+        "hoursToPpm":  140,
+        "isFocus":  true
+    },
+    {
+        "siteId":  "CP/NA/FC/028",
+        "tenantId":  "AB1845 (MTN)",
+        "state":  "Abuja FCT",
+        "address":  "Maitama Extension, Abuja",
+        "tankCap":  1000,
+        "currentDL":  280,
+        "fillPct":  28,
+        "cpd":  47,
+        "cpd12h":  23.5,
+        "cph":  1.96,
+        "dailyCostNgn":  98700,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "19-10-2026",
+        "supplier":  "Auwal",
+        "daysRemaining":  6,
+        "hoursRemaining":  143,
+        "predictedDryDate":  "07-Nov-2026 14:00",
+        "refuelDate":  "04-Nov-2026",
+        "status":  "WARNING",
+        "fse":  "Suleiman Garba",
+        "fsePhone":  "08108903624",
+        "security":  "Aliyu Usman (CLO)",
+        "securityPhone":  "08055667788",
+        "powerSource":  "In-house",
+        "gridStatus":  "On GRID",
+        "loadKw":  7,
+        "hoursToPpm":  82,
+        "isFocus":  true
+    },
+    {
+        "siteId":  "CP/CP/OG/001",
+        "tenantId":  "OG1820 (Airtel)",
+        "state":  "Ogun",
+        "address":  "Sagamu Expressway, Ogun",
+        "tankCap":  1000,
+        "currentDL":  245,
+        "fillPct":  24.5,
+        "cpd":  42,
+        "cpd12h":  21,
+        "cph":  1.75,
+        "dailyCostNgn":  88200,
+        "lastSupplyQty":  1000,
+        "lastSupplyDate":  "15-10-2026",
+        "supplier":  "Auwal",
+        "daysRemaining":  5.8,
+        "hoursRemaining":  140,
+        "predictedDryDate":  "07-Nov-2026 10:00",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING",
+        "fse":  "John Joseph",
+        "fsePhone":  "08034567890",
+        "security":  "Ogun Security Guard",
+        "securityPhone":  "08099887766",
+        "powerSource":  "In-house",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.8,
+        "hoursToPpm":  45,
+        "isFocus":  true
+    },
+    {
+        "siteId":  "CP/NA/EN/276",
+        "tenantId":  "EN0694 (Airtel)",
+        "state":  "Enugu",
+        "address":  "Independence Layout, Enugu",
+        "tankCap":  1000,
+        "currentDL":  828,
+        "fillPct":  82.8,
+        "cpd":  35,
+        "cpd12h":  17.5,
+        "cph":  1.46,
+        "dailyCostNgn":  73500,
+        "lastSupplyQty":  1000,
+        "lastSupplyDate":  "28-10-2026",
+        "supplier":  "Expedient",
+        "daysRemaining":  23.7,
+        "hoursRemaining":  568,
+        "predictedDryDate":  "17-Nov-2026 18:00",
+        "refuelDate":  "12-Nov-2026",
+        "status":  "HEALTHY",
+        "fse":  "Ejiofor Nnamdi",
+        "fsePhone":  "07038842986",
+        "security":  "Ezrah Peter (CLO)",
+        "securityPhone":  "08168854062",
+        "powerSource":  "In-house",
+        "gridStatus":  "On GRID",
+        "loadKw":  4.5,
+        "hoursToPpm":  175,
+        "isFocus":  true
+    },
+    {
+        "siteId":  "CP/CP/KD/002",
+        "tenantId":  "KD0737 (Airtel)",
+        "state":  "Kaduna",
+        "address":  "ABU Phase 2, Zaria, Kaduna",
+        "tankCap":  1000,
+        "currentDL":  448,
+        "fillPct":  44.8,
+        "cpd":  47,
+        "cpd12h":  23.5,
+        "cph":  1.96,
+        "dailyCostNgn":  98700,
+        "lastSupplyQty":  1000,
+        "lastSupplyDate":  "18-10-2026",
+        "supplier":  "Auwal",
+        "daysRemaining":  9.5,
+        "hoursRemaining":  229,
+        "predictedDryDate":  "09-Nov-2026 20:00",
+        "refuelDate":  "05-Nov-2026",
+        "status":  "HEALTHY",
+        "fse":  "Moses Nuhu",
+        "fsePhone":  "08031234567",
+        "security":  "Ibrahim Tanko",
+        "securityPhone":  "08022334455",
+        "powerSource":  "In-house",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  6.8,
+        "hoursToPpm":  60,
+        "isFocus":  true
+    },
+    {
+        "siteId":  "CP/CP/ED/001",
+        "tenantId":  "ED1179 (Airtel)",
+        "state":  "Edo",
+        "address":  "Trumpet of Zion, Auchi, Edo",
+        "tankCap":  1000,
+        "currentDL":  510,
+        "fillPct":  51,
+        "cpd":  48,
+        "cpd12h":  24,
+        "cph":  2,
+        "dailyCostNgn":  100800,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "31-10-2026",
+        "supplier":  "Auwal",
+        "daysRemaining":  10.6,
+        "hoursRemaining":  255,
+        "predictedDryDate":  "09-Nov-2026 22:00",
+        "refuelDate":  "05-Nov-2026",
+        "status":  "HEALTHY",
+        "fse":  "Steven Egbuwaohia",
+        "fsePhone":  "08066918855",
+        "security":  "Chief Isa Iyamah (CLO)",
+        "securityPhone":  "08061170814",
+        "powerSource":  "In-house",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  6.2,
+        "hoursToPpm":  110,
+        "isFocus":  true
+    },
+    {
+        "siteId":  "CP/NA/LA/021",
+        "tenantId":  "OG1435 (Airtel)",
+        "state":  "Ogun",
+        "address":  "Agbara Industrial Rd, Ogun",
+        "tankCap":  1200,
+        "currentDL":  640,
+        "fillPct":  53.3,
+        "cpd":  51.36,
+        "cpd12h":  25.68,
+        "cph":  2.14,
+        "dailyCostNgn":  107856,
+        "lastSupplyQty":  500,
+        "lastSupplyDate":  "12-10-2026",
+        "supplier":  "Auwal",
+        "daysRemaining":  12.5,
+        "hoursRemaining":  299,
+        "predictedDryDate":  "12-Nov-2026 15:00",
+        "refuelDate":  "07-Nov-2026",
+        "status":  "HEALTHY",
+        "fse":  "John Joseph",
+        "fsePhone":  "08034567890",
+        "security":  "Adeyemi Watch",
+        "securityPhone":  "08077665544",
+        "powerSource":  "In-house",
+        "gridStatus":  "On GRID (Partial)",
+        "loadKw":  5.7,
+        "hoursToPpm":  135,
+        "isFocus":  true
+    },
+    {
+        "siteId":  "CP/CP/BR/001",
+        "tenantId":  "BR2615 (MTN)",
+        "state":  "Borno",
+        "address":  "Army Univ Campus, Biu, Borno",
+        "tankCap":  850,
+        "currentDL":  445,
+        "fillPct":  52.4,
+        "cpd":  48,
+        "cpd12h":  24,
+        "cph":  2,
+        "dailyCostNgn":  100800,
+        "lastSupplyQty":  710,
+        "lastSupplyDate":  "01-11-2026",
+        "supplier":  "Auwal / Rospee",
+        "daysRemaining":  9.3,
+        "hoursRemaining":  222,
+        "predictedDryDate":  "09-Nov-2026 18:00",
+        "refuelDate":  "05-Nov-2026",
+        "status":  "HEALTHY",
+        "fse":  "Shugaba Mohammed",
+        "fsePhone":  "08029876543",
+        "security":  "Biu Gate Security",
+        "securityPhone":  "08044556677",
+        "powerSource":  "In-house (DG)",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  6,
+        "hoursToPpm":  25,
+        "isFocus":  true
+    },
+    {
+        "siteId":  "CP/SA/LA/002",
+        "tenantId":  "HP_LG_566 (Eleganza)",
+        "state":  "Lagos",
+        "address":  "Adeyemo Alakija St, Victoria Island",
+        "tankCap":  2000,
+        "currentDL":  1200,
+        "fillPct":  60,
+        "cpd":  102.86,
+        "cpd12h":  51.43,
+        "cph":  4.29,
+        "dailyCostNgn":  216006,
+        "lastSupplyQty":  1000,
+        "lastSupplyDate":  "26-10-2026",
+        "supplier":  "Auwal",
+        "daysRemaining":  11.7,
+        "hoursRemaining":  280,
+        "predictedDryDate":  "20-Nov-2026 12:00",
+        "refuelDate":  "14-Nov-2026",
+        "status":  "HEALTHY",
+        "fse":  "Idowu Awonusi",
+        "fsePhone":  "08039876543",
+        "security":  "VI Corporate Watch",
+        "securityPhone":  "08011223344",
+        "powerSource":  "In-house",
+        "gridStatus":  "On GRID",
+        "loadKw":  14,
+        "hoursToPpm":  160,
+        "isFocus":  true
+    },
+    {
+        "siteId":  "CP/CP/LA/025",
+        "tenantId":  "OG1436 (Airtel)",
+        "state":  "Lagos",
+        "address":  "Magboro Outskirts, Ogun/Lagos",
+        "tankCap":  3000,
+        "currentDL":  330,
+        "fillPct":  11,
+        "cpd":  20,
+        "cpd12h":  10,
+        "cph":  0.83,
+        "dailyCostNgn":  42000,
+        "lastSupplyQty":  1000,
+        "lastSupplyDate":  "05-Oct-2026",
+        "supplier":  "Auwal",
+        "daysRemaining":  16.5,
+        "hoursRemaining":  396,
+        "predictedDryDate":  "17-Nov-2026 10:00",
+        "refuelDate":  "10-Nov-2026",
+        "status":  "HEALTHY",
+        "fse":  "Idowu Awonusi",
+        "fsePhone":  "08039876543",
+        "security":  "Security Desk",
+        "securityPhone":  "08088776655",
+        "powerSource":  "In-house",
+        "gridStatus":  "On GRID",
+        "loadKw":  3.5,
+        "hoursToPpm":  210,
+        "isFocus":  true
+    },
+    {
+        "siteId":  "CP/CP/DE/004",
+        "tenantId":  "DL0637 (Airtel)",
+        "state":  "Delta",
+        "address":  "Kingdom Hall Rd, Warri, Delta",
+        "tankCap":  1200,
+        "currentDL":  1034,
+        "fillPct":  86.2,
+        "cpd":  48,
+        "cpd12h":  24,
+        "cph":  2,
+        "dailyCostNgn":  100800,
+        "lastSupplyQty":  1000,
+        "lastSupplyDate":  "30-10-2026",
+        "supplier":  "Jamruq",
+        "daysRemaining":  21.5,
+        "hoursRemaining":  517,
+        "predictedDryDate":  "22-Nov-2026 16:00",
+        "refuelDate":  "18-Nov-2026",
+        "status":  "HEALTHY",
+        "fse":  "Lawani Maurice",
+        "fsePhone":  "09160185834",
+        "security":  "Chuks Ogwaszi Godwin (CLO)",
+        "securityPhone":  "09024024245",
+        "powerSource":  "In-house",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  6.1,
+        "hoursToPpm":  120,
+        "isFocus":  true
+    },
+    {
+        "siteId":  "CP/CP/CR/001",
+        "tenantId":  "CR0671 (Airtel)",
+        "state":  "Cross River",
+        "address":  "46 Orok Orok St, Unical, Calabar",
+        "tankCap":  1000,
+        "currentDL":  220,
+        "fillPct":  22,
+        "cpd":  28.3,
+        "cpd12h":  14.15,
+        "cph":  1.18,
+        "dailyCostNgn":  59430,
+        "lastSupplyQty":  300,
+        "lastSupplyDate":  "29-10-2026",
+        "supplier":  "Auwal",
+        "daysRemaining":  7.8,
+        "hoursRemaining":  187,
+        "predictedDryDate":  "05-Nov-2026 12:00",
+        "refuelDate":  "03-Nov-2026",
+        "status":  "WARNING",
+        "fse":  "Etim Effiong",
+        "fsePhone":  "08086603364",
+        "security":  "Eyibio Effiong (CLO)",
+        "securityPhone":  "07065529932",
+        "powerSource":  "In-house",
+        "gridStatus":  "Non PHCN",
+        "loadKw":  5.4,
+        "hoursToPpm":  35,
+        "isFocus":  true
+    },
     {
         "siteId":  "CP/CP/AN/001",
         "tenantId":  "61 ()",
@@ -573,7 +1156,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  62,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/NT/AN/001",
@@ -600,34 +1186,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
-    },
-    {
-        "siteId":  "CP/CP/CR/001",
-        "tenantId":  "CR0761 (Airtel)",
-        "state":  "Cross River",
-        "address":  "46 Orok Orok St, Unical, Calabar",
-        "fse":  "Etim Effiong",
-        "fsePhone":  "08086603364",
-        "security":  "Eyibio Effiong (CLO)",
-        "securityPhone":  "07065529932",
-        "powerSource":  "In-house",
-        "gridStatus":  "Non PHCN",
-        "loadKw":  5.4,
-        "tankCap":  1000,
-        "currentDL":  160,
-        "fillPct":  16,
-        "cpd":  40,
-        "cph":  1.67,
-        "dailyCostNgn":  84000,
-        "lastSupplyQty":  300,
-        "lastSupplyDate":  "10-Oct-2026",
-        "supplier":  "Auwal",
-        "daysRemaining":  4,
-        "hoursRemaining":  96,
-        "predictedDryDate":  "06-Nov-2026 10:00",
-        "refuelDate":  "IMMEDIATE / PAST DUE",
-        "status":  "CRITICAL"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  75,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/SS/CR/001",
@@ -654,7 +1216,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  88,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CP/DE/001",
@@ -681,34 +1246,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
-    },
-    {
-        "siteId":  "CP/CP/DE/002",
-        "tenantId":  "DL1010 (Airtel)",
-        "state":  "Delta",
-        "address":  "Austine Okonkwo Cl, Umuagu, Asaba",
-        "fse":  "Lawani Maurice",
-        "fsePhone":  "09160185834",
-        "security":  "Peter Odinma (CLO)",
-        "securityPhone":  "09024024245",
-        "powerSource":  "In-house",
-        "gridStatus":  "On GRID (Partial)",
-        "loadKw":  8.3,
-        "tankCap":  1200,
-        "currentDL":  170,
-        "fillPct":  14,
-        "cpd":  55.9,
-        "cph":  2.33,
-        "dailyCostNgn":  117390,
-        "lastSupplyQty":  500,
-        "lastSupplyDate":  "05-Oct-2026",
-        "supplier":  "Auwal",
-        "daysRemaining":  3,
-        "hoursRemaining":  72,
-        "predictedDryDate":  "05-Nov-2026 10:00",
-        "refuelDate":  "IMMEDIATE / PAST DUE",
-        "status":  "CRITICAL"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  101,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CP/DE/003",
@@ -735,34 +1276,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
-    },
-    {
-        "siteId":  "CP/CP/DE/004",
-        "tenantId":  "DL0637 (Airtel)",
-        "state":  "Delta",
-        "address":  "Kingdom Hall Rd, Warri, Delta",
-        "fse":  "Lawani Maurice",
-        "fsePhone":  "09160185834",
-        "security":  "Chuks Ogwaszi Godwin (CLO)",
-        "securityPhone":  "09024024245",
-        "powerSource":  "In-house",
-        "gridStatus":  "Non PHCN",
-        "loadKw":  6.1,
-        "tankCap":  1200,
-        "currentDL":  530,
-        "fillPct":  44,
-        "cpd":  48,
-        "cph":  2,
-        "dailyCostNgn":  100800,
-        "lastSupplyQty":  600,
-        "lastSupplyDate":  "08-Oct-2026",
-        "supplier":  "Jamruq",
-        "daysRemaining":  11,
-        "hoursRemaining":  264,
-        "predictedDryDate":  "13-Nov-2026 10:00",
-        "refuelDate":  "09-Nov-2026",
-        "status":  "HEALTHY"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  114,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CP/DE/005",
@@ -789,7 +1306,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  127,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CP/DE/006",
@@ -816,7 +1336,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  140,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/DS/DE/013",
@@ -843,7 +1366,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  153,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/TR/DE/001",
@@ -870,61 +1396,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
-    },
-    {
-        "siteId":  "CP/CP/ED/001",
-        "tenantId":  "ED1179 (Airtel)",
-        "state":  "Edo",
-        "address":  "Trumpet of Zion, Auchi, Edo",
-        "fse":  "Steven Egbuwaohia",
-        "fsePhone":  "08066918855",
-        "security":  "Chief Isa Iyamah (CLO)",
-        "securityPhone":  "08061170814",
-        "powerSource":  "In-house",
-        "gridStatus":  "Non PHCN",
-        "loadKw":  6.2,
-        "tankCap":  1000,
-        "currentDL":  186,
-        "fillPct":  19,
-        "cpd":  48,
-        "cph":  2,
-        "dailyCostNgn":  100800,
-        "lastSupplyQty":  400,
-        "lastSupplyDate":  "04-Oct-2026",
-        "supplier":  "Auwal",
-        "daysRemaining":  3.9,
-        "hoursRemaining":  94,
-        "predictedDryDate":  "06-Nov-2026 07:36",
-        "refuelDate":  "IMMEDIATE / PAST DUE",
-        "status":  "CRITICAL"
-    },
-    {
-        "siteId":  "CP/NA/EN/276",
-        "tenantId":  "EN0694 (Airtel)",
-        "state":  "Enugu",
-        "address":  "Independence Layout, Enugu",
-        "fse":  "Ejiofor Nnamdi",
-        "fsePhone":  "07038842986",
-        "security":  "Ezrah Peter (CLO)",
-        "securityPhone":  "08168854062",
-        "powerSource":  "In-house",
-        "gridStatus":  "On GRID",
-        "loadKw":  4.5,
-        "tankCap":  1000,
-        "currentDL":  521,
-        "fillPct":  52,
-        "cpd":  35,
-        "cph":  1.46,
-        "dailyCostNgn":  73500,
-        "lastSupplyQty":  500,
-        "lastSupplyDate":  "08-Oct-2026",
-        "supplier":  "Expedient",
-        "daysRemaining":  14.9,
-        "hoursRemaining":  358,
-        "predictedDryDate":  "17-Nov-2026 07:36",
-        "refuelDate":  "11-Nov-2026",
-        "status":  "HEALTHY"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  166,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CY/RV/001",
@@ -951,7 +1426,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  179,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/NT/RV/001",
@@ -978,34 +1456,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
-    },
-    {
-        "siteId":  "CP/CP/EK/002",
-        "tenantId":  "EK0474 (Airtel)",
-        "state":  "Ekiti",
-        "address":  "Housing Estate, Ado Ekiti",
-        "fse":  "Opeyemi Lawani",
-        "fsePhone":  "09160185834",
-        "security":  "Site Guard",
-        "securityPhone":  "08031234567",
-        "powerSource":  "In-house",
-        "gridStatus":  "Non PHCN",
-        "loadKw":  6.5,
-        "tankCap":  1000,
-        "currentDL":  140,
-        "fillPct":  14,
-        "cpd":  55,
-        "cph":  2.29,
-        "dailyCostNgn":  115500,
-        "lastSupplyQty":  410,
-        "lastSupplyDate":  "16-Oct-2026",
-        "supplier":  "Auwal",
-        "daysRemaining":  2.5,
-        "hoursRemaining":  60,
-        "predictedDryDate":  "04-Nov-2026 22:00",
-        "refuelDate":  "IMMEDIATE / PAST DUE",
-        "status":  "CRITICAL"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  192,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CP/EK/003",
@@ -1032,7 +1486,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  205,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/NT/EK/001",
@@ -1059,7 +1516,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  218,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CF/LA/001",
@@ -1086,7 +1546,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  231,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CF/LA/002",
@@ -1113,7 +1576,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  64,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CP/LA/005",
@@ -1140,7 +1606,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  77,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CP/LA/008",
@@ -1167,7 +1636,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  90,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CP/LA/009",
@@ -1194,7 +1666,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  103,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CP/LA/026",
@@ -1221,7 +1696,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  116,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CY/FC/001",
@@ -1248,7 +1726,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  129,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CY/LA/004",
@@ -1275,7 +1756,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  142,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CY/LA/007",
@@ -1302,7 +1786,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  155,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CY/LA/009",
@@ -1329,7 +1816,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  168,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CY/LA/010",
@@ -1356,7 +1846,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  181,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CY/LA/014",
@@ -1383,7 +1876,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  194,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CY/LA/015",
@@ -1410,7 +1906,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  207,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CY/LA/018",
@@ -1437,7 +1936,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  220,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CY/LA/021",
@@ -1464,7 +1966,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  233,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CY/LA/022",
@@ -1491,7 +1996,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  66,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CY/LA/023",
@@ -1518,7 +2026,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  79,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CY/LA/028",
@@ -1545,7 +2056,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  92,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CY/LA/031",
@@ -1572,7 +2086,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  105,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CY/LA/32",
@@ -1599,7 +2116,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  118,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/IC/LA/008",
@@ -1626,7 +2146,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  131,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/MI/LA/001",
@@ -1653,7 +2176,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  144,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/NA/LA/036",
@@ -1680,34 +2206,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
-    },
-    {
-        "siteId":  "CP/SA/LA/002",
-        "tenantId":  "HP_LG_566 (Eleganza)",
-        "state":  "Lagos",
-        "address":  "Adeyemo Alakija St, Victoria Island",
-        "fse":  "Idowu Awonusi",
-        "fsePhone":  "08039876543",
-        "security":  "VI Corporate Watch",
-        "securityPhone":  "08011223344",
-        "powerSource":  "In-house",
-        "gridStatus":  "On GRID",
-        "loadKw":  14,
-        "tankCap":  2000,
-        "currentDL":  140,
-        "fillPct":  7,
-        "cpd":  102.9,
-        "cph":  4.29,
-        "dailyCostNgn":  216090,
-        "lastSupplyQty":  800,
-        "lastSupplyDate":  "10-Oct-2026",
-        "supplier":  "Auwal",
-        "daysRemaining":  1.4,
-        "hoursRemaining":  34,
-        "predictedDryDate":  "03-Nov-2026 19:36",
-        "refuelDate":  "IMMEDIATE / PAST DUE",
-        "status":  "CRITICAL"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  157,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/SF/LA/004",
@@ -1734,7 +2236,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  170,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/SF/LA/013",
@@ -1761,7 +2266,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  183,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/SF/LA/014",
@@ -1788,7 +2296,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  196,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/SF/LA/026",
@@ -1815,7 +2326,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  209,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/SF/LA/041",
@@ -1842,7 +2356,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  222,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/SF/LA/046",
@@ -1869,34 +2386,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
-    },
-    {
-        "siteId":  "CP/SF/LA/048",
-        "tenantId":  "LG5140 (Airtel)",
-        "state":  "Lagos",
-        "address":  "Herbert Macaulay, Yaba, Lagos",
-        "fse":  "Wale Babatunde",
-        "fsePhone":  "08023456789",
-        "security":  "Bayo Security",
-        "securityPhone":  "08033221100",
-        "powerSource":  "Partner",
-        "gridStatus":  "On GRID",
-        "loadKw":  5.2,
-        "tankCap":  1200,
-        "currentDL":  427,
-        "fillPct":  36,
-        "cpd":  46,
-        "cph":  1.92,
-        "dailyCostNgn":  96600,
-        "lastSupplyQty":  600,
-        "lastSupplyDate":  "10-Oct-2026",
-        "supplier":  "Expedient",
-        "daysRemaining":  9.3,
-        "hoursRemaining":  223,
-        "predictedDryDate":  "11-Nov-2026 17:12",
-        "refuelDate":  "07-Nov-2026",
-        "status":  "HEALTHY"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  235,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/SP/LA/148",
@@ -1923,7 +2416,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  68,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/ST/LA/030",
@@ -1950,7 +2446,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  81,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/WW/LA/005",
@@ -1977,88 +2476,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
-    },
-    {
-        "siteId":  "CP/CP/LA/025",
-        "tenantId":  "OG1436 (Airtel)",
-        "state":  "Lagos",
-        "address":  "Magboro Outskirts, Ogun/Lagos",
-        "fse":  "Idowu Awonusi",
-        "fsePhone":  "08039876543",
-        "security":  "Security Desk",
-        "securityPhone":  "08088776655",
-        "powerSource":  "In-house",
-        "gridStatus":  "On GRID",
-        "loadKw":  3.5,
-        "tankCap":  3000,
-        "currentDL":  650,
-        "fillPct":  22,
-        "cpd":  20,
-        "cph":  0.83,
-        "dailyCostNgn":  42000,
-        "lastSupplyQty":  1000,
-        "lastSupplyDate":  "05-Oct-2026",
-        "supplier":  "Auwal",
-        "daysRemaining":  32.5,
-        "hoursRemaining":  780,
-        "predictedDryDate":  "04-Dec-2026 22:00",
-        "refuelDate":  "24-Nov-2026",
-        "status":  "HEALTHY"
-    },
-    {
-        "siteId":  "CP/CP/OG/001",
-        "tenantId":  "OG1820 (Airtel)",
-        "state":  "Ogun",
-        "address":  "Sagamu Expressway, Ogun",
-        "fse":  "John Joseph",
-        "fsePhone":  "08034567890",
-        "security":  "Ogun State Guard",
-        "securityPhone":  "08099887766",
-        "powerSource":  "In-house",
-        "gridStatus":  "Non PHCN",
-        "loadKw":  5.8,
-        "tankCap":  1000,
-        "currentDL":  890,
-        "fillPct":  89,
-        "cpd":  42,
-        "cph":  1.75,
-        "dailyCostNgn":  88200,
-        "lastSupplyQty":  1000,
-        "lastSupplyDate":  "15-Oct-2026",
-        "supplier":  "Auwal",
-        "daysRemaining":  21.2,
-        "hoursRemaining":  509,
-        "predictedDryDate":  "23-Nov-2026 14:48",
-        "refuelDate":  "18-Nov-2026",
-        "status":  "HEALTHY"
-    },
-    {
-        "siteId":  "CP/NA/LA/021",
-        "tenantId":  "OG1435 (Airtel)",
-        "state":  "Ogun",
-        "address":  "Agbara Industrial Rd, Ogun",
-        "fse":  "John Joseph",
-        "fsePhone":  "08034567890",
-        "security":  "Adeyemi Watch",
-        "securityPhone":  "08077665544",
-        "powerSource":  "In-house",
-        "gridStatus":  "On GRID (Partial)",
-        "loadKw":  5.7,
-        "tankCap":  1200,
-        "currentDL":  310,
-        "fillPct":  26,
-        "cpd":  51.4,
-        "cph":  2.14,
-        "dailyCostNgn":  107940,
-        "lastSupplyQty":  500,
-        "lastSupplyDate":  "12-Oct-2026",
-        "supplier":  "Auwal",
-        "daysRemaining":  6,
-        "hoursRemaining":  144,
-        "predictedDryDate":  "08-Nov-2026 10:00",
-        "refuelDate":  "04-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  94,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CP/ON/001",
@@ -2085,7 +2506,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  107,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CP/OY/001",
@@ -2112,7 +2536,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  120,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CP/OY/002",
@@ -2139,7 +2566,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  133,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CP/FC/001",
@@ -2166,34 +2596,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
-    },
-    {
-        "siteId":  "CP/NA/FC/028",
-        "tenantId":  "AB1845 (MTN)",
-        "state":  "Abuja FCT",
-        "address":  "Maitama Extension, Abuja FCT",
-        "fse":  "Suleiman Garba",
-        "fsePhone":  "08108903624",
-        "security":  "Aliyu Usman",
-        "securityPhone":  "08055667788",
-        "powerSource":  "In-house",
-        "gridStatus":  "On GRID",
-        "loadKw":  7,
-        "tankCap":  1000,
-        "currentDL":  850,
-        "fillPct":  85,
-        "cpd":  47,
-        "cph":  1.96,
-        "dailyCostNgn":  98700,
-        "lastSupplyQty":  1000,
-        "lastSupplyDate":  "19-Oct-2026",
-        "supplier":  "Auwal",
-        "daysRemaining":  18.1,
-        "hoursRemaining":  434,
-        "predictedDryDate":  "20-Nov-2026 12:24",
-        "refuelDate":  "16-Nov-2026",
-        "status":  "HEALTHY"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  146,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/NA/FC/032",
@@ -2220,7 +2626,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  159,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/NC/AB/009",
@@ -2247,7 +2656,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  172,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/ST/FC/018",
@@ -2274,7 +2686,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  185,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/NT/BA/001",
@@ -2301,7 +2716,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  198,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/NT/BA/01",
@@ -2328,34 +2746,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
-    },
-    {
-        "siteId":  "CP/CP/BR/001",
-        "tenantId":  "BR2615 (MTN)",
-        "state":  "Borno",
-        "address":  "Army Univ Campus, Biu, Borno",
-        "fse":  "Shugaba Mohammed",
-        "fsePhone":  "08029876543",
-        "security":  "Biu Gate Security",
-        "securityPhone":  "08044556677",
-        "powerSource":  "In-house",
-        "gridStatus":  "Non PHCN",
-        "loadKw":  6,
-        "tankCap":  850,
-        "currentDL":  150,
-        "fillPct":  18,
-        "cpd":  48,
-        "cph":  2,
-        "dailyCostNgn":  100800,
-        "lastSupplyQty":  450,
-        "lastSupplyDate":  "18-Oct-2026",
-        "supplier":  "Auwal / Rospee",
-        "daysRemaining":  3.1,
-        "hoursRemaining":  74,
-        "predictedDryDate":  "05-Nov-2026 12:24",
-        "refuelDate":  "IMMEDIATE / PAST DUE",
-        "status":  "CRITICAL"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  211,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/NA/BO/145",
@@ -2382,34 +2776,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
-    },
-    {
-        "siteId":  "CP/CP/KD/002",
-        "tenantId":  "KD0737 (Airtel)",
-        "state":  "Kaduna",
-        "address":  "ABU Phase 2, Zaria, Kaduna",
-        "fse":  "Moses Nuhu",
-        "fsePhone":  "08031234567",
-        "security":  "Ibrahim Tanko",
-        "securityPhone":  "08022334455",
-        "powerSource":  "In-house",
-        "gridStatus":  "Non PHCN",
-        "loadKw":  6.8,
-        "tankCap":  1000,
-        "currentDL":  1086,
-        "fillPct":  100,
-        "cpd":  47,
-        "cph":  1.96,
-        "dailyCostNgn":  98700,
-        "lastSupplyQty":  1000,
-        "lastSupplyDate":  "18-Oct-2026",
-        "supplier":  "Auwal",
-        "daysRemaining":  23.1,
-        "hoursRemaining":  554,
-        "predictedDryDate":  "25-Nov-2026 12:24",
-        "refuelDate":  "21-Nov-2026",
-        "status":  "HEALTHY"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  224,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CP/KD/003",
@@ -2436,7 +2806,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  237,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CF/KN/001",
@@ -2463,7 +2836,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  70,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/NA/KN/388",
@@ -2490,7 +2866,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  83,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CP/PT/004",
@@ -2517,7 +2896,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  96,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CP/SK/001",
@@ -2544,7 +2926,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  109,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CP/SK/002",
@@ -2571,7 +2956,10 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  122,
+        "isFocus":  false
     },
     {
         "siteId":  "CP/CP/TR/001",
@@ -2598,39 +2986,207 @@
         "hoursRemaining":  139,
         "predictedDryDate":  "08-Nov-2026 05:12",
         "refuelDate":  "03-Nov-2026",
-        "status":  "WARNING"
+        "status":  "WARNING",
+        "cpd12h":  22.5,
+        "hoursToPpm":  135,
+        "isFocus":  false
     }
 ]
 ;
-    
-    // Check localStorage
+    const INITIAL_REPAIRS = [
+    {
+        "ticketId":  "REP-2026-1042",
+        "siteId":  "CP/CP/EK/002",
+        "tenantId":  "EK0474 (Airtel)",
+        "category":  "Generator Breakdown",
+        "fault":  "DG Shutdown - 15kVA cutover required",
+        "actionTaken":  "Fixed 15kVA generator and successfully completed cutover.",
+        "technician":  "Opeyemi Lawani",
+        "loggedDate":  "29-Oct-2026",
+        "costNgn":  125000,
+        "status":  "Resolved",
+        "priority":  "High"
+    },
+    {
+        "ticketId":  "REP-2026-1043",
+        "siteId":  "CP/CP/EK/002",
+        "tenantId":  "EK0474 (Airtel)",
+        "category":  "Generator Fault",
+        "fault":  "DG Shutdown - Alternator excitation failure",
+        "actionTaken":  "Technician dispatched to replace AVR and inspect alternator windings.",
+        "technician":  "Opeyemi Lawani",
+        "loggedDate":  "31-Oct-2026",
+        "costNgn":  85000,
+        "status":  "Open",
+        "priority":  "Critical"
+    },
+    {
+        "ticketId":  "REP-2026-1038",
+        "siteId":  "CP/CP/BR/001",
+        "tenantId":  "BR2615 (MTN)",
+        "category":  "Emergency Diesel Intervention",
+        "fault":  "Site was down on diesel depletion",
+        "actionTaken":  "Emergency 150L diesel batch supplied and generator reprimed.",
+        "technician":  "Shugaba Mohammed",
+        "loggedDate":  "29-Oct-2026",
+        "costNgn":  315000,
+        "status":  "Resolved",
+        "priority":  "Critical"
+    },
+    {
+        "ticketId":  "REP-2026-1039",
+        "siteId":  "CP/SF/LA/048",
+        "tenantId":  "LG5140 (Airtel)",
+        "category":  "Changeover Switch",
+        "fault":  "DG Shutdown due to faulty changeover switch",
+        "actionTaken":  "New 63A automatic changeover switch installed and synchronized.",
+        "technician":  "Wale Babatunde",
+        "loggedDate":  "27-Oct-2026",
+        "costNgn":  145000,
+        "status":  "Resolved",
+        "priority":  "High"
+    },
+    {
+        "ticketId":  "REP-2026-1040",
+        "siteId":  "CP/CP/DE/002",
+        "tenantId":  "DL1010 (Airtel)",
+        "category":  "Active Hardware",
+        "fault":  "Frozen module \u0026 active telecom equipment lockup",
+        "actionTaken":  "Power cycled rectifier and rebooted active telecom chassis.",
+        "technician":  "Lawani Maurice",
+        "loggedDate":  "29-Oct-2026",
+        "costNgn":  35000,
+        "status":  "Resolved",
+        "priority":  "Medium"
+    },
+    {
+        "ticketId":  "REP-2026-1041",
+        "siteId":  "CP/NA/LA/021",
+        "tenantId":  "OG1435 (Airtel)",
+        "category":  "Fuel Filter \u0026 Line",
+        "fault":  "Fuel filter clogging causing engine hunting and speed drops",
+        "actionTaken":  "Primary and secondary fuel filters replaced, fuel lines bled.",
+        "technician":  "John Joseph",
+        "loggedDate":  "26-Oct-2026",
+        "costNgn":  48000,
+        "status":  "Resolved",
+        "priority":  "Medium"
+    },
+    {
+        "ticketId":  "REP-2026-1044",
+        "siteId":  "CP/CP/CR/001",
+        "tenantId":  "CR0671 (Airtel)",
+        "category":  "PPM Maintenance",
+        "fault":  "250-hour scheduled PPM oil and filter service",
+        "actionTaken":  "Engine oil drained, 15W40 oil refilled, air \u0026 oil filters replaced.",
+        "technician":  "Etim Effiong",
+        "loggedDate":  "01-Nov-2026",
+        "costNgn":  95000,
+        "status":  "In Progress",
+        "priority":  "Medium"
+    }
+]
+;
+
     let masterSites = [];
-    const savedData = localStorage.getItem('coloplus_sites_data_v2');
-    if (savedData) {
-      try { masterSites = JSON.parse(savedData); } catch (e) { masterSites = INITIAL_SITES; }
+    const savedSites = localStorage.getItem('coloplus_sites_v3');
+    if (savedSites) {
+      try { masterSites = JSON.parse(savedSites); } catch (e) { masterSites = INITIAL_SITES; }
     } else {
       masterSites = INITIAL_SITES;
     }
 
+    let masterRepairs = [];
+    const savedRepairs = localStorage.getItem('coloplus_repairs_v3');
+    if (savedRepairs) {
+      try { masterRepairs = JSON.parse(savedRepairs); } catch (e) { masterRepairs = INITIAL_REPAIRS; }
+    } else {
+      masterRepairs = INITIAL_REPAIRS;
+    }
+
+    let fleetScope = 'focus'; // 'focus' (14 sites) or 'all' (76 sites)
     let currentFilter = 'ALL';
     let currentView = 'grid';
+    let activeHub = 'fuel'; // 'fuel' or 'repairs'
+    let currentRepairFilter = 'ALL';
     let activeSimSiteId = null;
-    let activeDrawerSiteId = null;
+    let liveAccumulatedBurn = 0;
 
     function init() {
-      // Calculate PPM maintenance intervals (simulated engine hours between 60 and 240 hrs)
-      masterSites.forEach((s, idx) => {
-        if (!s.currentRH) s.currentRH = 70 + (idx * 17) % 175;
-        s.hoursToPpm = Math.max(0, 250 - s.currentRH);
-      });
+      // populate site dropdown in repair modal
+      const siteSelect = document.getElementById('newRepairSiteId');
+      siteSelect.innerHTML = masterSites.map(s => `<option value="${s.siteId}">${s.siteId} - ${s.tenantId}</option>`).join('');
 
+      document.getElementById('scopeAllCount').innerText = masterSites.length;
+      document.getElementById('repairBadgeCount').innerText = masterRepairs.length;
+
+      updateKpis();
+      renderAnalytics();
+      renderSites();
+      renderRepairs();
+
+      // Start live tickers
+      setInterval(tickClock, 1000);
+      setInterval(tickFuelBurn, 2000);
+    }
+
+    function saveState() {
+      localStorage.setItem('coloplus_sites_v3', JSON.stringify(masterSites));
+      localStorage.setItem('coloplus_repairs_v3', JSON.stringify(masterRepairs));
+    }
+
+    function tickClock() {
+      const now = new Date();
+      document.getElementById('liveClock').innerText = now.toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+    }
+
+    function tickFuelBurn() {
+      // calculate network burn per 2 seconds based on active sites CPH
+      const activeList = getActiveScopeSites();
+      let totalCph = 0;
+      activeList.forEach(s => totalCph += s.cph);
+      const burnPer2Sec = (totalCph / 3600) * 2;
+      liveAccumulatedBurn += burnPer2Sec;
+      document.getElementById('liveBurnTicker').innerText = '+' + liveAccumulatedBurn.toFixed(2) + ' Litres';
+    }
+
+    function switchHub(hub) {
+      activeHub = hub;
+      if (hub === 'fuel') {
+        document.getElementById('fuelHubSection').classList.remove('hidden');
+        document.getElementById('repairsHubSection').classList.add('hidden');
+        document.getElementById('tabFuelBtn').className = 'px-3.5 py-1.5 text-xs font-bold rounded-lg bg-cyan-500 text-black shadow transition';
+        document.getElementById('tabRepairsBtn').className = 'px-3.5 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition';
+      } else {
+        document.getElementById('fuelHubSection').classList.add('hidden');
+        document.getElementById('repairsHubSection').classList.remove('hidden');
+        document.getElementById('tabFuelBtn').className = 'px-3.5 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition';
+        document.getElementById('tabRepairsBtn').className = 'px-3.5 py-1.5 text-xs font-bold rounded-lg bg-amber-500 text-black shadow transition';
+        renderRepairs();
+      }
+    }
+
+    function setFleetScope(scope) {
+      fleetScope = scope;
+      if (scope === 'focus') {
+        document.getElementById('scopeFocusBtn').className = 'px-3 py-1 rounded-xl text-xs font-bold bg-cyan-500 text-black shadow transition';
+        document.getElementById('scopeAllBtn').className = 'px-3 py-1 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-slate-400 hover:text-white transition';
+        document.getElementById('kpiScopeSub').innerText = 'WK 43 Priority Fleet';
+      } else {
+        document.getElementById('scopeFocusBtn').className = 'px-3 py-1 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-slate-400 hover:text-white transition';
+        document.getElementById('scopeAllBtn').className = 'px-3 py-1 rounded-xl text-xs font-bold bg-cyan-500 text-black shadow transition';
+        document.getElementById('kpiScopeSub').innerText = 'All Network Nodes';
+      }
       updateKpis();
       renderAnalytics();
       renderSites();
     }
 
-    function saveState() {
-      localStorage.setItem('coloplus_sites_data_v2', JSON.stringify(masterSites));
+    function getActiveScopeSites() {
+      if (fleetScope === 'focus') {
+        return masterSites.filter(s => s.isFocus);
+      }
+      return masterSites;
     }
 
     function toggleTheme() {
@@ -2645,11 +3201,11 @@
     }
 
     function toggleAnalyticsView() {
-      const hub = document.getElementById('analyticsHub');
-      hub.classList.toggle('hidden');
+      document.getElementById('analyticsHub').classList.toggle('hidden');
     }
 
     function updateKpis() {
+      const list = getActiveScopeSites();
       let critical = 0;
       let warning = 0;
       let healthy = 0;
@@ -2657,7 +3213,7 @@
       let totalCapacity = 0;
       let totalCpd = 0;
 
-      masterSites.forEach(s => {
+      list.forEach(s => {
         totalLiters += s.currentDL;
         totalCapacity += s.tankCap;
         totalCpd += s.cpd;
@@ -2666,57 +3222,56 @@
         else healthy++;
       });
 
-      document.getElementById('kpiTotalSites').innerText = masterSites.length;
+      document.getElementById('kpiTotalSites').innerText = list.length;
       document.getElementById('kpiCriticalSites').innerText = critical;
       document.getElementById('kpiWarningSites').innerText = warning;
       document.getElementById('kpiHealthySites').innerText = healthy;
       document.getElementById('kpiTotalLiters').innerText = totalLiters.toLocaleString() + ' L';
       
-      const avgFill = Math.round((totalLiters / totalCapacity) * 100);
+      const avgFill = Math.round((totalLiters / Math.max(1, totalCapacity)) * 100);
       document.getElementById('kpiAvgFill').innerText = avgFill + '% Portfolio Capacity';
 
       document.getElementById('kpiDailyBurn').innerText = Math.round(totalCpd).toLocaleString() + ' L/d';
-      const dailyCostNgn = Math.round(totalCpd * 2100);
-      document.getElementById('kpiDailyCost').innerText = '₦' + (dailyCostNgn / 1000000).toFixed(2) + 'M / day';
+      const halfDayBurn = Math.round(totalCpd / 2);
+      document.getElementById('kpi12hBurn').innerText = '12h Shift Burn: ' + halfDayBurn.toLocaleString() + ' L';
 
-      document.getElementById('countALL').innerText = masterSites.length;
+      document.getElementById('countALL').innerText = list.length;
       document.getElementById('countCRITICAL').innerText = critical;
       document.getElementById('countWARNING').innerText = warning;
       document.getElementById('countHEALTHY').innerText = healthy;
     }
 
     function renderAnalytics() {
-      // 1. Runway Chart Bars (Top 8 most critical sites)
-      const sortedByAutonomy = [...masterSites].sort((a,b) => a.daysRemaining - b.daysRemaining).slice(0, 8);
+      const list = getActiveScopeSites();
+      const sortedByAutonomy = [...list].sort((a,b) => a.daysRemaining - b.daysRemaining).slice(0, 8);
       const runwayContainer = document.getElementById('runwayChartBars');
       let runwayHtml = '';
 
       sortedByAutonomy.forEach(s => {
         const barColor = s.status === 'CRITICAL' ? 'bg-rose-500' : (s.status === 'WARNING' ? 'bg-amber-500' : 'bg-emerald-500');
-        const pctWidth = Math.min(100, Math.max(8, (s.daysRemaining / 15) * 100));
+        const pctWidth = Math.min(100, Math.max(8, (s.daysRemaining / 20) * 100));
 
         runwayHtml += `
-          <div class="flex items-center gap-3 text-xs font-mono">
+          <div class="flex items-center gap-3 text-xs">
             <span class="w-24 text-slate-300 font-bold truncate">${s.siteId}</span>
             <div class="flex-1 bg-white/5 h-4 rounded-full overflow-hidden p-0.5">
               <div class="${barColor} h-3 rounded-full transition-all duration-500 flex items-center justify-end pr-2 text-[10px] text-black font-extrabold" style="width: ${pctWidth}%">
                 ${s.daysRemaining}d
               </div>
             </div>
-            <span class="w-28 text-right text-[11px] text-slate-400">${s.currentDL}L / ${s.cpd}Ld</span>
+            <span class="w-32 text-right text-[11px] text-slate-400">${s.currentDL}L • 12h: ${s.cpd12h || (s.cpd/2).toFixed(1)}L</span>
           </div>
         `;
       });
       runwayContainer.innerHTML = runwayHtml;
 
-      // 2. Regional Breakdown
       const stateCounts = {};
-      masterSites.forEach(s => {
+      list.forEach(s => {
         stateCounts[s.state] = (stateCounts[s.state] || 0) + s.currentDL;
       });
 
       const topStates = Object.keys(stateCounts).sort((a,b) => stateCounts[b] - stateCounts[a]).slice(0, 5);
-      const maxLiters = Math.max(...Object.values(stateCounts));
+      const maxLiters = Math.max(1, ...Object.values(stateCounts));
       const regContainer = document.getElementById('regionalBars');
       let regHtml = '';
 
@@ -2725,7 +3280,7 @@
         const barWidth = Math.round((lit / maxLiters) * 100);
         regHtml += `
           <div class="text-xs">
-            <div class="flex justify-between text-[11px] font-mono text-slate-300 mb-1">
+            <div class="flex justify-between text-[11px] text-slate-300 mb-1">
               <span>${st}</span>
               <span class="text-cyan-400 font-bold">${lit.toLocaleString()} Litres</span>
             </div>
@@ -2746,13 +3301,13 @@
 
       const activeBtn = document.getElementById('filter' + filter);
       if (filter === 'CRITICAL') {
-        activeBtn.className = 'filter-tab px-3.5 py-2 rounded-xl text-xs font-bold bg-rose-600 text-white shadow-lg shadow-rose-600/30 transition';
+        activeBtn.className = 'filter-tab px-3.5 py-2 rounded-xl text-xs font-bold bg-rose-600 text-white shadow transition';
       } else if (filter === 'WARNING') {
-        activeBtn.className = 'filter-tab px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-500 text-black shadow-lg shadow-amber-500/30 transition';
+        activeBtn.className = 'filter-tab px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-500 text-black shadow transition';
       } else if (filter === 'HEALTHY') {
-        activeBtn.className = 'filter-tab px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-500 text-black shadow-lg shadow-emerald-500/30 transition';
+        activeBtn.className = 'filter-tab px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-500 text-black shadow transition';
       } else {
-        activeBtn.className = 'filter-tab px-3.5 py-2 rounded-xl text-xs font-bold bg-cyan-500 text-black shadow-lg shadow-cyan-500/30 transition';
+        activeBtn.className = 'filter-tab px-3.5 py-2 rounded-xl text-xs font-bold bg-cyan-500 text-black shadow transition';
       }
 
       renderSites();
@@ -2777,8 +3332,9 @@
       const q = document.getElementById('searchInput').value.trim().toLowerCase();
       const state = document.getElementById('stateSelect').value;
       const sort = document.getElementById('sortSelect').value;
+      const baseList = getActiveScopeSites();
 
-      let list = masterSites.filter(s => {
+      let list = baseList.filter(s => {
         if (currentFilter !== 'ALL' && s.status !== currentFilter) return false;
         if (state !== 'ALL' && s.state.toLowerCase() !== state.toLowerCase()) return false;
         if (q) {
@@ -2809,71 +3365,60 @@
       const tableBody = document.getElementById('sitesTableBody');
 
       if (list.length === 0) {
-        grid.innerHTML = '<div class="col-span-full text-center py-16 text-slate-400 text-sm glass-panel rounded-2xl">No telecom sites match your filter criteria.</div>';
-        tableBody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-slate-400">No telecom sites match your filter criteria.</td></tr>';
+        grid.innerHTML = '<div class="col-span-full text-center py-16 text-slate-400 text-sm glass-panel rounded-2xl">No telecom sites match your criteria.</div>';
+        tableBody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-slate-400">No sites found.</td></tr>';
         return;
       }
 
-      // Render Rich Cards with Liquid Tank Visualizer
       let cardsHtml = '';
       list.forEach(s => {
         let badgeClass = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30';
-        let waveColor = 'rgba(16, 185, 129, 0.4)';
         let liquidColor = '#10b981';
         let statusBadge = '🟢 ' + s.daysRemaining + 'd Left';
 
         if (s.status === 'CRITICAL') {
           badgeClass = 'bg-rose-500/20 text-rose-400 border-rose-500/40 glow-critical';
-          waveColor = 'rgba(244, 63, 94, 0.45)';
           liquidColor = '#f43f5e';
           statusBadge = '🚨 ' + s.daysRemaining + 'd CRITICAL';
         } else if (s.status === 'WARNING') {
           badgeClass = 'bg-amber-500/20 text-amber-400 border-amber-500/40 glow-warning';
-          waveColor = 'rgba(245, 158, 11, 0.45)';
           liquidColor = '#f59e0b';
           statusBadge = '⚠️ ' + s.daysRemaining + 'd REORDER';
         }
 
         const tankFillHeight = Math.min(100, Math.max(12, s.fillPct));
+        const shift12h = s.cpd12h || (s.cpd / 2).toFixed(1);
 
         cardsHtml += `
           <div class="glass-card rounded-2xl p-5 relative overflow-hidden flex flex-col justify-between group">
-            
             <div>
-              <!-- Top Row -->
-              <div class="flex items-start justify-between gap-3 mb-4">
+              <div class="flex items-start justify-between gap-3 mb-3.5">
                 <div>
                   <div class="flex items-center gap-2 flex-wrap">
                     <span class="font-extrabold text-base text-white tracking-tight">${s.siteId}</span>
                     <span class="px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
                       ${s.tenantId}
                     </span>
+                    ${s.isFocus ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">WK 43</span>' : ''}
                   </div>
-                  <p class="text-xs text-slate-400 mt-1 line-clamp-1" title="${s.address}">
-                    📍 ${s.state} • ${s.address}
-                  </p>
+                  <p class="text-xs text-slate-400 mt-1 line-clamp-1">📍 ${s.state} • ${s.address}</p>
                 </div>
                 <span class="px-2.5 py-1 rounded-xl text-xs font-mono font-bold border whitespace-nowrap ${badgeClass}">
                   ${statusBadge}
                 </span>
               </div>
 
-              <!-- Interactive Liquid Tank Gauge & Primary Specs -->
+              <!-- Animated Liquid Tank Gauge & 24h/12h metrics -->
               <div class="grid grid-cols-12 gap-3.5 mb-4 bg-black/40 p-3.5 rounded-xl border border-white/5">
                 
-                <!-- Tank Cylinder Graphic -->
                 <div class="col-span-4 flex flex-col items-center justify-center">
                   <div class="w-16 h-28 rounded-xl border-2 border-slate-600 bg-slate-900/90 relative overflow-hidden flex flex-col justify-end shadow-inner">
-                    <!-- Gauge lines -->
                     <div class="absolute inset-0 flex flex-col justify-between p-1 pointer-events-none opacity-30 text-[9px] font-mono text-white">
                       <span>100%</span>
                       <span>50%</span>
                       <span>0%</span>
                     </div>
-
-                    <!-- Liquid Container -->
                     <div class="w-full relative transition-all duration-700 overflow-hidden" style="height: ${tankFillHeight}%; background-color: ${liquidColor};">
-                      <!-- Wave SVG -->
                       <div class="w-[200%] h-3 absolute -top-2 left-0 liquid-wave opacity-50">
                         <svg viewBox="0 0 1200 120" preserveAspectRatio="none" class="w-full h-full fill-white">
                           <path d="M0,0 C150,90 350,-40 500,45 C650,130 900,10 1200,50 L1200,120 L0,120 Z"></path>
@@ -2884,21 +3429,27 @@
                   <span class="text-[11px] font-mono font-bold text-white mt-1.5">${s.fillPct}% FULL</span>
                 </div>
 
-                <!-- Metrics & Autonomy -->
-                <div class="col-span-8 flex flex-col justify-between text-xs space-y-2">
+                <div class="col-span-8 flex flex-col justify-between text-xs space-y-1.5 font-mono">
                   <div>
-                    <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Tank Volume Level</span>
-                    <span class="font-mono text-base font-black text-cyan-300">${s.currentDL.toLocaleString()} <span class="text-xs text-slate-400 font-normal">/ ${s.tankCap} L</span></span>
+                    <span class="text-[10px] text-slate-400 uppercase block">Tank Level</span>
+                    <span class="text-base font-black text-cyan-300">${s.currentDL.toLocaleString()} <span class="text-xs text-slate-400 font-normal">/ ${s.tankCap} L</span></span>
+                  </div>
+
+                  <!-- 24H and 12H Burn Display -->
+                  <div class="grid grid-cols-2 gap-1.5 p-1.5 rounded-lg bg-white/5 border border-white/5">
+                    <div>
+                      <span class="text-[9px] text-amber-400 uppercase block">Daily (24h)</span>
+                      <span class="font-bold text-amber-300 text-xs">${s.cpd} L/d</span>
+                    </div>
+                    <div>
+                      <span class="text-[9px] text-purple-400 uppercase block">12h Shift</span>
+                      <span class="font-bold text-purple-300 text-xs">${shift12h} L</span>
+                    </div>
                   </div>
 
                   <div>
-                    <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Daily Consumption (CPD)</span>
-                    <span class="font-mono font-bold text-amber-400">${s.cpd} L/day <span class="text-[11px] text-slate-400">(${s.cph} L/h)</span></span>
-                  </div>
-
-                  <div class="pt-1 border-t border-white/5">
-                    <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Predicted Empty Timestamp</span>
-                    <span class="font-mono font-bold ${s.status === 'CRITICAL' ? 'text-rose-400' : 'text-emerald-400'}">
+                    <span class="text-[10px] text-slate-400 uppercase block">Empty Forecast</span>
+                    <span class="font-bold ${s.status === 'CRITICAL' ? 'text-rose-400' : 'text-emerald-400'} text-xs">
                       ${s.predictedDryDate}
                     </span>
                   </div>
@@ -2906,19 +3457,19 @@
 
               </div>
 
-              <!-- Personnel & Quick Call Strip -->
-              <div class="pt-2 border-t border-white/5 mb-4 text-xs">
+              <!-- Personnel Strip -->
+              <div class="pt-2 border-t border-white/5 mb-3.5 text-xs">
                 <div class="flex items-center justify-between">
-                  <span class="text-slate-400 text-[11px]">Field Support:</span>
+                  <span class="text-slate-400 text-[11px]">Field Engineer:</span>
                   <span class="font-bold text-slate-200">${s.fse}</span>
                 </div>
                 <div class="flex items-center justify-between mt-1">
-                  <span class="text-slate-400 text-[11px]">Direct Contact:</span>
-                  <div class="flex items-center gap-1.5">
-                    <span class="font-mono text-slate-200 text-xs">${s.fsePhone}</span>
+                  <span class="text-slate-400 text-[11px]">Contact:</span>
+                  <div class="flex items-center gap-1.5 font-mono">
+                    <span class="text-slate-200 text-xs">${s.fsePhone}</span>
                     ${s.fsePhone.match(/^[0-9]/) ? `
-                      <a href="tel:${s.fsePhone}" class="p-1 rounded bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 text-xs" title="Call FSE">📞</a>
-                      <a href="https://wa.me/234${s.fsePhone.replace(/^0/, '')}" target="_blank" class="p-1 rounded bg-green-500/20 text-green-400 hover:bg-green-500/30 text-xs" title="WhatsApp FSE">💬</a>
+                      <a href="tel:${s.fsePhone}" class="p-1 rounded bg-emerald-500/20 text-emerald-400 text-xs" title="Call">📞</a>
+                      <a href="https://wa.me/234${s.fsePhone.replace(/^0/, '')}" target="_blank" class="p-1 rounded bg-green-500/20 text-green-400 text-xs" title="WhatsApp">💬</a>
                     ` : ''}
                   </div>
                 </div>
@@ -2928,13 +3479,12 @@
             <!-- Footer Buttons -->
             <div class="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
               <button onclick="openDrawer('${s.siteId}')" class="py-2 px-3 text-xs font-bold rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white transition flex items-center justify-center gap-1">
-                🔍 Details & Diagnostics
+                🔍 Diagnostics
               </button>
               <button onclick="openSimulationModal('${s.siteId}')" class="py-2 px-3 text-xs font-bold rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 transition flex items-center justify-center gap-1">
-                ⚡ Refuel / Simulate
+                ⚡ Refuel / Sim
               </button>
             </div>
-
           </div>
         `;
       });
@@ -2951,7 +3501,7 @@
             </td>
             <td class="py-3 px-4">
               <div class="text-white">${s.state}</div>
-              <div class="text-[11px] text-slate-400 truncate max-w-[140px]">${s.address}</div>
+              <div class="text-[11px] text-slate-400 truncate max-w-[130px]">${s.address}</div>
             </td>
             <td class="py-3 px-4">
               <div class="font-bold text-cyan-300">${s.currentDL} L</div>
@@ -2959,7 +3509,9 @@
             </td>
             <td class="py-3 px-4">
               <div class="font-bold text-amber-400">${s.cpd} L/d</div>
-              <div class="text-[11px] text-slate-400">${s.cph} L/h</div>
+            </td>
+            <td class="py-3 px-4">
+              <div class="font-bold text-purple-300">${s.cpd12h || (s.cpd/2).toFixed(1)} L/12h</div>
             </td>
             <td class="py-3 px-4">
               <span class="px-2.5 py-0.5 rounded-lg text-xs font-bold ${s.status === 'CRITICAL' ? 'bg-rose-500/20 text-rose-400' : (s.status === 'WARNING' ? 'bg-amber-500/20 text-amber-400' : 'bg-emerald-500/20 text-emerald-400')}">
@@ -2968,10 +3520,6 @@
             </td>
             <td class="py-3 px-4">
               <div class="text-white">${s.predictedDryDate.split(' ')[0]}</div>
-              <div class="text-[11px] text-slate-400">${s.predictedDryDate.split(' ')[1] || ''}</div>
-            </td>
-            <td class="py-3 px-4">
-              <div class="${s.hoursToPpm < 40 ? 'text-rose-400 font-bold' : 'text-slate-300'}">${s.hoursToPpm} hrs left</div>
             </td>
             <td class="py-3 px-4">
               <div class="font-bold text-white">${s.fse}</div>
@@ -2979,8 +3527,8 @@
             </td>
             <td class="py-3 px-4 text-right">
               <div class="flex items-center justify-end gap-1.5">
-                <button onclick="openDrawer('${s.siteId}')" class="p-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-300 hover:text-white" title="View Diagnostics">🔍</button>
-                <button onclick="openSimulationModal('${s.siteId}')" class="p-1.5 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/30" title="Refuel Simulator">⚡</button>
+                <button onclick="openDrawer('${s.siteId}')" class="p-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-300" title="Details">🔍</button>
+                <button onclick="openSimulationModal('${s.siteId}')" class="p-1.5 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/30" title="Refuel">⚡</button>
               </div>
             </td>
           </tr>
@@ -2989,9 +3537,223 @@
       tableBody.innerHTML = tableRows;
     }
 
+    // ==================== REPAIRS & RCA LOGIC ====================
+    function renderRepairs() {
+      const q = document.getElementById('repairSearchInput').value.trim().toLowerCase();
+      let list = masterRepairs.filter(r => {
+        if (currentRepairFilter !== 'ALL' && r.status !== currentRepairFilter) return false;
+        if (q) {
+          const match = r.siteId.toLowerCase().includes(q) ||
+                        r.tenantId.toLowerCase().includes(q) ||
+                        r.fault.toLowerCase().includes(q) ||
+                        r.category.toLowerCase().includes(q) ||
+                        r.technician.toLowerCase().includes(q);
+          if (!match) return false;
+        }
+        return true;
+      });
+
+      // Update KPI counts
+      let openCount = 0;
+      let progCount = 0;
+      let resCount = 0;
+      masterRepairs.forEach(r => {
+        if (r.status === 'Open') openCount++;
+        else if (r.status === 'In Progress') progCount++;
+        else resCount++;
+      });
+
+      document.getElementById('kpiTotalRepairs').innerText = masterRepairs.length;
+      document.getElementById('kpiOpenRepairs').innerText = openCount;
+      document.getElementById('kpiInProgressRepairs').innerText = progCount;
+      document.getElementById('kpiResolvedRepairs').innerText = resCount;
+      document.getElementById('repCountAll').innerText = masterRepairs.length;
+      document.getElementById('repCountOpen').innerText = openCount;
+      document.getElementById('repCountProg').innerText = progCount;
+      document.getElementById('repCountRes').innerText = resCount;
+
+      const tbody = document.getElementById('repairsTableBody');
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-slate-400">No repair tickets found.</td></tr>';
+        return;
+      }
+
+      let rows = '';
+      list.forEach(r => {
+        let statusBadge = 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
+        if (r.status === 'Open') statusBadge = 'bg-rose-500/20 text-rose-400 border-rose-500/30';
+        else if (r.status === 'In Progress') statusBadge = 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+
+        rows += `
+          <tr class="hover:bg-white/5 transition">
+            <td class="py-3 px-4 font-bold text-cyan-300">${r.ticketId}</td>
+            <td class="py-3 px-4">
+              <div class="font-bold text-white">${r.siteId}</div>
+              <div class="text-[11px] text-slate-400">${r.tenantId}</div>
+            </td>
+            <td class="py-3 px-4 text-slate-300">${r.category}</td>
+            <td class="py-3 px-4 text-white font-medium max-w-xs">${r.fault}</td>
+            <td class="py-3 px-4 text-slate-300 max-w-xs">${r.actionTaken}</td>
+            <td class="py-3 px-4 text-slate-300">${r.technician}</td>
+            <td class="py-3 px-4 text-slate-400">${r.loggedDate}</td>
+            <td class="py-3 px-4">
+              <span class="px-2.5 py-1 rounded-lg text-xs font-bold border ${statusBadge}">${r.status}</span>
+            </td>
+            <td class="py-3 px-4 text-right">
+              <button onclick="toggleTicketStatus('${r.ticketId}')" class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/15 text-white text-[11px] transition">
+                Toggle
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = rows;
+    }
+
+    function setRepairFilter(filter) {
+      currentRepairFilter = filter;
+      renderRepairs();
+    }
+
+    function toggleTicketStatus(ticketId) {
+      const ticket = masterRepairs.find(r => r.ticketId === ticketId);
+      if (!ticket) return;
+      if (ticket.status === 'Open') ticket.status = 'In Progress';
+      else if (ticket.status === 'In Progress') ticket.status = 'Resolved';
+      else ticket.status = 'Open';
+      saveState();
+      renderRepairs();
+      showToast('Updated ticket ' + ticketId + ' status to: ' + ticket.status);
+    }
+
+    // ==================== ADD SITE MODAL LOGIC ====================
+    function openAddSiteModal() {
+      document.getElementById('addSiteModal').classList.remove('hidden');
+    }
+    function closeAddSiteModal() {
+      document.getElementById('addSiteModal').classList.add('hidden');
+    }
+
+    function handleSaveNewSite(e) {
+      e.preventDefault();
+      const siteId = document.getElementById('newSiteId').value.trim();
+      const tenantId = document.getElementById('newTenantId').value.trim();
+      const state = document.getElementById('newState').value.trim();
+      const address = document.getElementById('newAddress').value.trim() || state;
+      const tankCap = parseFloat(document.getElementById('newTankCap').value) || 1000;
+      const currentDL = parseFloat(document.getElementById('newCurrentDL').value) || 300;
+      const cpd = parseFloat(document.getElementById('newCPD').value) || 45;
+      const fse = document.getElementById('newFse').value.trim();
+      const fsePhone = document.getElementById('newFsePhone').value.trim();
+      const security = document.getElementById('newSecurity').value.trim() || 'On-Site Security';
+      const supplier = document.getElementById('newSupplier').value.trim() || 'Auwal';
+
+      const daysRemaining = parseFloat((currentDL / cpd).toFixed(1));
+      const hoursRemaining = Math.round(daysRemaining * 24);
+      const fillPct = Math.min(100, Math.round((currentDL / tankCap) * 100));
+      const cpd12h = parseFloat((cpd / 2).toFixed(2));
+      const cph = parseFloat((cpd / 24).toFixed(2));
+
+      const now = new Date();
+      const dryDate = new Date(now.getTime() + daysRemaining * 24 * 60 * 60 * 1000);
+      const dryDateStr = dryDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + 
+                         dryDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+      let status = 'HEALTHY';
+      if (currentDL <= 200 || daysRemaining <= 3) status = 'CRITICAL';
+      else if (currentDL <= 400 || daysRemaining <= 6) status = 'WARNING';
+
+      const newSite = {
+        siteId,
+        tenantId,
+        state,
+        address,
+        tankCap,
+        currentDL,
+        fillPct,
+        cpd,
+        cpd12h,
+        cph,
+        dailyCostNgn: Math.round(cpd * 2100),
+        lastSupplyQty: 0,
+        lastSupplyDate: 'New Node',
+        supplier,
+        daysRemaining,
+        hoursRemaining,
+        predictedDryDate: dryDateStr,
+        refuelDate: 'Audit Active',
+        status,
+        fse,
+        fsePhone,
+        security,
+        securityPhone: 'Contact FSE',
+        powerSource: 'In-house (DG)',
+        gridStatus: 'Non PHCN',
+        loadKw: 5.5,
+        hoursToPpm: 120,
+        isFocus: true
+      };
+
+      // Check if already exists
+      const existingIdx = masterSites.findIndex(s => s.siteId.toLowerCase() === siteId.toLowerCase());
+      if (existingIdx >= 0) {
+        masterSites[existingIdx] = newSite;
+      } else {
+        masterSites.unshift(newSite);
+      }
+
+      saveState();
+      closeAddSiteModal();
+      updateKpis();
+      renderAnalytics();
+      renderSites();
+      showToast('Enrolled site ' + siteId + ' successfully!');
+    }
+
+    // ==================== ADD REPAIR MODAL LOGIC ====================
+    function openAddRepairModal() {
+      document.getElementById('addRepairModal').classList.remove('hidden');
+    }
+    function closeAddRepairModal() {
+      document.getElementById('addRepairModal').classList.add('hidden');
+    }
+
+    function handleSaveNewRepair(e) {
+      e.preventDefault();
+      const siteId = document.getElementById('newRepairSiteId').value;
+      const category = document.getElementById('newRepairCat').value;
+      const fault = document.getElementById('newRepairFault').value.trim();
+      const actionTaken = document.getElementById('newRepairAction').value.trim();
+      const technician = document.getElementById('newRepairTech').value.trim() || 'Assigned FSE';
+      const costNgn = parseFloat(document.getElementById('newRepairCost').value) || 0;
+      const status = document.getElementById('newRepairStatus').value;
+
+      const site = masterSites.find(s => s.siteId === siteId);
+      const tenantId = site ? site.tenantId : 'Network Node';
+
+      const newTicket = {
+        ticketId: 'REP-2026-' + (1045 + masterRepairs.length),
+        siteId,
+        tenantId,
+        category,
+        fault,
+        actionTaken,
+        technician,
+        loggedDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+        costNgn,
+        status,
+        priority: 'High'
+      };
+
+      masterRepairs.unshift(newTicket);
+      saveState();
+      closeAddRepairModal();
+      renderRepairs();
+      showToast('Repair ticket ' + newTicket.ticketId + ' logged!');
+    }
+
     // Drawer Logic
     function openDrawer(siteId) {
-      activeDrawerSiteId = siteId;
       const s = masterSites.find(item => item.siteId === siteId);
       if (!s) return;
 
@@ -2999,12 +3761,11 @@
       document.getElementById('drawerTenant').innerText = s.tenantId + ' • ' + s.state;
       document.getElementById('drawerDL').innerText = s.currentDL + ' L';
       document.getElementById('drawerCPD').innerText = s.cpd + ' L/d';
-      document.getElementById('drawerAutonomy').innerText = s.daysRemaining + ' d';
+      document.getElementById('drawer12h').innerText = (s.cpd12h || (s.cpd / 2).toFixed(1)) + ' L';
       document.getElementById('drawerTankCap').innerText = s.tankCap.toLocaleString() + ' Litres';
-      document.getElementById('drawerLoad').innerText = s.loadKw + ' kW • ' + s.powerSource;
-      document.getElementById('drawerCPH').innerText = s.cph + ' Litres/Hour';
+      document.getElementById('drawerCPH').innerText = s.cph + ' Litres / Hour';
       document.getElementById('drawerGridBadge').innerText = s.gridStatus;
-      document.getElementById('drawerPpmStatus').innerText = 'Next Service in ~ ' + s.hoursToPpm + ' Engine Hours';
+      document.getElementById('drawerPpmStatus').innerText = 'PPM Service in ~ ' + s.hoursToPpm + ' Engine Hours';
       document.getElementById('drawerFseName').innerText = s.fse;
       document.getElementById('drawerFsePhone').innerText = s.fsePhone;
       document.getElementById('drawerSecurity').innerText = s.security;
@@ -3013,8 +3774,8 @@
       const fseActions = document.getElementById('drawerFseActions');
       if (s.fsePhone.match(/^[0-9]/)) {
         fseActions.innerHTML = `
-          <a href="tel:${s.fsePhone}" class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-xs font-bold" title="Call">📞 Call</a>
-          <a href="https://wa.me/234${s.fsePhone.replace(/^0/, '')}" target="_blank" class="px-2 py-0.5 rounded bg-green-500/20 text-green-400 text-xs font-bold" title="WhatsApp">💬 WhatsApp</a>
+          <a href="tel:${s.fsePhone}" class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-xs font-bold">📞 Call</a>
+          <a href="https://wa.me/234${s.fsePhone.replace(/^0/, '')}" target="_blank" class="px-2 py-0.5 rounded bg-green-500/20 text-green-400 text-xs font-bold">💬 WhatsApp</a>
         `;
       } else {
         fseActions.innerHTML = '';
@@ -3055,7 +3816,7 @@
       document.getElementById('modalTankCap').innerText = site.tankCap.toLocaleString() + ' L';
       document.getElementById('modalCurrentDL').innerText = site.currentDL.toLocaleString() + ' L';
       document.getElementById('modalCPD').innerText = site.cpd + ' L/d';
-      document.getElementById('modalAutonomy').innerText = site.daysRemaining + ' d';
+      document.getElementById('modal12h').innerText = (site.cpd12h || (site.cpd/2).toFixed(1)) + ' L';
 
       document.getElementById('simCpdSlider').value = site.cpd;
       document.getElementById('simCpdValue').innerText = site.cpd + ' L/day';
@@ -3100,7 +3861,6 @@
 
       document.getElementById('simNewAutonomy').innerText = newDays + ' Days';
       document.getElementById('simNewDryDate').innerText = dryDateStr;
-      document.getElementById('simNewLevel').innerText = newLevel.toLocaleString() + ' L (' + fillPct + '% Full)';
     }
 
     function applySimulationToSite() {
@@ -3111,13 +3871,14 @@
       const addFuel = parseFloat(document.getElementById('simFuelAddInput').value) || 0;
 
       site.cpd = cpd;
+      site.cpd12h = parseFloat((cpd / 2).toFixed(2));
       site.cph = parseFloat((cpd / 24).toFixed(2));
       site.dailyCostNgn = Math.round(cpd * 2100);
 
       if (addFuel > 0) {
         site.currentDL = Math.min(site.tankCap, site.currentDL + addFuel);
         site.lastSupplyQty = addFuel;
-        site.lastSupplyDate = 'Today (Logged)';
+        site.lastSupplyDate = 'Logged Delivery';
       }
 
       site.daysRemaining = parseFloat((site.currentDL / site.cpd).toFixed(1));
@@ -3138,53 +3899,9 @@
       updateKpis();
       renderAnalytics();
       renderSites();
-      showToast('Updated ' + site.siteId + ' telemetry successfully!');
+      showToast('Updated ' + site.siteId + ' successfully!');
     }
 
-    // Consolidated Supplier Dispatch Modal
-    function openDispatchBatchModal() {
-      const urgentSites = masterSites.filter(s => s.daysRemaining <= 5);
-      const tbody = document.getElementById('dispatchTableBody');
-      let rows = '';
-      let totalLiters = 0;
-
-      urgentSites.forEach(s => {
-        const orderQty = Math.max(300, s.tankCap - s.currentDL);
-        totalLiters += orderQty;
-        rows += `
-          <tr class="hover:bg-white/5">
-            <td class="py-2 px-3 font-bold text-white">${s.siteId}</td>
-            <td class="py-2 px-3 text-slate-300">${s.state}</td>
-            <td class="py-2 px-3 text-rose-400 font-bold">${s.daysRemaining} d</td>
-            <td class="py-2 px-3 font-bold text-cyan-300">${orderQty.toLocaleString()} Litres</td>
-            <td class="py-2 px-3 text-slate-300">${s.supplier}</td>
-          </tr>
-        `;
-      });
-
-      tbody.innerHTML = rows;
-      document.getElementById('dispatchSummaryText').innerText = 'Urgent Nodes: ' + urgentSites.length + ' Sites | Total Diesel Needed: ' + totalLiters.toLocaleString() + ' Litres';
-      document.getElementById('dispatchModal').classList.remove('hidden');
-    }
-
-    function closeDispatchModal() {
-      document.getElementById('dispatchModal').classList.add('hidden');
-    }
-
-    function copyDispatchSummary() {
-      const urgentSites = masterSites.filter(s => s.daysRemaining <= 5);
-      let text = "COLOPLUS DIESEL PURCHASE ORDER DISPATCH (" + new Date().toISOString().slice(0, 10) + ")\n";
-      text += "---------------------------------------------------------\n";
-      urgentSites.forEach(s => {
-        const orderQty = Math.max(300, s.tankCap - s.currentDL);
-        text += `${s.siteId} (${s.tenantId}) | ${s.state} | Current: ${s.currentDL}L | Required: ${orderQty}L | FSE: ${s.fse} (${s.fsePhone})\n`;
-      });
-      navigator.clipboard.writeText(text).then(() => {
-        showToast('Supplier PO Dispatch copied to clipboard!');
-      });
-    }
-
-    // Clipboard & Export
     function copySiteAlert(siteId) {
       const site = masterSites.find(s => s.siteId === siteId);
       if (!site) return;
@@ -3193,25 +3910,24 @@
 Site: ${site.siteId} (${site.tenantId})
 Location: ${site.state} - ${site.address}
 Current Diesel Level: ${site.currentDL} Litres (${site.fillPct}% of ${site.tankCap}L)
-Daily Burn Rate: ${site.cpd} L/day (${site.cph} L/hr)
-Autonomy Remaining: ${site.daysRemaining} Days (~ ${site.hoursRemaining} Hours)
+Daily Burn (24h): ${site.cpd} L/day | 12h Shift: ${site.cpd12h || (site.cpd/2).toFixed(1)} L
+Autonomy Remaining: ${site.daysRemaining} Days
 Predicted Dry Date: ${site.predictedDryDate}
 Assigned FSE: ${site.fse} (Tel: ${site.fsePhone})
 Security Contact: ${site.security} (${site.securityPhone})
-Action Required: Dispatch refuel before predicted dry date to prevent off-air outage.`;
+Action: Dispatch emergency refuel to prevent off-air outage.`;
 
       navigator.clipboard.writeText(alertMsg).then(() => {
         showToast('Alert for ' + site.siteId + ' copied to clipboard!');
-      }).catch(err => {
-        alert(alertMsg);
       });
     }
 
     function exportToCsv() {
       let csvContent = 'data:text/csv;charset=utf-8,';
-      csvContent += 'Site ID,Tenant ID,State,Address,Current DL (L),Tank Cap (L),Fill %,CPD (L/d),CPH (L/h),Days Left,Predicted Dry Date,200L Reorder Date,Supplier,FSE In Charge,FSE Phone,Security,Security Phone,Status\r\n';
+      csvContent += 'Site ID,Tenant ID,State,Address,Current DL (L),Tank Cap (L),Fill %,CPD 24h (L),CPD 12h (L),CPH (L/h),Days Left,Predicted Dry Date,FSE In Charge,FSE Phone,Security,Status\r\n';
 
-      masterSites.forEach(s => {
+      const list = getActiveScopeSites();
+      list.forEach(s => {
         const row = [
           s.siteId,
           `"${s.tenantId}"`,
@@ -3221,15 +3937,13 @@ Action Required: Dispatch refuel before predicted dry date to prevent off-air ou
           s.tankCap,
           s.fillPct,
           s.cpd,
+          s.cpd12h || (s.cpd/2).toFixed(1),
           s.cph,
           s.daysRemaining,
           `"${s.predictedDryDate}"`,
-          `"${s.refuelDate}"`,
-          `"${s.supplier}"`,
           `"${s.fse}"`,
           `"${s.fsePhone}"`,
           `"${s.security}"`,
-          `"${s.securityPhone}"`,
           s.status
         ].join(',');
         csvContent += row + '\r\n';
@@ -3238,11 +3952,11 @@ Action Required: Dispatch refuel before predicted dry date to prevent off-air ou
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement('a');
       link.setAttribute('href', encodedUri);
-      link.setAttribute('download', 'ColoPlus_NOC_Diesel_Audit_' + new Date().toISOString().slice(0, 10) + '.csv');
+      link.setAttribute('download', 'ColoPlus_WK43_Diesel_Audit_' + new Date().toISOString().slice(0, 10) + '.csv');
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      showToast('Exported full 76-site audit to CSV!');
+      showToast('Exported fuel audit to CSV!');
     }
 
     function showToast(msg) {
