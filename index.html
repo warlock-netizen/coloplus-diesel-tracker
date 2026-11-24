@@ -156,18 +156,6 @@
         <span class="opacity-50">CLOCK:</span>
         <span id="liveClock" class="font-medium">2026-11-02 12:00:00 UTC</span>
       </div>
-      <div class="flex items-center gap-2">
-        <span class="opacity-50">BURN:</span>
-        <span id="liveBurnTicker" class="text-(--color-accent) font-medium">+0.00 L</span>
-      </div>
-      
-      <!-- Admin Mode Toggle Button -->
-      <button id="adminToggleBtn" onclick="toggleAdminAccess()" class="border_ui px-2.5 py-1 flex items-center gap-1.5 btn-invert cursor-pointer text-[11px] font-bold">
-        <span id="adminLockIcon">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-        </span>
-        <span id="adminBtnText">ADMIN LOCKED</span>
-      </button>
 
       <!-- Theme Mode Toggle -->
       <button onclick="toggleTheme()" class="border_ui px-2.5 py-1 flex items-center gap-1.5 btn-invert cursor-pointer text-[11px]">
@@ -178,23 +166,6 @@
       </button>
     </div>
   </header>
-
-  <!-- ADMIN ACTIVE BANNER -->
-  <div id="adminBanner" class="hidden border_ui border-amber-500/50 bg-amber-500/10 px-4 py-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-amber-400">
-    <div class="flex items-center gap-2">
-      <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-      <span class="font-bold tracking-wider">ADMIN MODE ACTIVE (PIN 1234)</span>
-      <span class="opacity-70">— Full write access: edit parameters, recalibrate, or reset any site.</span>
-    </div>
-    <div class="flex items-center gap-2">
-      <button onclick="resetAllToMasterAudit()" class="border_ui border-rose-500/50 hover:bg-rose-600 hover:text-white px-2 py-0.5 text-[11px] font-bold text-rose-300 transition-colors cursor-pointer">
-        RESET ALL SITES TO AUDIT
-      </button>
-      <button onclick="lockAdminAccess()" class="border_ui border-amber-500/50 hover:bg-amber-500 hover:text-black px-2 py-0.5 text-[11px] font-bold transition-colors cursor-pointer">
-        LOCK ADMIN
-      </button>
-    </div>
-  </div>
 
   <!-- MAIN OPERATING FRAME -->
   <div class="flex flex-1 min-h-[calc(100vh-120px)] flex-col md:flex-row gap-2.5">
@@ -223,6 +194,11 @@
             <span class="font-bold tracking-wide">03. ADMIN PORTAL</span>
             <span id="adminNavStatusBadge" class="ml-auto border_ui px-1 text-[9px] text-amber-400 border-amber-500/40">PIN</span>
           </button>
+
+          <button id="navCalendarBtn" onclick="switchSection('calendar')" class="flex items-center gap-2.5 py-1.5 px-2 text-left border_ui cursor-pointer btn-invert opacity-80 hover:opacity-100">
+            <span class="w-1.5 h-1.5 rounded-full bg-transparent"></span>
+            <span class="font-bold tracking-wide">04. CALENDAR &amp; TASKS</span>
+          </button>
         </nav>
 
         <!-- FSE Portal Sub-Menu (Visible when FSE logged in) -->
@@ -239,51 +215,6 @@
           <button id="subNavFseRepairs" onclick="openFseModule('repairs')" class="w-full flex items-center justify-between py-1 px-2 text-left border_ui cursor-pointer btn-invert text-[11px] opacity-75">
             <span>REPAIRS &amp; PPM</span>
             <span class="opacity-60">&gt;</span>
-          </button>
-        </div>
-
-        <div class="border_ui my-4 opacity-40"></div>
-
-        <div class="opacity-50 text-[10px] uppercase tracking-wider mb-1.5">// NOC FLEET OVERVIEW</div>
-        <nav class="flex flex-col gap-1.5">
-          <button id="navFleetBtn" onclick="switchSection('fleet')" class="flex items-center gap-2.5 py-1.5 px-2 text-left border_ui cursor-pointer btn-invert opacity-70 hover:opacity-100">
-            <span class="w-1.5 h-1.5 rounded-full bg-transparent"></span>
-            <span class="font-bold tracking-wide">FLEET &amp; FUEL</span>
-          </button>
-
-          <button id="navPowerBtn" onclick="switchSection('power')" class="flex items-center gap-2.5 py-1.5 px-2 text-left border_ui cursor-pointer btn-invert opacity-70 hover:opacity-100">
-            <span class="w-1.5 h-1.5 rounded-full bg-transparent"></span>
-            <span class="font-bold tracking-wide">LIGHT &amp; BATTERY (BUB)</span>
-          </button>
-          
-          <button id="navRepairsBtn" onclick="switchSection('repairs')" class="flex items-center gap-2.5 py-1.5 px-2 text-left border_ui cursor-pointer btn-invert opacity-70 hover:opacity-100">
-            <span class="w-1.5 h-1.5 rounded-full bg-transparent"></span>
-            <span class="font-bold tracking-wide">REPAIRS &amp; PPM</span>
-            <span id="repairBadgeCount" class="ml-auto border_ui px-1 text-[10px] opacity-75">6</span>
-          </button>
-          
-          <button id="navAnalyticsBtn" onclick="switchSection('analytics')" class="flex items-center gap-2.5 py-1.5 px-2 text-left border_ui cursor-pointer btn-invert opacity-70 hover:opacity-100">
-            <span class="w-1.5 h-1.5 rounded-full bg-transparent"></span>
-            <span class="font-bold tracking-wide">ANALYTICS RUNWAY</span>
-          </button>
-        </nav>
-
-        <div class="border_ui my-4 opacity-40"></div>
-
-        <!-- Action Shortcuts -->
-        <div class="space-y-1.5">
-          <div class="opacity-50 text-[10px] uppercase tracking-wider mb-2">// QUICK ACTIONS</div>
-          <button id="quickAddSiteBtn" onclick="openAddSiteModal()" class="w-full flex items-center justify-between border_ui px-2 py-1.5 btn-invert cursor-pointer text-[11px]">
-            <span>+ ADD NEW SITE</span>
-            <span id="quickAddSiteLock" class="opacity-60 text-[9px]">[ADMIN]</span>
-          </button>
-          <button onclick="openAddRepairModal()" class="w-full flex items-center justify-between border_ui px-2 py-1.5 btn-invert cursor-pointer text-[11px]">
-            <span>+ LOG REPAIR RCA</span>
-            <span class="opacity-50">[R]</span>
-          </button>
-          <button onclick="exportToCsv()" class="w-full flex items-center justify-between border_ui px-2 py-1.5 btn-invert cursor-pointer text-[11px]">
-            <span>EXPORT CSV</span>
-            <span class="opacity-50">[D]</span>
           </button>
         </div>
       </div>
@@ -334,8 +265,8 @@
               <button onclick="switchSection('admin')" class="border_ui border-amber-500/60 text-amber-400 px-5 py-3 font-bold text-xs tracking-wider uppercase hover:bg-amber-500 hover:text-black transition-colors cursor-pointer">
                 ADMIN PORTAL &gt;&gt;
               </button>
-              <button onclick="switchSection('fleet')" class="border_ui px-5 py-3 font-bold text-xs tracking-wider uppercase btn-invert cursor-pointer">
-                VIEW NOC FLEET
+              <button onclick="switchSection('calendar')" class="border_ui px-5 py-3 font-bold text-xs tracking-wider uppercase btn-invert cursor-pointer">
+                CALENDAR &amp; TASKS
               </button>
             </div>
           </div>
@@ -415,9 +346,9 @@
           </div>
 
           <div class="border_ui p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] opacity-80">
-            <span>// NOC OVERVIEW: Full 76-site diesel inventory, autonomy runway rankings, WhatsApp/SMS dispatch, and CSV audit exports.</span>
-            <button onclick="switchSection('analytics')" class="border_ui px-3 py-1 btn-invert cursor-pointer font-bold shrink-0">
-              OPEN ANALYTICS RUNWAY
+            <span>// CALENDAR &amp; TASKS: Schedule site refuels, PPM inspections, and field engineering tasks across the 76-site network.</span>
+            <button onclick="switchSection('calendar')" class="border_ui px-3 py-1 btn-invert cursor-pointer font-bold shrink-0">
+              OPEN CALENDAR &amp; TASKS
             </button>
           </div>
         </div>
@@ -823,6 +754,67 @@
 
         </div>
 
+      </section>
+
+      <!-- SECTION 0D: CALENDAR & TASKS -->
+      <section id="sectionCalendar" class="hidden flex flex-col gap-2.5 text-xs">
+        <div class="border_ui p-4 bg-(--color-card-bg)/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div class="text-[10px] uppercase tracking-widest opacity-50">// OPERATIONS SCHEDULER</div>
+            <h2 class="hero-outline-title text-4xl uppercase mt-0.5">CALENDAR &amp; TASKS</h2>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="changeCalendarMonth(-1)" class="border_ui px-3 py-1.5 btn-invert cursor-pointer font-bold">&lt; PREV</button>
+            <span id="calendarMonthLabel" class="border_ui px-4 py-1.5 font-bold uppercase min-w-[140px] text-center">NOVEMBER 2026</span>
+            <button onclick="changeCalendarMonth(1)" class="border_ui px-3 py-1.5 btn-invert cursor-pointer font-bold">NEXT &gt;</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-2.5">
+          <!-- Monthly Calendar Grid -->
+          <div class="lg:col-span-2 border_ui p-4 bg-(--color-card-bg)/40 space-y-3">
+            <div class="grid grid-cols-7 gap-1 text-center text-[10px] uppercase opacity-60 font-bold pb-1 border-b border_ui">
+              <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
+            </div>
+            <div id="calendarGridDays" class="grid grid-cols-7 gap-1">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+
+          <!-- Tasks Panel -->
+          <div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3 flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between border-b border_ui pb-2">
+                <span class="font-bold uppercase">// TASKS FOR <span id="selectedDateLabel">ALL DATES</span></span>
+                <button onclick="selectCalendarDate(null)" class="border_ui px-2 py-0.5 text-[10px] btn-invert cursor-pointer">SHOW ALL</button>
+              </div>
+
+              <form onsubmit="handleAddTask(event)" class="space-y-2 border_ui p-2.5 bg-black/10 dark:bg-white/5">
+                <div class="opacity-60 text-[10px] uppercase font-bold">// ADD NEW TASK</div>
+                <input type="text" id="newTaskTitle" required placeholder="Task description (e.g. Gen PPM / Diesel drop)" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none">
+                <div class="grid grid-cols-2 gap-2">
+                  <select id="newTaskSite" class="border_ui bg-(--color-card-bg) px-2 py-1.5 outline-none">
+                    <!-- Populated dynamically -->
+                  </select>
+                  <input type="date" id="newTaskDate" required class="border_ui bg-(--color-card-bg) px-2 py-1.5 outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <select id="newTaskCategory" class="border_ui bg-(--color-card-bg) px-2 py-1.5 outline-none">
+                    <option value="FUEL">FUEL</option>
+                    <option value="BUB">LIGHT &amp; BUB</option>
+                    <option value="PPM">REPAIRS &amp; PPM</option>
+                    <option value="GENERAL">GENERAL</option>
+                  </select>
+                  <button type="submit" class="border_ui py-1.5 font-bold nav_active btn-invert cursor-pointer">+ ADD TASK</button>
+                </div>
+              </form>
+
+              <div id="tasksListContainer" class="space-y-1.5 max-h-[360px] overflow-y-auto no-scrollbar">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- SECTION 1: FLEET & FUEL TELEMETRY -->
@@ -9742,8 +9734,10 @@
 
       document.getElementById('scopeAllCount').innerText = masterSites.length;
       document.getElementById('landingTotalSites').innerText = masterSites.length;
-      document.getElementById('repairBadgeCount').innerText = masterRepairs.length;
+      const rBadge = document.getElementById('repairBadgeCount');
+      if (rBadge) rBadge.innerText = masterRepairs.length;
 
+      initCalendarAndTasks();
       updateAdminUi();
       updateKpis();
       renderSites();
@@ -9753,7 +9747,6 @@
       switchSection(activeSection);
 
       setInterval(tickClock, 1000);
-      setInterval(tickFuelBurn, 2000);
     }
 
     function tickClock() {
@@ -9762,12 +9755,14 @@
     }
 
     function tickFuelBurn() {
+      const ticker = document.getElementById('liveBurnTicker');
+      if (!ticker) return;
       const activeList = getActiveScopeSites();
       let totalCph = 0;
       activeList.forEach(s => totalCph += s.cph);
       const burnPer2Sec = (totalCph / 3600) * 2;
       liveAccumulatedBurn += burnPer2Sec;
-      document.getElementById('liveBurnTicker').innerText = '+' + liveAccumulatedBurn.toFixed(2) + ' L';
+      ticker.innerText = '+' + liveAccumulatedBurn.toFixed(2) + ' L';
     }
 
     // Navigation Switching
@@ -9776,6 +9771,7 @@
       const navLanding = document.getElementById('navLandingBtn');
       const navFse = document.getElementById('navFseBtn');
       const navAdmin = document.getElementById('navAdminBtn');
+      const navCalendar = document.getElementById('navCalendarBtn');
       const navFleet = document.getElementById('navFleetBtn');
       const navPower = document.getElementById('navPowerBtn');
       const navRepairs = document.getElementById('navRepairsBtn');
@@ -9784,6 +9780,7 @@
       const secLanding = document.getElementById('sectionLanding');
       const secFse = document.getElementById('sectionFse');
       const secAdmin = document.getElementById('sectionAdmin');
+      const secCalendar = document.getElementById('sectionCalendar');
       const secFleet = document.getElementById('sectionFleet');
       const secPower = document.getElementById('sectionPower');
       const secRepairs = document.getElementById('sectionRepairs');
@@ -9791,13 +9788,13 @@
       const pathEl = document.getElementById('headerPath');
 
       // Reset
-      [navLanding, navFse, navAdmin, navFleet, navPower, navRepairs, navAnalytics].forEach(b => {
+      [navLanding, navFse, navAdmin, navCalendar, navFleet, navPower, navRepairs, navAnalytics].forEach(b => {
         if (!b) return;
         b.className = 'flex items-center gap-2.5 py-1.5 px-2 text-left border_ui cursor-pointer btn-invert opacity-70 hover:opacity-100';
         b.querySelector('span').className = 'w-1.5 h-1.5 rounded-full bg-transparent';
       });
 
-      [secLanding, secFse, secAdmin, secFleet, secPower, secRepairs, secAnalytics].forEach(s => {
+      [secLanding, secFse, secAdmin, secCalendar, secFleet, secPower, secRepairs, secAnalytics].forEach(s => {
         if (s) s.classList.add('hidden');
       });
 
@@ -9821,31 +9818,168 @@
         navAdmin.querySelector('span').className = activeDot;
         pathEl.innerText = (isAdminUnlocked && adminSession) ? ('// ADMIN PORTAL — ' + adminSession.siteId) : '// ADMIN PORTAL — SITE LOGIN';
         updateAdminPortalUiState();
-      } else if (sec === 'fleet') {
+      } else if (sec === 'calendar') {
+        secCalendar.classList.remove('hidden');
+        navCalendar.className = activeClass;
+        navCalendar.querySelector('span').className = activeDot;
+        pathEl.innerText = '// CALENDAR & TASKS';
+        renderCalendar();
+        renderTasks();
+      } else if (sec === 'fleet' && secFleet) {
         secFleet.classList.remove('hidden');
-        navFleet.className = activeClass;
-        navFleet.querySelector('span').className = activeDot;
+        if (navFleet) { navFleet.className = activeClass; navFleet.querySelector('span').className = activeDot; }
         pathEl.innerText = '// FLEET & FUEL TELEMETRY';
         renderSites();
-      } else if (sec === 'power') {
+      } else if (sec === 'power' && secPower) {
         secPower.classList.remove('hidden');
-        navPower.className = activeClass;
-        navPower.querySelector('span').className = activeDot;
+        if (navPower) { navPower.className = activeClass; navPower.querySelector('span').className = activeDot; }
         pathEl.innerText = '// LIGHT & BACKUP BATTERY (BUB)';
         renderPowerMatrix();
-      } else if (sec === 'repairs') {
+      } else if (sec === 'repairs' && secRepairs) {
         secRepairs.classList.remove('hidden');
-        navRepairs.className = activeClass;
-        navRepairs.querySelector('span').className = activeDot;
+        if (navRepairs) { navRepairs.className = activeClass; navRepairs.querySelector('span').className = activeDot; }
         pathEl.innerText = '// REPAIRS & PPM HUB';
         renderRepairs();
-      } else if (sec === 'analytics') {
+      } else if (sec === 'analytics' && secAnalytics) {
         secAnalytics.classList.remove('hidden');
-        navAnalytics.className = activeClass;
-        navAnalytics.querySelector('span').className = activeDot;
+        if (navAnalytics) { navAnalytics.className = activeClass; navAnalytics.querySelector('span').className = activeDot; }
         pathEl.innerText = '// ANALYTICS RUNWAY';
         renderAnalytics();
       }
+    }
+
+    // ==================== CALENDAR & TASKS LOGIC ====================
+    let calendarViewDate = new Date();
+    let selectedCalendarDate = null;
+    let masterTasks = [];
+    try {
+      const savedTasks = localStorage.getItem('coloplus_tasks_v1');
+      if (savedTasks) masterTasks = JSON.parse(savedTasks);
+    } catch (e) { masterTasks = []; }
+
+    function initCalendarAndTasks() {
+      const siteSel = document.getElementById('newTaskSite');
+      if (siteSel) {
+        siteSel.innerHTML = '<option value="ALL SITES">ALL SITES</option>' +
+          masterSites.map(s => '<option value="' + s.siteId + '">' + s.siteId + ' (' + s.state + ')</option>').join('');
+      }
+      const dateInput = document.getElementById('newTaskDate');
+      if (dateInput) dateInput.value = new Date().toISOString().slice(0, 10);
+
+      if (masterTasks.length === 0) {
+        const todayStr = new Date().toISOString().slice(0, 10);
+        masterTasks = [
+          { id: 't1', title: 'Inspect Gen Fuel Filters & Alternator', site: 'CP/CP/EK/002', date: todayStr, category: 'PPM', done: false },
+          { id: 't2', title: 'Verify Diesel Delivery & Dip Reading', site: 'CP/CP/AN/001', date: todayStr, category: 'FUEL', done: false },
+          { id: 't3', title: 'Check BUB Battery Bank Voltage & Light Hours', site: 'CP/CP/LA/001', date: todayStr, category: 'BUB', done: true }
+        ];
+        localStorage.setItem('coloplus_tasks_v1', JSON.stringify(masterTasks));
+      }
+      renderCalendar();
+      renderTasks();
+    }
+
+    function changeCalendarMonth(delta) {
+      calendarViewDate = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth() + delta, 1);
+      renderCalendar();
+    }
+
+    function selectCalendarDate(dateStr) {
+      selectedCalendarDate = dateStr;
+      document.getElementById('selectedDateLabel').innerText = dateStr ? dateStr : 'ALL DATES';
+      const dateInput = document.getElementById('newTaskDate');
+      if (dateStr && dateInput) dateInput.value = dateStr;
+      renderCalendar();
+      renderTasks();
+    }
+
+    function renderCalendar() {
+      const grid = document.getElementById('calendarGridDays');
+      const label = document.getElementById('calendarMonthLabel');
+      if (!grid || !label) return;
+
+      const year = calendarViewDate.getFullYear();
+      const month = calendarViewDate.getMonth();
+      label.innerText = calendarViewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase();
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const todayStr = new Date().toISOString().slice(0, 10);
+
+      let html = '';
+      for (let i = 0; i < firstDay; i++) {
+        html += '<div class="p-2 border_ui opacity-20 min-h-[60px]"></div>';
+      }
+      for (let d = 1; d <= daysInMonth; d++) {
+        const mm = String(month + 1).padStart(2, '0');
+        const dd = String(d).padStart(2, '0');
+        const dateStr = year + '-' + mm + '-' + dd;
+        const dayTasks = masterTasks.filter(t => t.date === dateStr);
+        const pendingCount = dayTasks.filter(t => !t.done).length;
+        const isSelected = selectedCalendarDate === dateStr;
+        const isToday = todayStr === dateStr;
+
+        html += '<button type="button" onclick="selectCalendarDate(\'' + dateStr + '\')" class="p-2 border_ui text-left min-h-[60px] flex flex-col justify-between cursor-pointer btn-invert ' +
+          (isSelected ? 'nav_active' : (isToday ? 'border-amber-400' : '')) + '">' +
+          '<div class="flex justify-between items-center w-full"><span class="font-bold">' + d + '</span>' +
+          (isToday ? '<span class="text-[8px] uppercase opacity-75">TODAY</span>' : '') + '</div>' +
+          (dayTasks.length > 0 ? '<div class="text-[9px] mt-1 font-bold ' + (pendingCount > 0 ? 'text-amber-400' : 'text-(--color-accent)') + '">' + dayTasks.length + ' TASK' + (dayTasks.length > 1 ? 'S' : '') + '</div>' : '<div class="text-[9px] opacity-25">—</div>') +
+        '</button>';
+      }
+      grid.innerHTML = html;
+    }
+
+    function renderTasks() {
+      const container = document.getElementById('tasksListContainer');
+      if (!container) return;
+      const list = selectedCalendarDate ? masterTasks.filter(t => t.date === selectedCalendarDate) : masterTasks;
+
+      if (list.length === 0) {
+        container.innerHTML = '<div class="opacity-60 text-[11px] py-3 text-center border_ui">No tasks scheduled for this view.</div>';
+        return;
+      }
+
+      container.innerHTML = list.map(t =>
+        '<div class="border_ui p-2.5 flex items-start justify-between gap-2">' +
+          '<div onclick="toggleTaskDone(\'' + t.id + '\')" class="cursor-pointer flex-1">' +
+            '<div class="font-bold text-[11px] ' + (t.done ? 'line-through opacity-50' : '') + '">' + (t.done ? '[✓] ' : '[ ] ') + t.title + '</div>' +
+            '<div class="text-[10px] opacity-60 mt-0.5">' + t.site + ' · ' + t.date + ' · ' + t.category + '</div>' +
+          '</div>' +
+          '<button onclick="deleteTask(\'' + t.id + '\')" class="border_ui px-1.5 py-0.5 text-[9px] hover:bg-rose-600 hover:text-white cursor-pointer">DEL</button>' +
+        '</div>'
+      ).join('');
+    }
+
+    function handleAddTask(e) {
+      e.preventDefault();
+      const title = document.getElementById('newTaskTitle').value.trim();
+      const site = document.getElementById('newTaskSite').value;
+      const date = document.getElementById('newTaskDate').value;
+      const category = document.getElementById('newTaskCategory').value;
+      if (!title || !date) return;
+
+      masterTasks.unshift({ id: 't_' + Date.now(), title, site, date, category, done: false });
+      localStorage.setItem('coloplus_tasks_v1', JSON.stringify(masterTasks));
+      document.getElementById('newTaskTitle').value = '';
+      renderCalendar();
+      renderTasks();
+      showToast('Task added for ' + date);
+    }
+
+    function toggleTaskDone(id) {
+      const t = masterTasks.find(x => x.id === id);
+      if (!t) return;
+      t.done = !t.done;
+      localStorage.setItem('coloplus_tasks_v1', JSON.stringify(masterTasks));
+      renderCalendar();
+      renderTasks();
+    }
+
+    function deleteTask(id) {
+      masterTasks = masterTasks.filter(x => x.id !== id);
+      localStorage.setItem('coloplus_tasks_v1', JSON.stringify(masterTasks));
+      renderCalendar();
+      renderTasks();
     }
 
     // ==================== FSE PORTAL LOGIC ====================
@@ -11043,15 +11177,15 @@
       const navBadge = document.getElementById('adminNavStatusBadge');
       const addLock = document.getElementById('quickAddSiteLock');
       if (isAdminUnlocked) {
-        btn.className = 'border_ui border-amber-500 bg-amber-500 text-black px-2.5 py-1 flex items-center gap-1.5 font-bold cursor-pointer text-[11px]';
-        txt.innerText = 'ADMIN ACTIVE';
-        banner.classList.remove('hidden');
+        if (btn) btn.className = 'border_ui border-amber-500 bg-amber-500 text-black px-2.5 py-1 flex items-center gap-1.5 font-bold cursor-pointer text-[11px]';
+        if (txt) txt.innerText = 'ADMIN ACTIVE';
+        if (banner) banner.classList.remove('hidden');
         if (navBadge) navBadge.innerText = adminSession ? adminSession.siteId : 'ACTIVE';
         if (addLock) addLock.innerText = '[N]';
       } else {
-        btn.className = 'border_ui px-2.5 py-1 flex items-center gap-1.5 btn-invert cursor-pointer text-[11px] font-bold';
-        txt.innerText = 'ADMIN LOCKED';
-        banner.classList.add('hidden');
+        if (btn) btn.className = 'border_ui px-2.5 py-1 flex items-center gap-1.5 btn-invert cursor-pointer text-[11px] font-bold';
+        if (txt) txt.innerText = 'ADMIN LOCKED';
+        if (banner) banner.classList.add('hidden');
         if (navBadge) navBadge.innerText = 'PIN';
         if (addLock) addLock.innerText = '[ADMIN]';
       }
