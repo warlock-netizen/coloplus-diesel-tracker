@@ -121,6 +121,20 @@
       background-color: var(--color-primary);
       color: var(--color-secondary);
     }
+
+    .card_surface {
+      background-color: var(--color-card-bg);
+    }
+    .nav_active {
+      background-color: var(--color-primary);
+      color: var(--color-secondary);
+    }
+    .hero-outline-title {
+      font-family: 'Londrina Outline', sans-serif;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      line-height: 0.95;
+    }
   </style>
 </head>
 <body class="flex flex-col gap-2.5 antialiased selection:bg-neutral-800 selection:text-white">
@@ -133,7 +147,7 @@
         <span class="font-bold tracking-widest uppercase">COLOPLUS NOC</span>
       </div>
       <span class="opacity-40">/</span>
-      <span id="headerPath" class="opacity-75 tracking-wider uppercase">// FLEET TELEMETRY &amp; POWER</span>
+      <span id="headerPath" class="opacity-75 tracking-wider uppercase">// INTRO &amp; SYSTEM GUIDE</span>
       <span class="cursor-blink font-bold">_</span>
     </div>
 
@@ -186,14 +200,54 @@
   <div class="flex flex-1 min-h-[calc(100vh-120px)] flex-col md:flex-row gap-2.5">
     
     <!-- LEFT NAVIGATION RAIL (debabrata aside style) -->
-    <aside class="w-full md:w-56 shrink-0 border_ui p-4 flex flex-col justify-between bg-(--color-card-bg)/30 text-xs">
+    <aside class="w-full md:w-60 shrink-0 border_ui p-4 flex flex-col justify-between bg-(--color-card-bg)/30 text-xs">
       <div>
-        <div class="mb-1 font-bold tracking-widest text-sm">COLOPLUS NOC</div>
-        <div class="opacity-50 text-[11px] mb-6">// TELECOM SYSTEM v5.3</div>
+        <div class="mb-1 font-bold tracking-widest text-sm">COLOPLUS TECH</div>
+        <div class="opacity-50 text-[11px] mb-5">// NOC &amp; FSE SYSTEM</div>
 
+        <div class="opacity-50 text-[10px] uppercase tracking-wider mb-1.5">// MAIN MENU</div>
         <nav class="flex flex-col gap-1.5">
-          <button id="navFleetBtn" onclick="switchSection('fleet')" class="flex items-center gap-2.5 py-1.5 px-2 text-left border_ui cursor-pointer btn-invert bg-(--color-primary) text-(--color-secondary)">
+          <button id="navLandingBtn" onclick="switchSection('landing')" class="flex items-center gap-2.5 py-1.5 px-2 text-left border_ui cursor-pointer btn-invert nav_active">
             <span class="w-1.5 h-1.5 rounded-full bg-(--color-accent)"></span>
+            <span class="font-bold tracking-wide">01. INTRO &amp; GUIDE</span>
+          </button>
+
+          <button id="navFseBtn" onclick="switchSection('fse')" class="flex items-center gap-2.5 py-1.5 px-2 text-left border_ui cursor-pointer btn-invert opacity-80 hover:opacity-100">
+            <span class="w-1.5 h-1.5 rounded-full bg-transparent"></span>
+            <span class="font-bold tracking-wide">02. FSE PORTAL</span>
+            <span id="fseNavStatusBadge" class="ml-auto border_ui px-1 text-[9px] opacity-80">LOGIN</span>
+          </button>
+
+          <button id="navAdminBtn" onclick="switchSection('admin')" class="flex items-center gap-2.5 py-1.5 px-2 text-left border_ui cursor-pointer btn-invert opacity-80 hover:opacity-100">
+            <span class="w-1.5 h-1.5 rounded-full bg-transparent"></span>
+            <span class="font-bold tracking-wide">03. ADMIN PORTAL</span>
+            <span id="adminNavStatusBadge" class="ml-auto border_ui px-1 text-[9px] text-amber-400 border-amber-500/40">PIN</span>
+          </button>
+        </nav>
+
+        <!-- FSE Portal Sub-Menu (Visible when FSE logged in) -->
+        <div id="fseSubNav" class="hidden mt-2 pl-3 border-l border_ui space-y-1">
+          <div class="opacity-50 text-[9px] uppercase tracking-wider mb-1">// SITE MODULES</div>
+          <button id="subNavFseFuel" onclick="openFseModule('fuel')" class="w-full flex items-center justify-between py-1 px-2 text-left border_ui cursor-pointer btn-invert text-[11px] nav_active">
+            <span>FLEET &amp; FUEL</span>
+            <span class="opacity-60">&gt;</span>
+          </button>
+          <button id="subNavFseBub" onclick="openFseModule('bub')" class="w-full flex items-center justify-between py-1 px-2 text-left border_ui cursor-pointer btn-invert text-[11px] opacity-75">
+            <span>LIGHT &amp; BATTERY (BUB)</span>
+            <span class="opacity-60">&gt;</span>
+          </button>
+          <button id="subNavFseRepairs" onclick="openFseModule('repairs')" class="w-full flex items-center justify-between py-1 px-2 text-left border_ui cursor-pointer btn-invert text-[11px] opacity-75">
+            <span>REPAIRS &amp; PPM</span>
+            <span class="opacity-60">&gt;</span>
+          </button>
+        </div>
+
+        <div class="border_ui my-4 opacity-40"></div>
+
+        <div class="opacity-50 text-[10px] uppercase tracking-wider mb-1.5">// NOC FLEET OVERVIEW</div>
+        <nav class="flex flex-col gap-1.5">
+          <button id="navFleetBtn" onclick="switchSection('fleet')" class="flex items-center gap-2.5 py-1.5 px-2 text-left border_ui cursor-pointer btn-invert opacity-70 hover:opacity-100">
+            <span class="w-1.5 h-1.5 rounded-full bg-transparent"></span>
             <span class="font-bold tracking-wide">FLEET &amp; FUEL</span>
           </button>
 
@@ -219,9 +273,9 @@
         <!-- Action Shortcuts -->
         <div class="space-y-1.5">
           <div class="opacity-50 text-[10px] uppercase tracking-wider mb-2">// QUICK ACTIONS</div>
-          <button onclick="openAddSiteModal()" class="w-full flex items-center justify-between border_ui px-2 py-1.5 btn-invert cursor-pointer text-[11px]">
+          <button id="quickAddSiteBtn" onclick="openAddSiteModal()" class="w-full flex items-center justify-between border_ui px-2 py-1.5 btn-invert cursor-pointer text-[11px]">
             <span>+ ADD NEW SITE</span>
-            <span class="opacity-50">[N]</span>
+            <span id="quickAddSiteLock" class="opacity-60 text-[9px]">[ADMIN]</span>
           </button>
           <button onclick="openAddRepairModal()" class="w-full flex items-center justify-between border_ui px-2 py-1.5 btn-invert cursor-pointer text-[11px]">
             <span>+ LOG REPAIR RCA</span>
@@ -253,8 +307,526 @@
     <!-- CENTER / WORKSPACE AREA -->
     <main class="flex-1 flex flex-col gap-2.5 min-w-0">
 
+      <!-- SECTION 0: LANDING PAGE (INTRO TO COLOPLUS TECH & CAPABILITIES) -->
+      <section id="sectionLanding" class="flex flex-col gap-2.5">
+        
+        <!-- 1. INTRO TO COLOPLUS TECH -->
+        <div class="border_ui p-6 md:p-8 bg-(--color-card-bg)/50 flex flex-col justify-between gap-6">
+          <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border_ui pb-6">
+            <div>
+              <div class="text-[11px] uppercase tracking-widest opacity-60 mb-2">
+                // 01. SYSTEM INTRODUCTION — TELECOM ENERGY &amp; NOC COMMAND
+              </div>
+              <h1 class="hero-outline-title text-5xl sm:text-6xl md:text-7xl uppercase tracking-wider">
+                COLOPLUS TECH
+              </h1>
+              <p class="mt-3 text-xs sm:text-sm max-w-2xl opacity-85 leading-relaxed">
+                Welcome to the <span class="font-bold">ColoPlus Tech Smart Diesel &amp; Site Autonomy Platform</span>. 
+                Built for ColoPlus Telecom Infrastructure, this system monitors <span class="font-bold text-(--color-accent)">76 nationwide tower sites</span>, 
+                empowering Field Support Engineers (FSEs) and NOC operators to track diesel deliveries, utility grid light hours, 
+                backup battery health (BUB), and recurring machinery repairs in real time.
+              </p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2 shrink-0 flex-wrap">
+              <button onclick="switchSection('fse')" class="border_ui px-5 py-3 font-bold text-xs tracking-wider uppercase nav_active btn-invert cursor-pointer">
+                ENTER FSE PORTAL &gt;&gt;
+              </button>
+              <button onclick="switchSection('admin')" class="border_ui border-amber-500/60 text-amber-400 px-5 py-3 font-bold text-xs tracking-wider uppercase hover:bg-amber-500 hover:text-black transition-colors cursor-pointer">
+                ADMIN PORTAL &gt;&gt;
+              </button>
+              <button onclick="switchSection('fleet')" class="border_ui px-5 py-3 font-bold text-xs tracking-wider uppercase btn-invert cursor-pointer">
+                VIEW NOC FLEET
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Telemetry Strip -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+            <div class="border_ui p-3">
+              <div class="opacity-50 text-[10px] uppercase">MONITORED TOWERS</div>
+              <div class="londrina-outline-regular text-3xl mt-0.5" id="landingTotalSites">76</div>
+              <div class="text-[10px] opacity-60">Nationwide Grid</div>
+            </div>
+            <div class="border_ui p-3">
+              <div class="opacity-50 text-[10px] uppercase">FSE PORTAL ACCESS</div>
+              <div class="londrina-outline-regular text-3xl mt-0.5 text-(--color-accent)">SITE LOGIN</div>
+              <div class="text-[10px] opacity-60">Direct Field Reporting</div>
+            </div>
+            <div class="border_ui p-3">
+              <div class="opacity-50 text-[10px] uppercase">POWER TELEMETRY</div>
+              <div class="londrina-outline-regular text-3xl mt-0.5">BUB + GRID</div>
+              <div class="text-[10px] opacity-60">Battery Life &amp; Light Hrs</div>
+            </div>
+            <div class="border_ui p-3">
+              <div class="opacity-50 text-[10px] uppercase">ASSET RELIABILITY</div>
+              <div class="londrina-outline-regular text-3xl mt-0.5 text-amber-500">PPM &amp; RCA</div>
+              <div class="text-[10px] opacity-60">Constant-Repair Tracking</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. LIST WHAT THE PAGE CAN DO -->
+        <div class="border_ui p-5 bg-(--color-card-bg)/40 space-y-4">
+          <div class="flex items-center justify-between border-b border_ui pb-2.5">
+            <span class="font-bold tracking-wider uppercase text-xs">// 02. WHAT THIS PLATFORM CAN DO (CAPABILITIES)</span>
+            <span class="opacity-50 text-[11px]">SELECT ANY MODULE TO LAUNCH</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+            <div onclick="switchSection('fse')" class="border_ui p-4 hover:border-(--color-primary) cursor-pointer transition-colors space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-sm uppercase">01 // FSE PORTAL (LOGIN WITH SITE DETAILS)</span>
+                <span class="border_ui px-1.5 py-0.5 text-[10px]">PORTAL &gt;&gt;</span>
+              </div>
+              <p class="opacity-75 text-[11px] leading-relaxed">
+                Field Support Engineers log in using their assigned <span class="font-bold">Site ID, State, and FSE Credentials</span> to unlock dedicated site controls for Fuel, Battery/Light, and Repairs &amp; PPM.
+              </p>
+            </div>
+
+            <div onclick="switchSection('fse'); setTimeout(() => { if(fseSession) openFseModule('fuel'); }, 50)" class="border_ui p-4 hover:border-(--color-primary) cursor-pointer transition-colors space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-sm uppercase">02 // FLEET &amp; FUEL (INPUT LEVEL &amp; DELIVERY TIME)</span>
+                <span class="border_ui px-1.5 py-0.5 text-[10px]">FUEL &gt;&gt;</span>
+              </div>
+              <p class="opacity-75 text-[11px] leading-relaxed">
+                Input current <span class="font-bold">diesel fuel levels (L)</span>, record exact <span class="font-bold">time &amp; date diesel was received</span>, inspect <span class="font-bold">previous date received</span>, and track run-out predictions.
+              </p>
+            </div>
+
+            <div onclick="switchSection('fse'); setTimeout(() => { if(fseSession) openFseModule('bub'); }, 50)" class="border_ui p-4 hover:border-(--color-primary) cursor-pointer transition-colors space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-sm uppercase">03 // LIGHT &amp; BATTERY (BUB) TELEMETRY</span>
+                <span class="border_ui px-1.5 py-0.5 text-[10px]">BUB &gt;&gt;</span>
+              </div>
+              <p class="opacity-75 text-[11px] leading-relaxed">
+                Monitor and log <span class="font-bold">battery life</span> (SOC %, bank voltage, off-grid autonomy hours) and the <span class="font-bold">number of hours of utility light (NEPA/PHCN) on site</span>.
+              </p>
+            </div>
+
+            <div onclick="switchSection('fse'); setTimeout(() => { if(fseSession) openFseModule('repairs'); }, 50)" class="border_ui p-4 hover:border-(--color-primary) cursor-pointer transition-colors space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-sm uppercase">04 // REPAIRS &amp; PPM (CONSTANT-REPAIR ASSETS)</span>
+                <span class="border_ui px-1.5 py-0.5 text-[10px]">PPM &gt;&gt;</span>
+              </div>
+              <p class="opacity-75 text-[11px] leading-relaxed">
+                Identify <span class="font-bold">machinery that requires constant repair</span>, track repeat-fault frequencies, complete site PPM checklists, and log Root Cause Analysis (RCA) tickets.
+              </p>
+            </div>
+          </div>
+
+          <div class="border_ui p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] opacity-80">
+            <span>// NOC OVERVIEW: Full 76-site diesel inventory, autonomy runway rankings, WhatsApp/SMS dispatch, and CSV audit exports.</span>
+            <button onclick="switchSection('analytics')" class="border_ui px-3 py-1 btn-invert cursor-pointer font-bold shrink-0">
+              OPEN ANALYTICS RUNWAY
+            </button>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- SECTION 0B: FSE PORTAL (LOGIN WITH SITE DETAILS -> REPAIRS & PPM / LIGHT & BATTERY / FLEET & FUEL) -->
+      <section id="sectionFse" class="hidden flex flex-col gap-2.5">
+        
+        <!-- FSE LOGIN VIEW -->
+        <div id="fseLoginView" class="border_ui p-6 md:p-8 bg-(--color-card-bg)/50 max-w-2xl mx-auto w-full space-y-5">
+          <div class="border-b border_ui pb-3">
+            <div class="text-[10px] uppercase tracking-widest opacity-50">// FSE PORTAL AUTHENTICATION</div>
+            <h2 class="hero-outline-title text-4xl uppercase mt-1">LOGIN WITH SITE DETAILS</h2>
+            <p class="text-[11px] opacity-70 mt-1">Select your assigned tower site and verify your FSE details to manage Fuel, Light &amp; Battery (BUB), and Repairs &amp; PPM.</p>
+          </div>
+
+          <form onsubmit="handleFseLogin(event)" class="space-y-3 text-xs">
+            <div>
+              <label class="block text-[10px] uppercase opacity-60 mb-1">1. SELECT SITE ID (76 SITES)</label>
+              <select id="fseLoginSiteSelect" onchange="prefillFseSiteDetails()" required class="w-full border_ui bg-(--color-card-bg) px-3 py-2 outline-none cursor-pointer">
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+
+            <div id="fseLoginSitePreview" class="border_ui p-3 bg-black/10 dark:bg-white/5 text-[11px] space-y-1">
+              <!-- Populated dynamically -->
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10px] uppercase opacity-60 mb-1">2. FSE NAME</label>
+                <input type="text" id="fseLoginName" required placeholder="Enter FSE Full Name" class="w-full border_ui bg-transparent px-3 py-2 outline-none focus:border-(--color-primary)">
+              </div>
+              <div>
+                <label class="block text-[10px] uppercase opacity-60 mb-1">3. FSE PHONE / BADGE ID</label>
+                <input type="text" id="fseLoginPhone" required placeholder="e.g. 0803... or FSE-01" class="w-full border_ui bg-transparent px-3 py-2 outline-none focus:border-(--color-primary)">
+              </div>
+            </div>
+
+            <div class="pt-2 flex items-center justify-between gap-3">
+              <button type="button" onclick="switchSection('landing')" class="border_ui px-4 py-2 btn-invert cursor-pointer">
+                &lt;&lt; BACK TO INTRO
+              </button>
+              <button type="submit" class="border_ui px-6 py-2 font-bold nav_active btn-invert cursor-pointer">
+                LOGIN TO SITE PORTAL &gt;&gt;
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- FSE WORKSPACE VIEW (AFTER LOGIN) -->
+        <div id="fseWorkspaceView" class="hidden flex flex-col gap-2.5">
+          
+          <!-- Active Site Header Banner -->
+          <div class="border_ui p-4 bg-(--color-card-bg)/50 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-(--color-accent) animate-pulse"></span>
+                <span class="text-[10px] uppercase tracking-widest opacity-60">// FSE PORTAL ACTIVE SESSION</span>
+              </div>
+              <div id="fseActiveSiteHeader" class="font-bold text-base mt-0.5">SITE: CP/CP/EK/002</div>
+              <div id="fseActiveSiteSub" class="opacity-70 text-[11px]">State · Tenant · Logged in as FSE</div>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <button onclick="logoutFsePortal()" class="border_ui px-3 py-1.5 btn-invert cursor-pointer font-bold text-[11px]">
+                SWITCH SITE / LOGOUT
+              </button>
+            </div>
+          </div>
+
+          <!-- FSE Module Tabs -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+            <button id="fseTabBtnFuel" onclick="openFseModule('fuel')" class="border_ui p-3 text-left cursor-pointer btn-invert nav_active">
+              <div class="text-[10px] opacity-70 uppercase">MODULE 01</div>
+              <div class="font-bold text-sm">FLEET &amp; FUEL</div>
+              <div class="text-[10px] opacity-75">Input Fuel Level, Time &amp; Previous Date</div>
+            </button>
+            <button id="fseTabBtnBub" onclick="openFseModule('bub')" class="border_ui p-3 text-left cursor-pointer btn-invert opacity-75">
+              <div class="text-[10px] opacity-70 uppercase">MODULE 02</div>
+              <div class="font-bold text-sm">LIGHT &amp; BATTERY (BUB)</div>
+              <div class="text-[10px] opacity-75">Battery Life &amp; Hours of Light on Site</div>
+            </button>
+            <button id="fseTabBtnRepairs" onclick="openFseModule('repairs')" class="border_ui p-3 text-left cursor-pointer btn-invert opacity-75">
+              <div class="text-[10px] opacity-70 uppercase">MODULE 03</div>
+              <div class="font-bold text-sm">REPAIRS &amp; PPM</div>
+              <div class="text-[10px] opacity-75">Machinery Requiring Constant Repair</div>
+            </button>
+          </div>
+
+          <!-- FSE MODULE 1: FLEET & FUEL -->
+          <div id="fseModuleFuel" class="space-y-2.5">
+            <div id="fseFuelKpiRow" class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <!-- Populated dynamically -->
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-2.5 text-xs">
+              <!-- Input Fuel Level -->
+              <div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">
+                <div class="font-bold uppercase tracking-wider border-b border_ui pb-2">// INPUT CURRENT FUEL LEVEL</div>
+                <form onsubmit="handleFseUpdateFuelLevel(event)" class="space-y-3">
+                  <div>
+                    <label class="block text-[10px] uppercase opacity-60 mb-1">CURRENT DIESEL LEVEL IN TANK (LITRES)</label>
+                    <input type="number" step="0.1" min="0" id="fseFuelLevelInput" required class="w-full border_ui bg-transparent px-3 py-2 text-sm font-bold outline-none focus:border-(--color-primary)">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] uppercase opacity-60 mb-1">DAILY BURN RATE CPD (L/DAY)</label>
+                    <input type="number" step="0.1" min="1" id="fseCpdInput" required class="w-full border_ui bg-transparent px-3 py-2 outline-none focus:border-(--color-primary)">
+                  </div>
+                  <button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">
+                    SAVE FUEL LEVEL READING
+                  </button>
+                </form>
+              </div>
+
+              <!-- Log Diesel Received (Time, Date, Previous Date) -->
+              <div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">
+                <div class="font-bold uppercase tracking-wider border-b border_ui pb-2">// LOG DIESEL RECEIVED (DATE &amp; TIME)</div>
+                <form onsubmit="handleFseLogDelivery(event)" class="space-y-2.5">
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="block text-[10px] uppercase opacity-60 mb-1">QUANTITY RECEIVED (L)</label>
+                      <input type="number" step="1" min="1" id="fseDeliveryQty" required placeholder="e.g. 500" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none focus:border-(--color-primary)">
+                    </div>
+                    <div>
+                      <label class="block text-[10px] uppercase opacity-60 mb-1">SUPPLIER / VENDOR</label>
+                      <input type="text" id="fseDeliverySupplier" required placeholder="e.g. Auwal / In-House" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none focus:border-(--color-primary)">
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="block text-[10px] uppercase opacity-60 mb-1">DATE DIESEL RECEIVED</label>
+                      <input type="date" id="fseDeliveryDate" required class="w-full border_ui bg-(--color-card-bg) px-2.5 py-1.5 outline-none focus:border-(--color-primary)">
+                    </div>
+                    <div>
+                      <label class="block text-[10px] uppercase opacity-60 mb-1">TIME DIESEL RECEIVED</label>
+                      <input type="time" id="fseDeliveryTime" required class="w-full border_ui bg-(--color-card-bg) px-2.5 py-1.5 outline-none focus:border-(--color-primary)">
+                    </div>
+                  </div>
+                  <button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">
+                    + RECORD DIESEL DELIVERY
+                  </button>
+                </form>
+
+                <!-- Previous & Latest Delivery Summary -->
+                <div id="fseDeliveryDatesBox" class="border_ui p-3 bg-black/10 dark:bg-white/5 space-y-1 text-[11px]">
+                  <!-- Populated dynamically -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Site Refuel Ledger -->
+            <div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-2 text-xs">
+              <div class="font-bold uppercase tracking-wider">// SITE DIESEL DELIVERY LEDGER</div>
+              <div id="fseFuelLedger" class="overflow-x-auto">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+          </div>
+
+          <!-- FSE MODULE 2: LIGHT & BATTERY (BUB) -->
+          <div id="fseModuleBub" class="hidden space-y-2.5">
+            <div id="fseBubKpiRow" class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <!-- Populated dynamically -->
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-2.5 text-xs">
+              <!-- Battery Life (BUB) -->
+              <div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">
+                <div class="font-bold uppercase tracking-wider border-b border_ui pb-2">// BATTERY LIFE &amp; BUB TELEMETRY</div>
+                <form onsubmit="handleFseSaveBub(event)" class="space-y-2.5">
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="block text-[10px] uppercase opacity-60 mb-1">BATTERY LIFE (HOURS OFF-GRID)</label>
+                      <input type="number" step="0.5" min="0" id="fseBubHoursInput" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none focus:border-(--color-primary)">
+                    </div>
+                    <div>
+                      <label class="block text-[10px] uppercase opacity-60 mb-1">BATTERY CHARGE SOC (%)</label>
+                      <input type="number" min="0" max="100" id="fseBubSocInput" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none focus:border-(--color-primary)">
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="block text-[10px] uppercase opacity-60 mb-1">BANK VOLTAGE (V)</label>
+                      <input type="text" id="fseBubVoltageInput" required placeholder="e.g. 52.8 V" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none focus:border-(--color-primary)">
+                    </div>
+                    <div>
+                      <label class="block text-[10px] uppercase opacity-60 mb-1">BATTERY HEALTH</label>
+                      <select id="fseBubHealthInput" class="w-full border_ui bg-(--color-card-bg) px-2.5 py-1.5 outline-none">
+                        <option value="HEALTHY">HEALTHY</option>
+                        <option value="DEGRADED">DEGRADED</option>
+                        <option value="CRITICAL / REPLACE">CRITICAL / REPLACE</option>
+                      </select>
+                    </div>
+                  </div>
+                  <button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">
+                    UPDATE BATTERY LIFE TELEMETRY
+                  </button>
+                </form>
+              </div>
+
+              <!-- No. of Hours of Light on Site -->
+              <div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">
+                <div class="font-bold uppercase tracking-wider border-b border_ui pb-2">// NO. OF HOURS OF LIGHT ON SITE (GRID)</div>
+                <form onsubmit="handleFseSaveLight(event)" class="space-y-2.5">
+                  <div>
+                    <label class="block text-[10px] uppercase opacity-60 mb-1">NO. OF HOURS OF LIGHT ON SITE (HRS / DAY)</label>
+                    <input type="number" step="0.5" min="0" max="24" id="fseLightHoursInput" required class="w-full border_ui bg-transparent px-3 py-2 text-sm font-bold outline-none focus:border-(--color-primary)">
+                  </div>
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="block text-[10px] uppercase opacity-60 mb-1">GRID STATUS (NEPA / PHCN)</label>
+                      <select id="fseGridStatusInput" class="w-full border_ui bg-(--color-card-bg) px-2.5 py-1.5 outline-none">
+                        <option value="PHCN ONLINE">PHCN ONLINE</option>
+                        <option value="INTERMITTENT">INTERMITTENT</option>
+                        <option value="OUTAGE">OUTAGE</option>
+                        <option value="NON PHCN">NON PHCN</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-[10px] uppercase opacity-60 mb-1">PREPAID TOKEN STATUS</label>
+                      <select id="fseTokenStatusInput" class="w-full border_ui bg-(--color-card-bg) px-2.5 py-1.5 outline-none">
+                        <option value="LOADED">LOADED</option>
+                        <option value="LOW UNITS">LOW UNITS</option>
+                        <option value="EXPIRED / NONE">EXPIRED / NONE</option>
+                      </select>
+                    </div>
+                  </div>
+                  <button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">
+                    UPDATE SITE LIGHT HOURS
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- FSE MODULE 3: REPAIRS & PPM (MACHINERY REQUIRING CONSTANT REPAIR) -->
+          <div id="fseModuleRepairs" class="hidden space-y-2.5 text-xs">
+            
+            <!-- Machinery Requiring Constant Repair -->
+            <div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border_ui pb-2">
+                <div>
+                  <div class="font-bold uppercase tracking-wider text-amber-400">// MACHINERY REQUIRING CONSTANT REPAIR</div>
+                  <div class="opacity-60 text-[10px]">Recurring fault equipment &amp; chronic breakdown assets flagged for PPM replacement/overhaul</div>
+                </div>
+                <span id="fseConstantRepairCount" class="border_ui px-2 py-0.5 text-[10px] font-bold text-rose-400 border-rose-500/40">0 ASSETS FLAGGED</span>
+              </div>
+
+              <div id="fseConstantRepairList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                <!-- Populated dynamically -->
+              </div>
+
+              <!-- Quick Flag Machinery -->
+              <form onsubmit="handleFseFlagMachinery(event)" class="pt-2 border-t border_ui grid grid-cols-1 sm:grid-cols-4 gap-2">
+                <input type="text" id="fseFlagMachineName" required placeholder="Machinery name (e.g. Gen Alternator)" class="border_ui bg-transparent px-2.5 py-1.5 outline-none">
+                <input type="text" id="fseFlagMachineIssue" required placeholder="Recurring fault (e.g. Overheating / Oil leak)" class="sm:col-span-2 border_ui bg-transparent px-2.5 py-1.5 outline-none">
+                <button type="submit" class="border_ui px-3 py-1.5 font-bold nav_active btn-invert cursor-pointer">+ FLAG MACHINERY</button>
+              </form>
+            </div>
+
+            <!-- Site Repairs & PPM Checklist -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
+              <div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">
+                <div class="flex items-center justify-between border-b border_ui pb-2">
+                  <span class="font-bold uppercase tracking-wider">// SITE REPAIR &amp; PPM TICKETS</span>
+                  <button onclick="openAddRepairModal()" class="border_ui px-2 py-1 btn-invert cursor-pointer text-[10px] font-bold">+ LOG TICKET</button>
+                </div>
+                <div id="fseSiteRepairsList" class="space-y-2">
+                  <!-- Populated dynamically -->
+                </div>
+              </div>
+
+              <div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">
+                <div class="flex items-center justify-between border-b border_ui pb-2">
+                  <span class="font-bold uppercase tracking-wider">// SITE PPM MAINTENANCE CHECKLIST</span>
+                  <button onclick="openTicksModal(fseSession.siteId)" class="border_ui px-2 py-1 btn-invert cursor-pointer text-[10px] font-bold">OPEN FULL CHECKLIST</button>
+                </div>
+                <div id="fseSitePpmList" class="space-y-1.5">
+                  <!-- Populated dynamically -->
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- SECTION 0C: ADMIN PORTAL (LOGIN WITH SITE DETAILS -> REPAIRS & PPM / LIGHT & BATTERY / FLEET & FUEL + EXCLUSIVE SITE EDITING) -->
+      <section id="sectionAdmin" class="hidden flex flex-col gap-2.5">
+        
+        <!-- ADMIN LOGIN VIEW -->
+        <div id="adminLoginView" class="border_ui p-6 md:p-8 bg-(--color-card-bg)/50 max-w-2xl mx-auto w-full space-y-5 border-amber-500/40">
+          <div class="border-b border_ui pb-3">
+            <div class="text-[10px] uppercase tracking-widest text-amber-400 font-bold">// ADMIN PORTAL — EXCLUSIVE SITE EDITING AUTHORIZATION</div>
+            <h2 class="hero-outline-title text-4xl uppercase mt-1">ADMIN LOGIN WITH SITE DETAILS</h2>
+            <p class="text-[11px] opacity-75 mt-1">
+              Only authorized Administrators can <span class="font-bold text-amber-400">edit sites, add new sites, or reset audit records</span>. 
+              Authenticate with your Admin PIN and Site Details to manage Repairs &amp; PPM, Light &amp; Battery (BUB), Fleet &amp; Fuel, and Admin Tools.
+            </p>
+          </div>
+
+          <form onsubmit="handleAdminPortalLogin(event)" class="space-y-3 text-xs">
+            <div>
+              <label class="block text-[10px] uppercase opacity-60 mb-1">1. ADMIN PASSCODE (DEFAULT: 1234)</label>
+              <input type="password" id="adminLoginPin" required placeholder="Enter Admin PIN" class="w-full border_ui bg-transparent px-3 py-2 outline-none focus:border-amber-400">
+            </div>
+
+            <div>
+              <label class="block text-[10px] uppercase opacity-60 mb-1">2. SELECT SITE ID (76 SITES)</label>
+              <select id="adminLoginSiteSelect" onchange="prefillAdminSiteDetails()" required class="w-full border_ui bg-(--color-card-bg) px-3 py-2 outline-none cursor-pointer">
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+
+            <div id="adminLoginSitePreview" class="border_ui p-3 bg-black/10 dark:bg-white/5 text-[11px] space-y-1">
+              <!-- Populated dynamically -->
+            </div>
+
+            <div>
+              <label class="block text-[10px] uppercase opacity-60 mb-1">3. ADMIN / SUPERVISOR NAME</label>
+              <input type="text" id="adminLoginName" required placeholder="e.g. NOC Lead / Regional Supervisor" value="NOC Administrator" class="w-full border_ui bg-transparent px-3 py-2 outline-none focus:border-amber-400">
+            </div>
+
+            <div class="pt-2 flex items-center justify-between gap-3">
+              <button type="button" onclick="switchSection('landing')" class="border_ui px-4 py-2 btn-invert cursor-pointer">
+                &lt;&lt; BACK TO INTRO
+              </button>
+              <button type="submit" class="border_ui border-amber-500 bg-amber-500 text-black px-6 py-2 font-bold hover:bg-amber-400 cursor-pointer">
+                UNLOCK ADMIN PORTAL &gt;&gt;
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- ADMIN WORKSPACE VIEW (AFTER LOGIN) -->
+        <div id="adminWorkspaceView" class="hidden flex flex-col gap-2.5">
+          
+          <!-- Admin Active Site + Exclusive Action Bar -->
+          <div class="border_ui border-amber-500/50 p-4 bg-amber-500/10 flex flex-col gap-3 text-xs">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                  <span class="text-[10px] uppercase tracking-widest text-amber-400 font-bold">// ADMIN AUTHORIZED SESSION (FULL SITE EDIT ACCESS)</span>
+                </div>
+                <div id="adminActiveSiteHeader" class="font-bold text-base mt-0.5">SITE: CP/CP/EK/002</div>
+                <div id="adminActiveSiteSub" class="opacity-75 text-[11px]">State · Tenant · Admin</div>
+              </div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <select id="adminQuickSiteSwitch" onchange="switchAdminSite(this.value)" class="border_ui bg-(--color-card-bg) px-2.5 py-1.5 text-[11px] outline-none cursor-pointer">
+                  <!-- Populated dynamically -->
+                </select>
+                <button onclick="logoutAdminPortal()" class="border_ui border-rose-500/50 px-3 py-1.5 hover:bg-rose-600 hover:text-white cursor-pointer font-bold text-[11px]">
+                  LOCK &amp; LOGOUT
+                </button>
+              </div>
+            </div>
+
+            <!-- Exclusive Admin Action Toolbar -->
+            <div class="border-t border_ui pt-3 flex flex-wrap items-center gap-2">
+              <span class="text-[10px] uppercase opacity-70 mr-1 font-bold">// ADMIN ACTIONS:</span>
+              <button onclick="openEditSiteModal(adminSession.siteId)" class="border_ui border-amber-400 bg-amber-500 text-black px-3 py-1.5 font-bold hover:bg-amber-400 cursor-pointer text-[11px]">
+                EDIT THIS SITE (ADMIN ONLY)
+              </button>
+              <button onclick="openAddSiteModal()" class="border_ui px-3 py-1.5 btn-invert cursor-pointer font-bold text-[11px]">
+                + ADD NEW SITE
+              </button>
+              <button onclick="openAddRepairModal()" class="border_ui px-3 py-1.5 btn-invert cursor-pointer font-bold text-[11px]">
+                + LOG REPAIR RCA
+              </button>
+              <button onclick="exportToCsv()" class="border_ui px-3 py-1.5 btn-invert cursor-pointer font-bold text-[11px]">
+                EXPORT CSV
+              </button>
+            </div>
+          </div>
+
+          <!-- Admin Module Tabs -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+            <button id="adminTabBtnRepairs" onclick="openAdminModule('repairs')" class="border_ui p-3 text-left cursor-pointer btn-invert nav_active">
+              <div class="text-[10px] opacity-70 uppercase">ADMIN MODULE 01</div>
+              <div class="font-bold text-sm">REPAIRS &amp; PPM</div>
+              <div class="text-[10px] opacity-75">Machinery Requiring Constant Repair</div>
+            </button>
+            <button id="adminTabBtnBub" onclick="openAdminModule('bub')" class="border_ui p-3 text-left cursor-pointer btn-invert opacity-75">
+              <div class="text-[10px] opacity-70 uppercase">ADMIN MODULE 02</div>
+              <div class="font-bold text-sm">LIGHT &amp; BATTERY (BUB)</div>
+              <div class="text-[10px] opacity-75">Battery Life &amp; Hours of Light on Site</div>
+            </button>
+            <button id="adminTabBtnFuel" onclick="openAdminModule('fuel')" class="border_ui p-3 text-left cursor-pointer btn-invert opacity-75">
+              <div class="text-[10px] opacity-70 uppercase">ADMIN MODULE 03</div>
+              <div class="font-bold text-sm">FLEET &amp; FUEL</div>
+              <div class="text-[10px] opacity-75">Input Fuel Level, Time &amp; Previous Date</div>
+            </button>
+          </div>
+
+          <!-- Admin Active Module Body (Synced with FSE Workspace controls + Admin Edit privileges) -->
+          <div id="adminModuleContainer" class="space-y-2.5 text-xs">
+            <!-- Populated dynamically -->
+          </div>
+
+        </div>
+
+      </section>
+
       <!-- SECTION 1: FLEET & FUEL TELEMETRY -->
-      <section id="sectionFleet" class="flex flex-col gap-2.5">
+      <section id="sectionFleet" class="hidden flex flex-col gap-2.5">
         
         <!-- TOP KPI BENTO GRID -->
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
@@ -9078,7 +9650,7 @@
     }
 
     // State Variables
-    let activeSection = 'fleet';
+    let activeSection = 'landing';
     let fleetScope = 'focus'; // 'focus' (14 priority sites) or 'all' (76 sites)
     let currentFilter = 'ALL';
     let currentRepairFilter = 'ALL';
@@ -9088,6 +9660,19 @@
     let activeTicksSite = null;
     let activeHistorySite = null;
     let liveAccumulatedBurn = 0.0;
+    let fseActiveModule = 'fuel';
+    let fseSession = null;
+    try {
+      const savedFse = localStorage.getItem('coloplus_fse_session');
+      if (savedFse) fseSession = JSON.parse(savedFse);
+    } catch (e) { fseSession = null; }
+
+    let adminActiveModule = 'repairs';
+    let adminSession = null;
+    try {
+      const savedAdmin = localStorage.getItem('coloplus_admin_session');
+      if (savedAdmin) adminSession = JSON.parse(savedAdmin);
+    } catch (e) { adminSession = null; }
 
     // Strict Mathematical Correlation Engine
     function synchronizeSite(s) {
@@ -9126,10 +9711,14 @@
         s.refuelDate = refuelTime.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
       }
 
-      // Ensure ticks array exists
+      // Ensure arrays exist
       if (!s.maintenanceTicks) s.maintenanceTicks = [];
       if (!s.refuelHistory) s.refuelHistory = [];
       if (!s.majorIssues) s.majorIssues = [];
+      if (!s.constantRepairAssets) s.constantRepairAssets = [];
+      if (s.gridHoursPerDay === undefined) s.gridHoursPerDay = (s.gridStatus || '').includes('ONLINE') ? 12 : 4;
+      if (s.batteryAutonomyHours === undefined) s.batteryAutonomyHours = 8;
+      if (s.batterySoc === undefined) s.batterySoc = 85;
     }
 
     // Save State
@@ -9146,7 +9735,13 @@
       siteSelect.innerHTML = masterSites.map(s => '<option value="' + s.siteId + '">' + s.siteId + ' - ' + s.tenantId + '</option>').join('');
       handleRepairSiteChange();
 
+      populateFseLoginDropdown();
+      updateFseUiState();
+      populateAdminLoginDropdown();
+      updateAdminPortalUiState();
+
       document.getElementById('scopeAllCount').innerText = masterSites.length;
+      document.getElementById('landingTotalSites').innerText = masterSites.length;
       document.getElementById('repairBadgeCount').innerText = masterRepairs.length;
 
       updateAdminUi();
@@ -9155,6 +9750,7 @@
       renderPowerMatrix();
       renderRepairs();
       renderAnalytics();
+      switchSection(activeSection);
 
       setInterval(tickClock, 1000);
       setInterval(tickFuelBurn, 2000);
@@ -9177,11 +9773,17 @@
     // Navigation Switching
     function switchSection(sec) {
       activeSection = sec;
+      const navLanding = document.getElementById('navLandingBtn');
+      const navFse = document.getElementById('navFseBtn');
+      const navAdmin = document.getElementById('navAdminBtn');
       const navFleet = document.getElementById('navFleetBtn');
       const navPower = document.getElementById('navPowerBtn');
       const navRepairs = document.getElementById('navRepairsBtn');
       const navAnalytics = document.getElementById('navAnalyticsBtn');
       
+      const secLanding = document.getElementById('sectionLanding');
+      const secFse = document.getElementById('sectionFse');
+      const secAdmin = document.getElementById('sectionAdmin');
       const secFleet = document.getElementById('sectionFleet');
       const secPower = document.getElementById('sectionPower');
       const secRepairs = document.getElementById('sectionRepairs');
@@ -9189,41 +9791,418 @@
       const pathEl = document.getElementById('headerPath');
 
       // Reset
-      [navFleet, navPower, navRepairs, navAnalytics].forEach(b => {
+      [navLanding, navFse, navAdmin, navFleet, navPower, navRepairs, navAnalytics].forEach(b => {
+        if (!b) return;
         b.className = 'flex items-center gap-2.5 py-1.5 px-2 text-left border_ui cursor-pointer btn-invert opacity-70 hover:opacity-100';
         b.querySelector('span').className = 'w-1.5 h-1.5 rounded-full bg-transparent';
       });
 
-      secFleet.classList.add('hidden');
-      secPower.classList.add('hidden');
-      secRepairs.classList.add('hidden');
-      secAnalytics.classList.add('hidden');
+      [secLanding, secFse, secAdmin, secFleet, secPower, secRepairs, secAnalytics].forEach(s => {
+        if (s) s.classList.add('hidden');
+      });
 
-      if (sec === 'fleet') {
+      const activeClass = 'flex items-center gap-2.5 py-1.5 px-2 text-left border_ui cursor-pointer btn-invert nav_active';
+      const activeDot = 'w-1.5 h-1.5 rounded-full bg-(--color-accent)';
+
+      if (sec === 'landing') {
+        secLanding.classList.remove('hidden');
+        navLanding.className = activeClass;
+        navLanding.querySelector('span').className = activeDot;
+        pathEl.innerText = '// INTRO & SYSTEM GUIDE';
+      } else if (sec === 'fse') {
+        secFse.classList.remove('hidden');
+        navFse.className = activeClass;
+        navFse.querySelector('span').className = activeDot;
+        pathEl.innerText = fseSession ? ('// FSE PORTAL — ' + fseSession.siteId) : '// FSE PORTAL — SITE LOGIN';
+        updateFseUiState();
+      } else if (sec === 'admin') {
+        secAdmin.classList.remove('hidden');
+        navAdmin.className = activeClass;
+        navAdmin.querySelector('span').className = activeDot;
+        pathEl.innerText = (isAdminUnlocked && adminSession) ? ('// ADMIN PORTAL — ' + adminSession.siteId) : '// ADMIN PORTAL — SITE LOGIN';
+        updateAdminPortalUiState();
+      } else if (sec === 'fleet') {
         secFleet.classList.remove('hidden');
-        navFleet.className = 'flex items-center gap-2.5 py-1.5 px-2 text-left border_ui cursor-pointer btn-invert bg-(--color-primary) text-(--color-secondary)';
-        navFleet.querySelector('span').className = 'w-1.5 h-1.5 rounded-full bg-(--color-accent)';
+        navFleet.className = activeClass;
+        navFleet.querySelector('span').className = activeDot;
         pathEl.innerText = '// FLEET & FUEL TELEMETRY';
         renderSites();
       } else if (sec === 'power') {
         secPower.classList.remove('hidden');
-        navPower.className = 'flex items-center gap-2.5 py-1.5 px-2 text-left border_ui cursor-pointer btn-invert bg-(--color-primary) text-(--color-secondary)';
-        navPower.querySelector('span').className = 'w-1.5 h-1.5 rounded-full bg-(--color-accent)';
+        navPower.className = activeClass;
+        navPower.querySelector('span').className = activeDot;
         pathEl.innerText = '// LIGHT & BACKUP BATTERY (BUB)';
         renderPowerMatrix();
       } else if (sec === 'repairs') {
         secRepairs.classList.remove('hidden');
-        navRepairs.className = 'flex items-center gap-2.5 py-1.5 px-2 text-left border_ui cursor-pointer btn-invert bg-(--color-primary) text-(--color-secondary)';
-        navRepairs.querySelector('span').className = 'w-1.5 h-1.5 rounded-full bg-(--color-accent)';
+        navRepairs.className = activeClass;
+        navRepairs.querySelector('span').className = activeDot;
         pathEl.innerText = '// REPAIRS & PPM HUB';
         renderRepairs();
       } else if (sec === 'analytics') {
         secAnalytics.classList.remove('hidden');
-        navAnalytics.className = 'flex items-center gap-2.5 py-1.5 px-2 text-left border_ui cursor-pointer btn-invert bg-(--color-primary) text-(--color-secondary)';
-        navAnalytics.querySelector('span').className = 'w-1.5 h-1.5 rounded-full bg-(--color-accent)';
+        navAnalytics.className = activeClass;
+        navAnalytics.querySelector('span').className = activeDot;
         pathEl.innerText = '// ANALYTICS RUNWAY';
         renderAnalytics();
       }
+    }
+
+    // ==================== FSE PORTAL LOGIC ====================
+    function populateFseLoginDropdown() {
+      const sel = document.getElementById('fseLoginSiteSelect');
+      if (!sel) return;
+      sel.innerHTML = masterSites.map(s =>
+        '<option value="' + s.siteId + '">' + s.siteId + ' — ' + s.state + ' (' + s.tenantId + ')</option>'
+      ).join('');
+      prefillFseSiteDetails();
+    }
+
+    function prefillFseSiteDetails() {
+      const sel = document.getElementById('fseLoginSiteSelect');
+      if (!sel) return;
+      const site = masterSites.find(s => s.siteId === sel.value);
+      if (!site) return;
+
+      document.getElementById('fseLoginSitePreview').innerHTML =
+        '<div class="flex justify-between"><span class="opacity-60">STATE / REGION:</span><span class="font-bold">' + site.state + '</span></div>' +
+        '<div class="flex justify-between"><span class="opacity-60">TENANT ID:</span><span class="font-bold">' + site.tenantId + '</span></div>' +
+        '<div class="flex justify-between"><span class="opacity-60">ADDRESS:</span><span class="truncate max-w-[260px]">' + site.address + '</span></div>' +
+        '<div class="flex justify-between"><span class="opacity-60">ASSIGNED FSE:</span><span class="font-bold">' + (site.fse || 'Regional FSE') + '</span></div>';
+
+      const nameInput = document.getElementById('fseLoginName');
+      const phoneInput = document.getElementById('fseLoginPhone');
+      if (site.fse && site.fse !== 'Regional FSE') nameInput.value = site.fse;
+      if (site.fsePhone && site.fsePhone !== 'Operations Dispatch') phoneInput.value = site.fsePhone;
+    }
+
+    function handleFseLogin(e) {
+      e.preventDefault();
+      const siteId = document.getElementById('fseLoginSiteSelect').value;
+      const fseName = document.getElementById('fseLoginName').value.trim();
+      const fsePhone = document.getElementById('fseLoginPhone').value.trim();
+      const site = masterSites.find(s => s.siteId === siteId);
+      if (!site) return;
+
+      fseSession = {
+        siteId: site.siteId,
+        fseName: fseName || site.fse,
+        fsePhone: fsePhone || site.fsePhone,
+        loginAt: new Date().toISOString()
+      };
+      localStorage.setItem('coloplus_fse_session', JSON.stringify(fseSession));
+      updateFseUiState();
+      openFseModule('fuel');
+      showToast('Logged into FSE Portal: ' + site.siteId);
+    }
+
+    function logoutFsePortal() {
+      fseSession = null;
+      localStorage.removeItem('coloplus_fse_session');
+      updateFseUiState();
+      showToast('Logged out of FSE Portal');
+    }
+
+    function updateFseUiState() {
+      const loginView = document.getElementById('fseLoginView');
+      const workspaceView = document.getElementById('fseWorkspaceView');
+      const badge = document.getElementById('fseNavStatusBadge');
+      const subNav = document.getElementById('fseSubNav');
+
+      if (!fseSession) {
+        if (loginView) loginView.classList.remove('hidden');
+        if (workspaceView) workspaceView.classList.add('hidden');
+        if (subNav) subNav.classList.add('hidden');
+        if (badge) badge.innerText = 'LOGIN';
+        return;
+      }
+
+      const site = masterSites.find(s => s.siteId === fseSession.siteId);
+      if (!site) {
+        logoutFsePortal();
+        return;
+      }
+
+      if (loginView) loginView.classList.add('hidden');
+      if (workspaceView) workspaceView.classList.remove('hidden');
+      if (subNav) subNav.classList.remove('hidden');
+      if (badge) badge.innerText = site.siteId;
+
+      document.getElementById('fseActiveSiteHeader').innerText = 'SITE: ' + site.siteId + ' (' + site.tenantId + ')';
+      document.getElementById('fseActiveSiteSub').innerText = site.state + ' · ' + site.address + ' · FSE: ' + fseSession.fseName + ' (' + fseSession.fsePhone + ')';
+
+      renderFseFuelModule(site);
+      renderFseBubModule(site);
+      renderFseRepairsModule(site);
+    }
+
+    function openFseModule(mod) {
+      fseActiveModule = mod;
+      if (activeSection !== 'fse') {
+        switchSection('fse');
+      }
+      if (!fseSession) return;
+
+      const modules = ['fuel', 'bub', 'repairs'];
+      modules.forEach(m => {
+        const el = document.getElementById('fseModule' + m.charAt(0).toUpperCase() + m.slice(1));
+        const btn = document.getElementById('fseTabBtn' + m.charAt(0).toUpperCase() + m.slice(1));
+        const subBtn = document.getElementById('subNavFse' + m.charAt(0).toUpperCase() + m.slice(1));
+        if (el) el.classList.toggle('hidden', m !== mod);
+        if (btn) btn.className = 'border_ui p-3 text-left cursor-pointer btn-invert ' + (m === mod ? 'nav_active' : 'opacity-75');
+        if (subBtn) subBtn.className = 'w-full flex items-center justify-between py-1 px-2 text-left border_ui cursor-pointer btn-invert text-[11px] ' + (m === mod ? 'nav_active' : 'opacity-75');
+      });
+    }
+
+    // FSE Module 1: Fleet & Fuel
+    function renderFseFuelModule(site) {
+      const kpiEl = document.getElementById('fseFuelKpiRow');
+      const statusColor = site.status === 'CRITICAL' ? 'text-rose-500' : (site.status === 'WARNING' ? 'text-amber-500' : 'text-emerald-500');
+      kpiEl.innerHTML =
+        '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">CURRENT FUEL LEVEL</div><div class="text-xl font-bold mt-1">' + site.currentDL + ' L</div><div class="text-[10px] opacity-60">' + site.fillPct + '% of ' + site.tankCap + 'L Tank</div></div>' +
+        '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">DAILY BURN (CPD)</div><div class="text-xl font-bold mt-1 text-amber-500">' + site.cpd + ' L/d</div><div class="text-[10px] opacity-60">' + site.cph + ' L/hr · 12h: ' + site.cpd12h + 'L</div></div>' +
+        '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">AUTONOMY LEFT</div><div class="text-xl font-bold mt-1 ' + statusColor + '">' + site.daysRemaining + ' DAYS</div><div class="text-[10px] opacity-60">' + site.status + '</div></div>' +
+        '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">PREDICTED DRY DATE</div><div class="text-sm font-bold mt-1">' + site.predictedDryDate + '</div><div class="text-[10px] opacity-60">' + site.refuelDate + '</div></div>';
+
+      document.getElementById('fseFuelLevelInput').value = site.currentDL;
+      document.getElementById('fseCpdInput').value = site.cpd;
+      document.getElementById('fseDeliverySupplier').value = site.supplier || 'In-House';
+      const now = new Date();
+      document.getElementById('fseDeliveryDate').value = now.toISOString().slice(0, 10);
+      document.getElementById('fseDeliveryTime').value = now.toTimeString().slice(0, 5);
+
+      const prevDate = site.previousSupplyDate || (site.refuelHistory && site.refuelHistory.length > 1 ? site.refuelHistory[1].date : 'No prior record');
+      const prevTime = site.previousSupplyTime || (site.refuelHistory && site.refuelHistory.length > 1 ? (site.refuelHistory[1].time || '--:--') : '--:--');
+      const prevQty = site.previousSupplyQty || (site.refuelHistory && site.refuelHistory.length > 1 ? site.refuelHistory[1].qty + ' L' : 'N/A');
+
+      document.getElementById('fseDeliveryDatesBox').innerHTML =
+        '<div class="opacity-50 text-[9px] uppercase font-bold">// DIESEL DELIVERY TIMELINE</div>' +
+        '<div class="flex justify-between"><span>Latest Diesel Received:</span><span class="font-bold text-(--color-accent)">' + (site.lastSupplyQty || 0) + ' L on ' + (site.lastSupplyDate || 'N/A') + ' @ ' + (site.lastSupplyTime || '--:--') + '</span></div>' +
+        '<div class="flex justify-between"><span>Previous Date Received:</span><span class="font-bold text-amber-400">' + prevDate + (prevTime !== '--:--' ? ' @ ' + prevTime : '') + ' (' + prevQty + ')</span></div>';
+
+      const hist = site.refuelHistory || [];
+      if (hist.length === 0) {
+        document.getElementById('fseFuelLedger').innerHTML = '<div class="opacity-60 py-2">No diesel delivery entries recorded yet.</div>';
+      } else {
+        document.getElementById('fseFuelLedger').innerHTML =
+          '<table class="w-full text-left border-collapse text-[11px]">' +
+            '<thead><tr class="border-b border_ui opacity-60"><th class="py-1.5 pr-3">DATE RECEIVED</th><th class="py-1.5 pr-3">TIME</th><th class="py-1.5 pr-3">QTY (L)</th><th class="py-1.5 pr-3">SUPPLIER</th><th class="py-1.5">LOGGED BY</th></tr></thead>' +
+            '<tbody>' + hist.map(h =>
+              '<tr class="border-b border_ui/50"><td class="py-1.5 pr-3 font-bold">' + h.date + '</td><td class="py-1.5 pr-3">' + (h.time || '--:--') + '</td><td class="py-1.5 pr-3 text-(--color-accent) font-bold">+' + h.qty + ' L</td><td class="py-1.5 pr-3">' + (h.supplier || 'N/A') + '</td><td class="py-1.5 opacity-70">' + (h.loggedBy || 'FSE') + '</td></tr>'
+            ).join('') + '</tbody></table>';
+      }
+    }
+
+    function handleFseUpdateFuelLevel(e) {
+      e.preventDefault();
+      if (!fseSession) return;
+      const site = masterSites.find(s => s.siteId === fseSession.siteId);
+      if (!site) return;
+
+      site.currentDL = parseFloat(document.getElementById('fseFuelLevelInput').value) || 0;
+      site.cpd = parseFloat(document.getElementById('fseCpdInput').value) || site.cpd;
+      synchronizeSite(site);
+      saveState();
+      updateKpis();
+      renderSites();
+      renderFseFuelModule(site);
+      showToast('Updated fuel level for ' + site.siteId + ' to ' + site.currentDL + ' L');
+    }
+
+    function handleFseLogDelivery(e) {
+      e.preventDefault();
+      if (!fseSession) return;
+      const site = masterSites.find(s => s.siteId === fseSession.siteId);
+      if (!site) return;
+
+      const qty = parseFloat(document.getElementById('fseDeliveryQty').value) || 0;
+      const dateRaw = document.getElementById('fseDeliveryDate').value;
+      const timeRaw = document.getElementById('fseDeliveryTime').value;
+      const supplier = document.getElementById('fseDeliverySupplier').value.trim();
+
+      const formattedDate = new Date(dateRaw + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+      // Shift current lastSupply into previousSupply
+      if (site.lastSupplyDate) {
+        site.previousSupplyDate = site.lastSupplyDate;
+        site.previousSupplyTime = site.lastSupplyTime || '--:--';
+        site.previousSupplyQty = (site.lastSupplyQty || 0) + ' L';
+      }
+
+      site.lastSupplyQty = qty;
+      site.lastSupplyDate = formattedDate;
+      site.lastSupplyTime = timeRaw;
+      site.supplier = supplier;
+      site.currentDL = Math.min(site.tankCap, site.currentDL + qty);
+
+      if (!site.refuelHistory) site.refuelHistory = [];
+      site.refuelHistory.unshift({
+        date: formattedDate,
+        time: timeRaw,
+        qty: qty,
+        supplier: supplier,
+        loggedBy: fseSession.fseName
+      });
+
+      synchronizeSite(site);
+      saveState();
+      updateKpis();
+      renderSites();
+      renderFseFuelModule(site);
+      showToast('Recorded +' + qty + 'L delivery at ' + timeRaw + ' on ' + formattedDate);
+    }
+
+    // FSE Module 2: Light & Battery (BUB)
+    function renderFseBubModule(site) {
+      const soc = site.batterySoc || 85;
+      const battHrs = site.batteryAutonomyHours || 8;
+      const lightHrs = site.gridHoursPerDay !== undefined ? site.gridHoursPerDay : 12;
+      const totalOffload = (parseFloat(battHrs) + parseFloat(lightHrs)).toFixed(1);
+
+      document.getElementById('fseBubKpiRow').innerHTML =
+        '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">BATTERY LIFE (OFF-GRID)</div><div class="text-xl font-bold mt-1 text-(--color-accent)">' + battHrs + ' HRS</div><div class="text-[10px] opacity-60">' + (site.batteryStatus || 'HEALTHY') + '</div></div>' +
+        '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">BATTERY SOC / VOLTS</div><div class="text-xl font-bold mt-1">' + soc + '%</div><div class="text-[10px] opacity-60">' + (site.batteryVoltage || '52.8 V') + '</div></div>' +
+        '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">HOURS OF LIGHT ON SITE</div><div class="text-xl font-bold mt-1 text-amber-400">' + lightHrs + ' HRS/D</div><div class="text-[10px] opacity-60">' + (site.gridStatus || 'PHCN ONLINE') + '</div></div>' +
+        '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">TOTAL GEN OFFLOAD</div><div class="text-xl font-bold mt-1">' + totalOffload + ' HRS/D</div><div class="text-[10px] opacity-60">Light + BUB Backup</div></div>';
+
+      document.getElementById('fseBubHoursInput').value = battHrs;
+      document.getElementById('fseBubSocInput').value = soc;
+      document.getElementById('fseBubVoltageInput').value = site.batteryVoltage || '52.8 V';
+      document.getElementById('fseBubHealthInput').value = site.batteryStatus || 'HEALTHY';
+      document.getElementById('fseLightHoursInput').value = lightHrs;
+      document.getElementById('fseGridStatusInput').value = site.gridStatus || 'PHCN ONLINE';
+      document.getElementById('fseTokenStatusInput').value = site.nepaTokenStatus || 'LOADED';
+    }
+
+    function handleFseSaveBub(e) {
+      e.preventDefault();
+      if (!fseSession) return;
+      const site = masterSites.find(s => s.siteId === fseSession.siteId);
+      if (!site) return;
+
+      site.batteryAutonomyHours = parseFloat(document.getElementById('fseBubHoursInput').value) || 0;
+      site.batterySoc = parseInt(document.getElementById('fseBubSocInput').value, 10) || 0;
+      site.batteryVoltage = document.getElementById('fseBubVoltageInput').value.trim();
+      site.batteryStatus = document.getElementById('fseBubHealthInput').value;
+
+      saveState();
+      renderPowerMatrix();
+      renderFseBubModule(site);
+      showToast('Updated Battery Life & BUB telemetry for ' + site.siteId);
+    }
+
+    function handleFseSaveLight(e) {
+      e.preventDefault();
+      if (!fseSession) return;
+      const site = masterSites.find(s => s.siteId === fseSession.siteId);
+      if (!site) return;
+
+      site.gridHoursPerDay = parseFloat(document.getElementById('fseLightHoursInput').value) || 0;
+      site.gridStatus = document.getElementById('fseGridStatusInput').value;
+      site.nepaTokenStatus = document.getElementById('fseTokenStatusInput').value;
+
+      saveState();
+      renderPowerMatrix();
+      renderFseBubModule(site);
+      showToast('Updated site light hours (' + site.gridHoursPerDay + ' hrs/day) for ' + site.siteId);
+    }
+
+    // FSE Module 3: Repairs & PPM (Machinery Requiring Constant Repair)
+    function renderFseRepairsModule(site) {
+      const siteTickets = masterRepairs.filter(r => r.siteId === site.siteId);
+
+      // Build Machinery Requiring Constant Repair list (site-flagged + recurring repair tickets + common repeat-fault machinery)
+      const constantAssets = [...(site.constantRepairAssets || [])];
+      siteTickets.forEach(t => {
+        const existing = constantAssets.find(a => a.name.toLowerCase() === (t.category || 'Generator').toLowerCase());
+        if (existing) {
+          existing.count += 1;
+          existing.lastIssue = t.issue;
+        } else {
+          constantAssets.push({
+            name: t.category || 'Generator Subsystem',
+            issue: t.issue,
+            count: 2,
+            severity: t.priority || 'High'
+          });
+        }
+      });
+
+      // Fallback chronic machinery watchlist if site has none logged yet
+      if (constantAssets.length === 0) {
+        constantAssets.push(
+          { name: 'Diesel Generator Alternator', issue: 'Voltage fluctuation & brush wear under high ambient load', count: 3, severity: 'High' },
+          { name: 'Fuel Injection Pump & Filters', issue: 'Frequent clogging requiring bi-weekly servicing', count: 4, severity: 'Critical' },
+          { name: 'ATS / Rectifier Cooling Fan', issue: 'Dust buildup & bearing wear causing thermal trips', count: 2, severity: 'Medium' }
+        );
+      }
+
+      document.getElementById('fseConstantRepairCount').innerText = constantAssets.length + ' ASSETS FLAGGED';
+      document.getElementById('fseConstantRepairList').innerHTML = constantAssets.map(a =>
+        '<div class="border_ui p-3 bg-black/10 dark:bg-white/5 space-y-1.5">' +
+          '<div class="flex items-start justify-between gap-2">' +
+            '<span class="font-bold text-xs">' + a.name + '</span>' +
+            '<span class="border_ui px-1.5 py-0.5 text-[9px] font-bold text-rose-400 border-rose-500/40">' + a.count + 'x REPAIRS</span>' +
+          '</div>' +
+          '<div class="text-[11px] opacity-75">' + (a.issue || a.lastIssue) + '</div>' +
+          '<div class="text-[9px] uppercase opacity-50">PRIORITY: ' + (a.severity || 'HIGH') + ' — NEEDS PPM OVERHAUL</div>' +
+        '</div>'
+      ).join('');
+
+      // Site Repair Tickets
+      const ticketsEl = document.getElementById('fseSiteRepairsList');
+      if (siteTickets.length === 0) {
+        ticketsEl.innerHTML = '<div class="opacity-60 text-[11px] py-2">No active repair tickets logged for ' + site.siteId + '.</div>';
+      } else {
+        ticketsEl.innerHTML = siteTickets.map(t =>
+          '<div class="border_ui p-2.5 space-y-1">' +
+            '<div class="flex justify-between font-bold"><span>' + t.ticketId + ' · ' + (t.category || 'GENERAL') + '</span><span class="text-amber-400">' + t.status + '</span></div>' +
+            '<div class="opacity-80 text-[11px]">' + t.issue + '</div>' +
+            '<div class="opacity-50 text-[10px]">Logged: ' + t.loggedDate + ' · Tech: ' + (t.technician || fseSession.fseName) + '</div>' +
+          '</div>'
+        ).join('');
+      }
+
+      // Site PPM Checklist
+      const ticks = site.maintenanceTicks || [];
+      const ppmEl = document.getElementById('fseSitePpmList');
+      if (ticks.length === 0) {
+        ppmEl.innerHTML = '<div class="opacity-60 text-[11px] py-2">Click "OPEN FULL CHECKLIST" to initialize PPM tasks for this site.</div>';
+      } else {
+        ppmEl.innerHTML = ticks.map((tk, idx) =>
+          '<div onclick="toggleSiteTickFromFse(' + idx + ')" class="border_ui p-2 flex items-center justify-between cursor-pointer hover:border-(--color-primary)">' +
+            '<span class="text-[11px] ' + (tk.done ? 'line-through opacity-50' : '') + '">' + (tk.done ? '[✓] ' : '[ ] ') + tk.task + '</span>' +
+            '<span class="text-[9px] opacity-60">' + (tk.category || 'PPM') + '</span>' +
+          '</div>'
+        ).join('');
+      }
+    }
+
+    function handleFseFlagMachinery(e) {
+      e.preventDefault();
+      if (!fseSession) return;
+      const site = masterSites.find(s => s.siteId === fseSession.siteId);
+      if (!site) return;
+
+      const name = document.getElementById('fseFlagMachineName').value.trim();
+      const issue = document.getElementById('fseFlagMachineIssue').value.trim();
+      if (!site.constantRepairAssets) site.constantRepairAssets = [];
+      site.constantRepairAssets.unshift({ name, issue, count: 1, severity: 'High' });
+
+      document.getElementById('fseFlagMachineName').value = '';
+      document.getElementById('fseFlagMachineIssue').value = '';
+      saveState();
+      renderFseRepairsModule(site);
+      showToast('Flagged ' + name + ' as constant-repair machinery');
+    }
+
+    function toggleSiteTickFromFse(idx) {
+      if (!fseSession) return;
+      const site = masterSites.find(s => s.siteId === fseSession.siteId);
+      if (!site || !site.maintenanceTicks || !site.maintenanceTicks[idx]) return;
+      site.maintenanceTicks[idx].done = !site.maintenanceTicks[idx].done;
+      saveState();
+      renderFseRepairsModule(site);
     }
 
     // Fleet Scope
@@ -10061,18 +11040,317 @@
       const btn = document.getElementById('adminToggleBtn');
       const banner = document.getElementById('adminBanner');
       const txt = document.getElementById('adminBtnText');
+      const navBadge = document.getElementById('adminNavStatusBadge');
+      const addLock = document.getElementById('quickAddSiteLock');
       if (isAdminUnlocked) {
         btn.className = 'border_ui border-amber-500 bg-amber-500 text-black px-2.5 py-1 flex items-center gap-1.5 font-bold cursor-pointer text-[11px]';
         txt.innerText = 'ADMIN ACTIVE';
         banner.classList.remove('hidden');
+        if (navBadge) navBadge.innerText = adminSession ? adminSession.siteId : 'ACTIVE';
+        if (addLock) addLock.innerText = '[N]';
       } else {
         btn.className = 'border_ui px-2.5 py-1 flex items-center gap-1.5 btn-invert cursor-pointer text-[11px] font-bold';
         txt.innerText = 'ADMIN LOCKED';
         banner.classList.add('hidden');
+        if (navBadge) navBadge.innerText = 'PIN';
+        if (addLock) addLock.innerText = '[ADMIN]';
+      }
+      updateAdminPortalUiState();
+    }
+
+    // ==================== ADMIN PORTAL LOGIC ====================
+    function populateAdminLoginDropdown() {
+      const sel = document.getElementById('adminLoginSiteSelect');
+      const quick = document.getElementById('adminQuickSiteSwitch');
+      const opts = masterSites.map(s =>
+        '<option value="' + s.siteId + '">' + s.siteId + ' — ' + s.state + ' (' + s.tenantId + ')</option>'
+      ).join('');
+      if (sel) {
+        sel.innerHTML = opts;
+        prefillAdminSiteDetails();
+      }
+      if (quick) quick.innerHTML = opts;
+    }
+
+    function prefillAdminSiteDetails() {
+      const sel = document.getElementById('adminLoginSiteSelect');
+      if (!sel) return;
+      const site = masterSites.find(s => s.siteId === sel.value);
+      if (!site) return;
+
+      document.getElementById('adminLoginSitePreview').innerHTML =
+        '<div class="flex justify-between"><span class="opacity-60">STATE / REGION:</span><span class="font-bold">' + site.state + '</span></div>' +
+        '<div class="flex justify-between"><span class="opacity-60">TENANT ID:</span><span class="font-bold">' + site.tenantId + '</span></div>' +
+        '<div class="flex justify-between"><span class="opacity-60">ADDRESS:</span><span class="truncate max-w-[260px]">' + site.address + '</span></div>' +
+        '<div class="flex justify-between"><span class="opacity-60">CURRENT FUEL / BUB:</span><span class="font-bold">' + site.currentDL + ' L · ' + (site.batterySoc || 85) + '% BUB</span></div>';
+    }
+
+    function handleAdminPortalLogin(e) {
+      e.preventDefault();
+      const pin = document.getElementById('adminLoginPin').value.trim();
+      if (pin !== '1234') {
+        alert('Incorrect Admin Passcode. Only authorized Admins can access site editing.');
+        return;
+      }
+      const siteId = document.getElementById('adminLoginSiteSelect').value;
+      const adminName = document.getElementById('adminLoginName').value.trim() || 'NOC Administrator';
+
+      isAdminUnlocked = true;
+      localStorage.setItem('coloplus_admin_unlocked', 'true');
+      adminSession = { siteId, adminName, loginAt: new Date().toISOString() };
+      localStorage.setItem('coloplus_admin_session', JSON.stringify(adminSession));
+
+      document.getElementById('adminLoginPin').value = '';
+      updateAdminUi();
+      renderSites();
+      renderRepairs();
+      openAdminModule(adminActiveModule || 'repairs');
+      showToast('Admin Portal Unlocked for ' + siteId);
+    }
+
+    function switchAdminSite(siteId) {
+      if (!isAdminUnlocked) return;
+      if (!adminSession) adminSession = { siteId, adminName: 'NOC Administrator' };
+      adminSession.siteId = siteId;
+      localStorage.setItem('coloplus_admin_session', JSON.stringify(adminSession));
+      updateAdminPortalUiState();
+      showToast('Admin switched to site ' + siteId);
+    }
+
+    function logoutAdminPortal() {
+      adminSession = null;
+      localStorage.removeItem('coloplus_admin_session');
+      lockAdminAccess();
+    }
+
+    function updateAdminPortalUiState() {
+      const loginView = document.getElementById('adminLoginView');
+      const workspaceView = document.getElementById('adminWorkspaceView');
+      if (!loginView || !workspaceView) return;
+
+      if (!isAdminUnlocked || !adminSession) {
+        loginView.classList.remove('hidden');
+        workspaceView.classList.add('hidden');
+        return;
+      }
+
+      const site = masterSites.find(s => s.siteId === adminSession.siteId) || masterSites[0];
+      if (!site) return;
+      adminSession.siteId = site.siteId;
+
+      loginView.classList.add('hidden');
+      workspaceView.classList.remove('hidden');
+
+      document.getElementById('adminActiveSiteHeader').innerText = 'SITE: ' + site.siteId + ' (' + site.tenantId + ')';
+      document.getElementById('adminActiveSiteSub').innerText = site.state + ' · ' + site.address + ' · Admin: ' + adminSession.adminName;
+      const quick = document.getElementById('adminQuickSiteSwitch');
+      if (quick) quick.value = site.siteId;
+
+      renderAdminModuleContent(site);
+    }
+
+    function openAdminModule(mod) {
+      adminActiveModule = mod;
+      ['repairs', 'bub', 'fuel'].forEach(m => {
+        const btn = document.getElementById('adminTabBtn' + m.charAt(0).toUpperCase() + m.slice(1));
+        if (btn) btn.className = 'border_ui p-3 text-left cursor-pointer btn-invert ' + (m === mod ? 'nav_active' : 'opacity-75');
+      });
+      if (isAdminUnlocked && adminSession) {
+        const site = masterSites.find(s => s.siteId === adminSession.siteId);
+        if (site) renderAdminModuleContent(site);
       }
     }
 
+    function renderAdminModuleContent(site) {
+      const container = document.getElementById('adminModuleContainer');
+      if (!container) return;
+
+      if (adminActiveModule === 'repairs') {
+        const siteTickets = masterRepairs.filter(r => r.siteId === site.siteId);
+        const constantAssets = [...(site.constantRepairAssets || [])];
+        siteTickets.forEach(t => {
+          const ex = constantAssets.find(a => a.name.toLowerCase() === (t.category || 'Generator').toLowerCase());
+          if (ex) { ex.count += 1; ex.lastIssue = t.issue; }
+          else constantAssets.push({ name: t.category || 'Generator Subsystem', issue: t.issue, count: 2, severity: t.priority || 'High' });
+        });
+        if (constantAssets.length === 0) {
+          constantAssets.push(
+            { name: 'Diesel Generator Alternator', issue: 'Voltage fluctuation & brush wear under high ambient load', count: 3, severity: 'High' },
+            { name: 'Fuel Injection Pump & Filters', issue: 'Frequent clogging requiring bi-weekly servicing', count: 4, severity: 'Critical' },
+            { name: 'ATS / Rectifier Cooling Fan', issue: 'Dust buildup & bearing wear causing thermal trips', count: 2, severity: 'Medium' }
+          );
+        }
+        container.innerHTML =
+          '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
+            '<div class="flex justify-between items-center border-b border_ui pb-2">' +
+              '<span class="font-bold uppercase text-amber-400">// MACHINERY REQUIRING CONSTANT REPAIR (' + site.siteId + ')</span>' +
+              '<span class="border_ui px-2 py-0.5 text-[10px] font-bold text-rose-400 border-rose-500/40">' + constantAssets.length + ' FLAGGED</span>' +
+            '</div>' +
+            '<div class="grid grid-cols-1 md:grid-cols-3 gap-2.5">' +
+              constantAssets.map(a =>
+                '<div class="border_ui p-3 bg-black/10 dark:bg-white/5 space-y-1">' +
+                  '<div class="flex justify-between"><span class="font-bold">' + a.name + '</span><span class="text-rose-400 font-bold text-[10px]">' + a.count + 'x</span></div>' +
+                  '<div class="text-[11px] opacity-75">' + (a.issue || a.lastIssue) + '</div>' +
+                '</div>'
+              ).join('') +
+            '</div>' +
+            '<form onsubmit="handleAdminFlagMachinery(event)" class="pt-2 border-t border_ui grid grid-cols-1 sm:grid-cols-4 gap-2">' +
+              '<input type="text" id="adminFlagName" required placeholder="Machinery name..." class="border_ui bg-transparent px-2.5 py-1.5 outline-none">' +
+              '<input type="text" id="adminFlagIssue" required placeholder="Constant repair issue..." class="sm:col-span-2 border_ui bg-transparent px-2.5 py-1.5 outline-none">' +
+              '<button type="submit" class="border_ui px-3 py-1.5 font-bold nav_active btn-invert cursor-pointer">+ FLAG MACHINERY</button>' +
+            '</form>' +
+          '</div>';
+      } else if (adminActiveModule === 'bub') {
+        const battHrs = site.batteryAutonomyHours || 8;
+        const soc = site.batterySoc || 85;
+        const lightHrs = site.gridHoursPerDay !== undefined ? site.gridHoursPerDay : 12;
+        container.innerHTML =
+          '<div class="grid grid-cols-1 lg:grid-cols-2 gap-2.5">' +
+            '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
+              '<div class="font-bold uppercase border-b border_ui pb-2">// BATTERY LIFE &amp; BUB (' + site.siteId + ')</div>' +
+              '<form onsubmit="handleAdminSaveBub(event)" class="space-y-2.5">' +
+                '<div class="grid grid-cols-2 gap-2">' +
+                  '<div><label class="block text-[10px] opacity-60 mb-1">BATTERY LIFE (HRS OFF-GRID)</label><input type="number" step="0.5" min="0" id="admBubHrs" value="' + battHrs + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
+                  '<div><label class="block text-[10px] opacity-60 mb-1">BATTERY SOC (%)</label><input type="number" min="0" max="100" id="admBubSoc" value="' + soc + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
+                '</div>' +
+                '<button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">SAVE BATTERY TELEMETRY</button>' +
+              '</form>' +
+            '</div>' +
+            '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
+              '<div class="font-bold uppercase border-b border_ui pb-2">// NO. OF HOURS OF LIGHT ON SITE</div>' +
+              '<form onsubmit="handleAdminSaveLight(event)" class="space-y-2.5">' +
+                '<div class="grid grid-cols-2 gap-2">' +
+                  '<div><label class="block text-[10px] opacity-60 mb-1">HOURS OF LIGHT (HRS/DAY)</label><input type="number" step="0.5" min="0" max="24" id="admLightHrs" value="' + lightHrs + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
+                  '<div><label class="block text-[10px] opacity-60 mb-1">GRID STATUS</label><input type="text" id="admGridStatus" value="' + (site.gridStatus || 'PHCN ONLINE') + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
+                '</div>' +
+                '<button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">SAVE LIGHT HOURS</button>' +
+              '</form>' +
+            '</div>' +
+          '</div>';
+      } else if (adminActiveModule === 'fuel') {
+        const now = new Date();
+        const prevDate = site.previousSupplyDate || (site.refuelHistory && site.refuelHistory.length > 1 ? site.refuelHistory[1].date : 'No prior record');
+        container.innerHTML =
+          '<div class="grid grid-cols-1 lg:grid-cols-2 gap-2.5">' +
+            '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
+              '<div class="font-bold uppercase border-b border_ui pb-2">// INPUT FUEL LEVEL (' + site.siteId + ')</div>' +
+              '<form onsubmit="handleAdminUpdateFuel(event)" class="space-y-2.5">' +
+                '<div><label class="block text-[10px] opacity-60 mb-1">CURRENT FUEL LEVEL (LITRES)</label><input type="number" step="0.1" min="0" id="admFuelLevel" value="' + site.currentDL + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 font-bold outline-none"></div>' +
+                '<button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">SAVE FUEL LEVEL</button>' +
+              '</form>' +
+            '</div>' +
+            '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
+              '<div class="font-bold uppercase border-b border_ui pb-2">// TIME DIESEL RECEIVED &amp; PREVIOUS DATE</div>' +
+              '<form onsubmit="handleAdminLogDelivery(event)" class="space-y-2">' +
+                '<div class="grid grid-cols-3 gap-2">' +
+                  '<input type="number" id="admDelQty" required placeholder="Qty (L)" class="border_ui bg-transparent px-2 py-1.5 outline-none">' +
+                  '<input type="date" id="admDelDate" value="' + now.toISOString().slice(0, 10) + '" required class="border_ui bg-(--color-card-bg) px-2 py-1.5 outline-none">' +
+                  '<input type="time" id="admDelTime" value="' + now.toTimeString().slice(0, 5) + '" required class="border_ui bg-(--color-card-bg) px-2 py-1.5 outline-none">' +
+                '</div>' +
+                '<button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">+ RECORD DIESEL DELIVERY</button>' +
+              '</form>' +
+              '<div class="border_ui p-2.5 bg-black/10 dark:bg-white/5 text-[11px] space-y-1">' +
+                '<div class="flex justify-between"><span>Latest Received:</span><span class="font-bold text-(--color-accent)">' + (site.lastSupplyQty || 0) + ' L · ' + (site.lastSupplyDate || 'N/A') + ' @ ' + (site.lastSupplyTime || '--:--') + '</span></div>' +
+                '<div class="flex justify-between"><span>Previous Date Received:</span><span class="font-bold text-amber-400">' + prevDate + '</span></div>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+      }
+    }
+
+    function handleAdminFlagMachinery(e) {
+      e.preventDefault();
+      if (!isAdminUnlocked || !adminSession) return;
+      const site = masterSites.find(s => s.siteId === adminSession.siteId);
+      if (!site) return;
+      if (!site.constantRepairAssets) site.constantRepairAssets = [];
+      site.constantRepairAssets.unshift({
+        name: document.getElementById('adminFlagName').value.trim(),
+        issue: document.getElementById('adminFlagIssue').value.trim(),
+        count: 1,
+        severity: 'High'
+      });
+      saveState();
+      renderAdminModuleContent(site);
+      showToast('Flagged constant-repair machinery');
+    }
+
+    function handleAdminSaveBub(e) {
+      e.preventDefault();
+      if (!isAdminUnlocked || !adminSession) return;
+      const site = masterSites.find(s => s.siteId === adminSession.siteId);
+      if (!site) return;
+      site.batteryAutonomyHours = parseFloat(document.getElementById('admBubHrs').value) || 0;
+      site.batterySoc = parseInt(document.getElementById('admBubSoc').value, 10) || 0;
+      saveState();
+      renderPowerMatrix();
+      renderAdminModuleContent(site);
+      showToast('Admin updated battery telemetry');
+    }
+
+    function handleAdminSaveLight(e) {
+      e.preventDefault();
+      if (!isAdminUnlocked || !adminSession) return;
+      const site = masterSites.find(s => s.siteId === adminSession.siteId);
+      if (!site) return;
+      site.gridHoursPerDay = parseFloat(document.getElementById('admLightHrs').value) || 0;
+      site.gridStatus = document.getElementById('admGridStatus').value.trim();
+      saveState();
+      renderPowerMatrix();
+      renderAdminModuleContent(site);
+      showToast('Admin updated site light hours');
+    }
+
+    function handleAdminUpdateFuel(e) {
+      e.preventDefault();
+      if (!isAdminUnlocked || !adminSession) return;
+      const site = masterSites.find(s => s.siteId === adminSession.siteId);
+      if (!site) return;
+      site.currentDL = parseFloat(document.getElementById('admFuelLevel').value) || 0;
+      synchronizeSite(site);
+      saveState();
+      updateKpis();
+      renderSites();
+      renderAdminModuleContent(site);
+      showToast('Admin updated fuel level');
+    }
+
+    function handleAdminLogDelivery(e) {
+      e.preventDefault();
+      if (!isAdminUnlocked || !adminSession) return;
+      const site = masterSites.find(s => s.siteId === adminSession.siteId);
+      if (!site) return;
+      const qty = parseFloat(document.getElementById('admDelQty').value) || 0;
+      const dateRaw = document.getElementById('admDelDate').value;
+      const timeRaw = document.getElementById('admDelTime').value;
+      const formattedDate = new Date(dateRaw + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+      if (site.lastSupplyDate) {
+        site.previousSupplyDate = site.lastSupplyDate;
+        site.previousSupplyTime = site.lastSupplyTime || '--:--';
+        site.previousSupplyQty = (site.lastSupplyQty || 0) + ' L';
+      }
+      site.lastSupplyQty = qty;
+      site.lastSupplyDate = formattedDate;
+      site.lastSupplyTime = timeRaw;
+      site.currentDL = Math.min(site.tankCap, site.currentDL + qty);
+      if (!site.refuelHistory) site.refuelHistory = [];
+      site.refuelHistory.unshift({ date: formattedDate, time: timeRaw, qty, supplier: site.supplier || 'Admin', loggedBy: adminSession.adminName });
+
+      synchronizeSite(site);
+      saveState();
+      updateKpis();
+      renderSites();
+      renderAdminModuleContent(site);
+      showToast('Admin recorded +' + qty + 'L delivery at ' + timeRaw);
+    }
+
     function resetAllToMasterAudit() {
+      if (!isAdminUnlocked) {
+        showToast('Access Denied: Only Admin is authorized to reset sites');
+        switchSection('admin');
+        return;
+      }
       if (!confirm('Revert ALL sites and tickets to the master WK 43 Presentation audit defaults? All manual edits will be reset.')) {
         return;
       }
@@ -10088,8 +11366,13 @@
       showToast('Restored all sites to master audit defaults');
     }
 
-    // ==================== EDIT SITE & PER-SITE RESET ====================
+    // ==================== EDIT SITE & PER-SITE RESET (ADMIN ONLY) ====================
     function openEditSiteModal(siteId) {
+      if (!isAdminUnlocked) {
+        showToast('Access Denied: Only Admin is authorized to edit sites');
+        switchSection('admin');
+        return;
+      }
       const site = masterSites.find(s => s.siteId === siteId);
       if (!site) return;
 
@@ -10135,6 +11418,10 @@
 
     function handleSaveEditedSite(e) {
       e.preventDefault();
+      if (!isAdminUnlocked) {
+        showToast('Access Denied: Only Admin is authorized to edit sites');
+        return;
+      }
       const siteId = document.getElementById('editSiteIdHidden').value;
       const site = masterSites.find(s => s.siteId === siteId);
       if (!site) return;
@@ -10207,8 +11494,13 @@
       }
     }
 
-    // ==================== ADD SITE MODAL ====================
+    // ==================== ADD SITE MODAL (ADMIN ONLY) ====================
     function openAddSiteModal() {
+      if (!isAdminUnlocked) {
+        showToast('Access Denied: Only Admin is authorized to add or edit sites');
+        switchSection('admin');
+        return;
+      }
       document.getElementById('addSiteModal').classList.remove('hidden');
     }
     function closeAddSiteModal() {
