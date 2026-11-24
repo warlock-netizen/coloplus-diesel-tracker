@@ -348,38 +348,30 @@
           <div class="border-b border_ui pb-3">
             <div class="text-[10px] uppercase tracking-widest opacity-50">// FSE PORTAL AUTHENTICATION</div>
             <h2 class="hero-outline-title text-4xl uppercase mt-1">LOGIN WITH SITE DETAILS</h2>
-            <p class="text-[11px] opacity-70 mt-1">Select your assigned tower site and verify your FSE details to manage Fuel, Light &amp; Battery (BUB), and Repairs &amp; PPM.</p>
+            <p class="text-[11px] opacity-70 mt-1">Input your <span class="font-bold">Site ID</span> and <span class="font-bold">Tenant ID</span> to verify your site and open your FSE details.</p>
           </div>
 
           <form onsubmit="handleFseLogin(event)" class="space-y-3 text-xs">
-            <div>
-              <label class="block text-[10px] uppercase opacity-60 mb-1">1. SELECT SITE ID (14 ACTIVE SITES)</label>
-              <select id="fseLoginSiteSelect" onchange="prefillFseSiteDetails()" required class="w-full border_ui bg-(--color-card-bg) px-3 py-2 outline-none cursor-pointer">
-                <!-- Populated dynamically -->
-              </select>
-            </div>
-
-            <div id="fseLoginSitePreview" class="border_ui p-3 bg-black/10 dark:bg-white/5 text-[11px] space-y-1">
-              <!-- Populated dynamically -->
-            </div>
-
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label class="block text-[10px] uppercase opacity-60 mb-1">2. FSE NAME</label>
-                <input type="text" id="fseLoginName" required placeholder="Enter FSE Full Name" class="w-full border_ui bg-transparent px-3 py-2 outline-none focus:border-(--color-primary)">
+                <label class="block text-[10px] uppercase opacity-60 mb-1">1. INPUT SITE ID</label>
+                <input type="text" id="fseLoginSiteIdInput" list="activeSiteIdList" required placeholder="e.g. CP/CP/EK/002" class="w-full border_ui bg-transparent px-3 py-2 uppercase outline-none focus:border-(--color-primary)">
+                <datalist id="activeSiteIdList"></datalist>
               </div>
               <div>
-                <label class="block text-[10px] uppercase opacity-60 mb-1">3. FSE PHONE / BADGE ID</label>
-                <input type="text" id="fseLoginPhone" required placeholder="e.g. 0803... or FSE-01" class="w-full border_ui bg-transparent px-3 py-2 outline-none focus:border-(--color-primary)">
+                <label class="block text-[10px] uppercase opacity-60 mb-1">2. INPUT TENANT ID</label>
+                <input type="text" id="fseLoginTenantIdInput" required placeholder="e.g. EK0474" class="w-full border_ui bg-transparent px-3 py-2 uppercase outline-none focus:border-(--color-primary)">
               </div>
             </div>
+
+            <div id="fseLoginError" class="hidden border_ui border-rose-500/60 bg-rose-500/10 p-2.5 text-rose-400 text-[11px] font-bold"></div>
 
             <div class="pt-2 flex items-center justify-between gap-3">
               <button type="button" onclick="switchSection('landing')" class="border_ui px-4 py-2 btn-invert cursor-pointer">
                 &lt;&lt; BACK TO INTRO
               </button>
               <button type="submit" class="border_ui px-6 py-2 font-bold nav_active btn-invert cursor-pointer">
-                LOGIN TO SITE PORTAL &gt;&gt;
+                VERIFY SITE &amp; LOGIN &gt;&gt;
               </button>
             </div>
           </form>
@@ -489,6 +481,22 @@
             <div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-2 text-xs">
               <div class="font-bold uppercase tracking-wider">// SITE DIESEL DELIVERY LEDGER</div>
               <div id="fseFuelLedger" class="overflow-x-auto">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+
+            <!-- Hourly Diesel Scan Panel -->
+            <div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3 text-xs">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border_ui pb-2">
+                <div>
+                  <div class="font-bold uppercase tracking-wider text-(--color-accent)">// HOURLY DIESEL SCAN ENGINE</div>
+                  <div id="hourlyScanStatusText" class="opacity-65 text-[10px]">AUTO-SCAN EVERY 60 MIN · NEXT SCAN IN 60:00</div>
+                </div>
+                <button type="button" onclick="runHourlyDieselScan(true)" class="border_ui px-3 py-1.5 font-bold nav_active btn-invert cursor-pointer text-[11px]">
+                  RUN HOURLY SCAN NOW
+                </button>
+              </div>
+              <div id="hourlyScanLogContainer" class="overflow-x-auto">
                 <!-- Populated dynamically -->
               </div>
             </div>
@@ -1036,6 +1044,40 @@
   </div>
 
   <!-- ==================== MODALS & DRAWERS ==================== -->
+
+  <!-- 0. FSE DETAIL VERIFICATION POPUP MODAL -->
+  <div id="fseDetailPopupModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="border_ui bg-(--color-secondary) text-(--color-primary) w-full max-w-lg p-6 shadow-2xl space-y-4 font-mono text-xs">
+      <div class="flex items-start justify-between border-b border_ui pb-3">
+        <div>
+          <span class="text-[10px] uppercase tracking-widest text-(--color-accent) font-bold">// SITE &amp; TENANT VERIFIED</span>
+          <h3 class="hero-outline-title text-3xl uppercase mt-0.5">FSE SITE DETAILS</h3>
+        </div>
+        <button onclick="closeFseDetailPopup()" class="border_ui px-2 py-1 btn-invert cursor-pointer">CLOSE</button>
+      </div>
+
+      <div id="fsePopupSiteDetails" class="border_ui p-3 bg-black/10 dark:bg-white/5 space-y-1.5 text-[11px]">
+        <!-- Populated dynamically -->
+      </div>
+
+      <form onsubmit="confirmFseDetailPopup(event)" class="space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-[10px] uppercase opacity-60 mb-1">FSE IN CHARGE</label>
+            <input type="text" id="fsePopupNameInput" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none focus:border-(--color-primary)">
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase opacity-60 mb-1">FSE PHONE / CONTACT</label>
+            <input type="text" id="fsePopupPhoneInput" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none focus:border-(--color-primary)">
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-2 border-t border_ui">
+          <button type="button" onclick="closeFseDetailPopup()" class="border_ui px-4 py-2 btn-invert cursor-pointer">CANCEL</button>
+          <button type="submit" class="border_ui px-5 py-2 font-bold nav_active btn-invert cursor-pointer">ENTER SITE WORKSPACE &gt;&gt;</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- 1. MAINTENANCE & RCA TICKS CHECKLIST MODAL -->
   <div id="ticksModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -3197,6 +3239,7 @@
       if (rBadge) rBadge.innerText = masterRepairs.length;
 
       initCalendarAndTasks();
+      initHourlyDieselScanner();
       updateAdminUi();
       updateKpis();
       renderSites();
@@ -3206,6 +3249,96 @@
       switchSection(activeSection);
 
       setInterval(tickClock, 1000);
+    }
+
+    // ==================== HOURLY DIESEL SCANNER ====================
+    let hourlyScanHistory = [];
+    try {
+      const savedScans = localStorage.getItem('coloplus_hourly_scans_v1');
+      if (savedScans) hourlyScanHistory = JSON.parse(savedScans);
+    } catch (e) { hourlyScanHistory = []; }
+    let nextHourlyScanAt = Date.now() + 3600 * 1000;
+
+    function initHourlyDieselScanner() {
+      if (hourlyScanHistory.length === 0) {
+        runHourlyDieselScan(false);
+      } else {
+        renderHourlyScanLogs();
+      }
+      setInterval(() => {
+        if (Date.now() >= nextHourlyScanAt) {
+          runHourlyDieselScan(true);
+        }
+        updateHourlyScanCountdown();
+      }, 1000);
+    }
+
+    function updateHourlyScanCountdown() {
+      const el = document.getElementById('hourlyScanStatusText');
+      if (!el) return;
+      const diffSec = Math.max(0, Math.floor((nextHourlyScanAt - Date.now()) / 1000));
+      const mm = String(Math.floor(diffSec / 60)).padStart(2, '0');
+      const ss = String(diffSec % 60).padStart(2, '0');
+      const last = hourlyScanHistory[0] ? hourlyScanHistory[0].scannedAt : 'N/A';
+      el.innerText = 'LAST SCAN: ' + last + ' · NEXT AUTO-SCAN IN ' + mm + ':' + ss;
+    }
+
+    function runHourlyDieselScan(deductHourBurn) {
+      let totalFleetDL = 0;
+      let totalHourlyBurn = 0;
+      const flagged = [];
+
+      masterSites.forEach(s => {
+        if (deductHourBurn) {
+          s.currentDL = Math.max(0, parseFloat((s.currentDL - s.cph).toFixed(2)));
+        }
+        synchronizeSite(s);
+        totalFleetDL += s.currentDL;
+        totalHourlyBurn += s.cph;
+        if (s.status === 'CRITICAL' || s.currentDL <= 200) {
+          flagged.push(s.siteId + ' (' + s.currentDL + 'L)');
+        }
+      });
+
+      const entry = {
+        scannedAt: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
+        totalFleetDL: Math.round(totalFleetDL),
+        totalHourlyBurn: parseFloat(totalHourlyBurn.toFixed(2)),
+        criticalCount: flagged.length,
+        flaggedSites: flagged.length ? flagged.join(', ') : 'None'
+      };
+
+      hourlyScanHistory.unshift(entry);
+      if (hourlyScanHistory.length > 24) hourlyScanHistory = hourlyScanHistory.slice(0, 24);
+      localStorage.setItem('coloplus_hourly_scans_v1', JSON.stringify(hourlyScanHistory));
+      nextHourlyScanAt = Date.now() + 3600 * 1000;
+
+      if (deductHourBurn) {
+        saveState();
+        updateKpis();
+        if (fseSession) {
+          const activeSite = masterSites.find(x => x.siteId === fseSession.siteId);
+          if (activeSite) renderFseFuelModule(activeSite);
+        }
+        showToast('Hourly diesel scan complete — ' + flagged.length + ' critical site(s) flagged');
+      }
+      renderHourlyScanLogs();
+      updateHourlyScanCountdown();
+    }
+
+    function renderHourlyScanLogs() {
+      const container = document.getElementById('hourlyScanLogContainer');
+      if (!container) return;
+      if (hourlyScanHistory.length === 0) {
+        container.innerHTML = '<div class="opacity-60 py-2">No hourly scans recorded yet.</div>';
+        return;
+      }
+      container.innerHTML =
+        '<table class="w-full text-left border-collapse text-[11px]">' +
+          '<thead><tr class="border-b border_ui opacity-60"><th class="py-1.5 pr-3">SCAN TIMESTAMP</th><th class="py-1.5 pr-3">TOTAL FLEET (L)</th><th class="py-1.5 pr-3">1H BURN (L)</th><th class="py-1.5">CRITICAL / &lt;=200L ALERTS</th></tr></thead>' +
+          '<tbody>' + hourlyScanHistory.slice(0, 8).map(h =>
+            '<tr class="border-b border_ui/50"><td class="py-1.5 pr-3 font-bold">' + h.scannedAt + '</td><td class="py-1.5 pr-3">' + h.totalFleetDL + ' L</td><td class="py-1.5 pr-3 text-amber-400">-' + h.totalHourlyBurn + ' L</td><td class="py-1.5 ' + (h.criticalCount > 0 ? 'text-rose-400 font-bold' : 'text-(--color-accent)') + '">' + h.flaggedSites + '</td></tr>'
+          ).join('') + '</tbody></table>';
     }
 
     function tickClock() {
@@ -3442,51 +3575,83 @@
     }
 
     // ==================== FSE PORTAL LOGIC ====================
+    let pendingVerifiedFseSite = null;
+
     function populateFseLoginDropdown() {
-      const sel = document.getElementById('fseLoginSiteSelect');
-      if (!sel) return;
-      sel.innerHTML = masterSites.map(s =>
-        '<option value="' + s.siteId + '">' + s.siteId + ' — ' + s.state + ' (' + s.tenantId + ')</option>'
+      const dl = document.getElementById('activeSiteIdList');
+      if (!dl) return;
+      dl.innerHTML = masterSites.map(s =>
+        '<option value="' + s.siteId + '">' + s.siteId + ' — ' + s.state + '</option>'
       ).join('');
-      prefillFseSiteDetails();
     }
 
-    function prefillFseSiteDetails() {
-      const sel = document.getElementById('fseLoginSiteSelect');
-      if (!sel) return;
-      const site = masterSites.find(s => s.siteId === sel.value);
-      if (!site) return;
-
-      document.getElementById('fseLoginSitePreview').innerHTML =
-        '<div class="flex justify-between"><span class="opacity-60">STATE / REGION:</span><span class="font-bold">' + site.state + '</span></div>' +
-        '<div class="flex justify-between"><span class="opacity-60">TENANT ID:</span><span class="font-bold">' + site.tenantId + '</span></div>' +
-        '<div class="flex justify-between"><span class="opacity-60">ADDRESS:</span><span class="truncate max-w-[260px]">' + site.address + '</span></div>' +
-        '<div class="flex justify-between"><span class="opacity-60">ASSIGNED FSE:</span><span class="font-bold">' + (site.fse || 'Regional FSE') + '</span></div>';
-
-      const nameInput = document.getElementById('fseLoginName');
-      const phoneInput = document.getElementById('fseLoginPhone');
-      if (site.fse && site.fse !== 'Regional FSE') nameInput.value = site.fse;
-      if (site.fsePhone && site.fsePhone !== 'Operations Dispatch') phoneInput.value = site.fsePhone;
-    }
+    function prefillFseSiteDetails() {}
 
     function handleFseLogin(e) {
       e.preventDefault();
-      const siteId = document.getElementById('fseLoginSiteSelect').value;
-      const fseName = document.getElementById('fseLoginName').value.trim();
-      const fsePhone = document.getElementById('fseLoginPhone').value.trim();
-      const site = masterSites.find(s => s.siteId === siteId);
-      if (!site) return;
+      const siteIdInput = document.getElementById('fseLoginSiteIdInput').value.trim().toUpperCase();
+      const tenantInput = document.getElementById('fseLoginTenantIdInput').value.trim().toUpperCase();
+      const errEl = document.getElementById('fseLoginError');
+
+      const site = masterSites.find(s => {
+        const sidMatch = s.siteId.trim().toUpperCase() === siteIdInput;
+        const fullTid = (s.tenantId || '').trim().toUpperCase();
+        const shortTid = fullTid.split('(')[0].trim();
+        const tidMatch = fullTid === tenantInput || shortTid === tenantInput;
+        return sidMatch && tidMatch;
+      });
+
+      if (!site) {
+        if (errEl) {
+          errEl.innerText = 'Verification failed: Site ID "' + siteIdInput + '" and Tenant ID "' + tenantInput + '" do not match an active site.';
+          errEl.classList.remove('hidden');
+        }
+        return;
+      }
+
+      if (errEl) errEl.classList.add('hidden');
+      pendingVerifiedFseSite = site;
+      openFseDetailPopup(site);
+    }
+
+    function openFseDetailPopup(site) {
+      document.getElementById('fsePopupSiteDetails').innerHTML =
+        '<div class="flex justify-between"><span class="opacity-60">SITE ID:</span><span class="font-bold text-(--color-accent)">' + site.siteId + '</span></div>' +
+        '<div class="flex justify-between"><span class="opacity-60">TENANT ID:</span><span class="font-bold">' + site.tenantId + '</span></div>' +
+        '<div class="flex justify-between"><span class="opacity-60">STATE / REGION:</span><span class="font-bold">' + site.state + '</span></div>' +
+        '<div class="flex justify-between"><span class="opacity-60">ADDRESS:</span><span class="truncate max-w-[260px]">' + site.address + '</span></div>' +
+        '<div class="flex justify-between"><span class="opacity-60">SECURITY (CLO):</span><span>' + (site.security || 'On-site Security') + '</span></div>' +
+        '<div class="flex justify-between"><span class="opacity-60">CURRENT DIESEL:</span><span class="font-bold">' + site.currentDL + ' L (' + site.daysRemaining + 'd left)</span></div>';
+
+      document.getElementById('fsePopupNameInput').value = site.fse || 'Regional FSE';
+      document.getElementById('fsePopupPhoneInput').value = site.fsePhone || 'Operations Dispatch';
+      document.getElementById('fseDetailPopupModal').classList.remove('hidden');
+    }
+
+    function closeFseDetailPopup() {
+      document.getElementById('fseDetailPopupModal').classList.add('hidden');
+      pendingVerifiedFseSite = null;
+    }
+
+    function confirmFseDetailPopup(e) {
+      e.preventDefault();
+      if (!pendingVerifiedFseSite) return;
+      const site = pendingVerifiedFseSite;
+      const fseName = document.getElementById('fsePopupNameInput').value.trim();
+      const fsePhone = document.getElementById('fsePopupPhoneInput').value.trim();
 
       fseSession = {
         siteId: site.siteId,
+        tenantId: site.tenantId,
         fseName: fseName || site.fse,
         fsePhone: fsePhone || site.fsePhone,
         loginAt: new Date().toISOString()
       };
       localStorage.setItem('coloplus_fse_session', JSON.stringify(fseSession));
+      closeFseDetailPopup();
       updateFseUiState();
       openFseModule('fuel');
-      showToast('Logged into FSE Portal: ' + site.siteId);
+      showToast('Verified & Logged into ' + site.siteId);
     }
 
     function logoutFsePortal() {
