@@ -3307,17 +3307,28 @@
         };
       });
 
-      // PPM Cycle Period & Next PPM Due Date
-      if (!s.ppmCycleDays) s.ppmCycleDays = 30;
-      if (!s.lastPpmDate) s.lastPpmDate = new Date().toISOString().slice(0, 10);
-      const lastD = new Date(s.lastPpmDate + 'T00:00:00');
-      const nextD = new Date(lastD.getTime() + Number(s.ppmCycleDays) * 24 * 60 * 60 * 1000);
-      s.nextPpmDate = nextD.toISOString().slice(0, 10);
+      // PPM Cycle Period & Next PPM Due Date (computed from each site's hoursToPpm DG RH cycle)
+      if (s.gridHoursPerDay === undefined) s.gridHoursPerDay = (s.gridStatus || '').includes('ONLINE') ? 12 : 4;
+      const genHrsPerDay = Math.max(4, 24 - Number(s.gridHoursPerDay || 12));
+      if (!s.ppmCycleDays) s.ppmCycleDays = Math.round(250 / genHrsPerDay);
+      if (s.ppmManuallySet && s.lastPpmDate) {
+        const lastD = new Date(s.lastPpmDate + 'T00:00:00');
+        const nextD = new Date(lastD.getTime() + Number(s.ppmCycleDays) * 24 * 60 * 60 * 1000);
+        s.nextPpmDate = nextD.toISOString().slice(0, 10);
+      } else {
+        const hrsLeft = (s.hoursToPpm !== undefined && s.hoursToPpm !== null) ? Number(s.hoursToPpm) : 250;
+        const daysToPpm = Math.max(1, Math.round(hrsLeft / genHrsPerDay));
+        const nextD = new Date(now.getTime() + daysToPpm * 24 * 60 * 60 * 1000);
+        s.nextPpmDate = nextD.toISOString().slice(0, 10);
+        if (!s.lastPpmDate) {
+          const prevD = new Date(nextD.getTime() - Number(s.ppmCycleDays) * 24 * 60 * 60 * 1000);
+          s.lastPpmDate = prevD.toISOString().slice(0, 10);
+        }
+      }
 
       if (!s.refuelHistory) s.refuelHistory = [];
       if (!s.majorIssues) s.majorIssues = [];
       if (!s.constantRepairAssets) s.constantRepairAssets = [];
-      if (s.gridHoursPerDay === undefined) s.gridHoursPerDay = (s.gridStatus || '').includes('ONLINE') ? 12 : 4;
       if (s.batteryAutonomyHours === undefined) s.batteryAutonomyHours = 8;
       if (s.batterySoc === undefined) s.batterySoc = 85;
     }
@@ -3464,6 +3475,7 @@
             done: !!t.done
           }));
           localStorage.setItem('coloplus_tasks_v1', JSON.stringify(masterTasks));
+          syncPpmDatesToCalendar();
           renderCalendar();
           renderTasks();
         }
@@ -3839,12 +3851,13 @@
     }
 
     function syncPpmDatesToCalendar() {
-      // Automatically put each site's next PPM date on the Calendar
+      // Automatically put each site's next PPM cycle date on the Calendar
       masterSites.forEach(s => {
         if (!s.nextPpmDate) return;
         const autoId = 'ppm_auto_' + s.siteId;
         const existing = masterTasks.find(t => t.id === autoId);
-        const title = 'Regular PPM Check (' + s.ppmCycleDays + 'd cycle)';
+        const hrsTxt = (s.hoursToPpm !== undefined && s.hoursToPpm !== null) ? (s.hoursToPpm + 'h DG RH left') : (s.ppmCycleDays + 'd cycle');
+        const title = 'PPM Cycle Due — ' + hrsTxt + ' (' + s.state + ')';
         if (existing) {
           existing.date = s.nextPpmDate;
           existing.title = title;
@@ -3859,6 +3872,7 @@
           });
         }
       });
+      masterTasks.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
       localStorage.setItem('coloplus_tasks_v1', JSON.stringify(masterTasks));
     }
 
@@ -5839,6 +5853,7 @@
 
       site.lastPpmDate = document.getElementById('admPpmLastDate').value;
       site.ppmCycleDays = parseInt(document.getElementById('admPpmCycleDays').value, 10) || 30;
+      site.ppmManuallySet = true;
       synchronizeSite(site);
       saveState();
       sbUpsertSite(site);
