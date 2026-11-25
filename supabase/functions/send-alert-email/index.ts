@@ -130,6 +130,37 @@ serve(async (req: Request) => {
     }
 
     // -------------------------------------------------------------------------
+    // MODE 2B: NEW REPAIR / PPM TICKET ALERT (to Admin & Finance)
+    // -------------------------------------------------------------------------
+    if (eventType === "REPAIR_TICKET") {
+      const recipients: string[] = [];
+      if (ADMIN_ALERT_EMAIL) recipients.push(ADMIN_ALERT_EMAIL);
+      if (FINANCE_TEAM_EMAIL) recipients.push(FINANCE_TEAM_EMAIL);
+
+      const subject = `[REPAIR TICKET] ${payload.ticket_id ?? "NEW"} — ${payload.site_id} (${payload.category ?? "REPAIR"})`;
+      const html = `
+        <div style="font-family: monospace; background:#0b0d10; color:#f4f3ef; padding:24px; border:1px solid #333;">
+          <h2 style="margin:0 0 12px; color:#f59e0b;">// NEW SITE REPAIR / PPM TICKET LOGGED</h2>
+          <table style="width:100%; border-collapse:collapse; font-size:13px;">
+            <tr><td style="padding:6px; border:1px solid #333;"><strong>Ticket ID</strong></td><td style="padding:6px; border:1px solid #333;">${payload.ticket_id ?? "N/A"}</td></tr>
+            <tr><td style="padding:6px; border:1px solid #333;"><strong>Site ID</strong></td><td style="padding:6px; border:1px solid #333;">${payload.site_id} (${payload.tenant_id ?? ""})</td></tr>
+            <tr><td style="padding:6px; border:1px solid #333;"><strong>State</strong></td><td style="padding:6px; border:1px solid #333;">${payload.state ?? "N/A"}</td></tr>
+            <tr><td style="padding:6px; border:1px solid #333;"><strong>Category / Type</strong></td><td style="padding:6px; border:1px solid #333;">${payload.category ?? "GENERAL"}</td></tr>
+            <tr><td style="padding:6px; border:1px solid #333;"><strong>Status</strong></td><td style="padding:6px; border:1px solid #333;">${payload.status ?? "OPEN"}</td></tr>
+            <tr><td style="padding:6px; border:1px solid #333;"><strong>Technician / FSE</strong></td><td style="padding:6px; border:1px solid #333;">${payload.technician ?? "FSE"}</td></tr>
+            <tr><td style="padding:6px; border:1px solid #333;"><strong>Gen Run Hours</strong></td><td style="padding:6px; border:1px solid #333;">${payload.gen_run_hours ?? "N/A"} hrs</td></tr>
+            <tr><td style="padding:6px; border:1px solid #333;"><strong>Issue Details</strong></td><td style="padding:6px; border:1px solid #333;">${payload.issue ?? ""}</td></tr>
+          </table>
+        </div>
+      `;
+      const result = await sendResendEmail(recipients, subject, html);
+      return new Response(JSON.stringify(result), {
+        status: 200,
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+      });
+    }
+
+    // -------------------------------------------------------------------------
     // MODE 3: CRITICAL DIESEL ALERT (alert_logs webhook -> Admin, Finance & FSE)
     // -------------------------------------------------------------------------
     const record = payload.record ?? payload;

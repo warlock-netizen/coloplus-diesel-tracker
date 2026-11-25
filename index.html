@@ -768,6 +768,11 @@
             </div>
           </div>
 
+          <!-- Admin Incoming FSE Repair Ticket Alerts Banner -->
+          <div id="adminTicketAlertBanner" class="hidden border_ui border-rose-500/60 bg-rose-500/10 p-4 space-y-2.5 text-xs">
+            <!-- Populated dynamically -->
+          </div>
+
           <!-- Admin Module Tabs -->
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs">
             <button id="adminTabBtnRepairs" onclick="openAdminModule('repairs')" class="border_ui p-3 text-left cursor-pointer btn-invert nav_active">
@@ -1520,7 +1525,8 @@
       </div>
 
       <form id="addRepairForm" onsubmit="handleAddNewRepair(event)" class="space-y-3">
-        <div>
+        <div id="newRepairSiteLockedDisplay" class="hidden border_ui p-2.5 bg-black/10 dark:bg-white/5 text-[11px] font-bold text-(--color-accent)"></div>
+        <div id="newRepairSiteSelectWrap">
           <label class="opacity-60 text-[10px] block mb-1">SELECT SITE</label>
           <select id="newRepairSiteId" onchange="handleRepairSiteChange()" class="w-full border_ui bg-(--color-card-bg) px-2.5 py-1.5 outline-none cursor-pointer"></select>
         </div>
@@ -5619,7 +5625,57 @@
       const quick = document.getElementById('adminQuickSiteSwitch');
       if (quick) quick.value = site.siteId;
 
+      renderAdminTicketAlerts();
       renderAdminModuleContent(site);
+    }
+
+    function renderAdminTicketAlerts() {
+      const banner = document.getElementById('adminTicketAlertBanner');
+      if (!banner) return;
+      const unread = masterRepairs.filter(r => !r.adminReviewed && (r.status || '').toUpperCase() !== 'RESOLVED');
+      if (unread.length === 0) {
+        banner.classList.add('hidden');
+        return;
+      }
+      banner.classList.remove('hidden');
+      banner.innerHTML =
+        '<div class="flex items-center justify-between border-b border-rose-500/30 pb-2">' +
+          '<div class="flex items-center gap-2">' +
+            '<span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping inline-block"></span>' +
+            '<span class="font-bold uppercase tracking-wider text-rose-400">// INCOMING SITE REPAIR TICKET ALERTS (' + unread.length + ')</span>' +
+          '</div>' +
+          '<button type="button" onclick="acknowledgeAllAdminTickets()" class="border_ui border-rose-500/50 px-2.5 py-1 text-[10px] font-bold hover:bg-rose-600 hover:text-white cursor-pointer">MARK ALL REVIEWED</button>' +
+        '</div>' +
+        '<div class="space-y-2">' +
+          unread.slice(0, 5).map(t =>
+            '<div class="border_ui border-rose-500/30 bg-black/20 p-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">' +
+              '<div>' +
+                '<div class="font-bold text-rose-300">' + t.ticketId + ' · ' + t.siteId + ' (' + (t.category || t.type || 'REPAIR') + ')</div>' +
+                '<div class="text-[11px] opacity-90 mt-0.5">' + t.issue + '</div>' +
+                '<div class="text-[10px] opacity-60 mt-0.5">Logged: ' + (t.loggedDate || t.dateLogged || 'Today') + ' · Tech: ' + (t.technician || 'FSE') + ' · Status: ' + t.status + '</div>' +
+              '</div>' +
+              '<div class="flex items-center gap-1.5 shrink-0">' +
+                '<button type="button" onclick="switchAdminSite(\'' + t.siteId + '\'); openAdminModule(\'repairs\');" class="border_ui px-2.5 py-1 text-[10px] font-bold btn-invert cursor-pointer">INSPECT</button>' +
+                '<button type="button" onclick="acknowledgeAdminTicket(\'' + t.ticketId + '\')" class="border_ui border-emerald-500/50 px-2.5 py-1 text-[10px] font-bold text-emerald-400 hover:bg-emerald-500 hover:text-black cursor-pointer">ACK</button>' +
+              '</div>' +
+            '</div>'
+          ).join('') +
+        '</div>';
+    }
+
+    function acknowledgeAdminTicket(ticketId) {
+      const t = masterRepairs.find(r => r.ticketId === ticketId);
+      if (t) t.adminReviewed = true;
+      saveState();
+      renderAdminTicketAlerts();
+      showToast('Acknowledged ticket ' + ticketId);
+    }
+
+    function acknowledgeAllAdminTickets() {
+      masterRepairs.forEach(r => { r.adminReviewed = true; });
+      saveState();
+      renderAdminTicketAlerts();
+      showToast('All repair ticket alerts marked reviewed');
     }
 
     function openAdminModule(mod) {
@@ -6271,6 +6327,35 @@
 
     // ==================== ADD REPAIR MODAL ====================
     function openAddRepairModal() {
+      const selWrap = document.getElementById('newRepairSiteSelectWrap');
+      const lockedDisp = document.getElementById('newRepairSiteLockedDisplay');
+      const sel = document.getElementById('newRepairSiteId');
+      const techInput = document.getElementById('newRepairTech');
+
+      let activeSiteId = null;
+      let activeTech = '';
+      if (activeSection === 'fse' && fseSession) {
+        activeSiteId = fseSession.siteId;
+        activeTech = fseSession.fseName || '';
+      } else if (activeSection === 'admin' && adminSession) {
+        activeSiteId = adminSession.siteId;
+        activeTech = adminSession.adminName || '';
+      }
+
+      if (activeSiteId && sel) {
+        sel.value = activeSiteId;
+        const s = masterSites.find(item => item.siteId === activeSiteId);
+        if (selWrap) selWrap.classList.add('hidden');
+        if (lockedDisp) {
+          lockedDisp.innerText = 'LOGGING TICKET FOR SITE: ' + activeSiteId + (s ? ' — ' + s.tenantId + ' (' + s.state + ')' : '');
+          lockedDisp.classList.remove('hidden');
+        }
+        if (techInput) techInput.value = activeTech || (s ? s.fse : '');
+      } else {
+        if (selWrap) selWrap.classList.remove('hidden');
+        if (lockedDisp) lockedDisp.classList.add('hidden');
+        handleRepairSiteChange();
+      }
       document.getElementById('addRepairModal').classList.remove('hidden');
     }
     function closeAddRepairModal() {
@@ -6287,29 +6372,71 @@
 
     function handleAddNewRepair(e) {
       e.preventDefault();
-      const siteId = document.getElementById('newRepairSiteId').value;
+      let siteId = document.getElementById('newRepairSiteId').value;
+      if (activeSection === 'fse' && fseSession) siteId = fseSession.siteId;
+      else if (activeSection === 'admin' && adminSession) siteId = adminSession.siteId;
+
       const s = masterSites.find(item => item.siteId === siteId);
+      const repairType = document.getElementById('newRepairType').value;
+      const repairStatus = document.getElementById('newRepairStatus').value;
+      const issueText = document.getElementById('newRepairIssue').value.trim();
+      const techName = document.getElementById('newRepairTech').value.trim() || (fseSession ? fseSession.fseName : 'FSE');
+      const genHours = parseInt(document.getElementById('newRepairGenHours').value) || 1200;
+      const todayFormatted = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
       const ticket = {
         ticketId: 'RCA-2026-' + Math.floor(100 + Math.random() * 900),
         siteId: siteId,
-        tenantId: s ? s.tenantId : 'CORPLUS',
-        type: document.getElementById('newRepairType').value,
-        status: document.getElementById('newRepairStatus').value,
-        issue: document.getElementById('newRepairIssue').value.trim(),
-        technician: document.getElementById('newRepairTech').value.trim(),
-        genRunHours: parseInt(document.getElementById('newRepairGenHours').value) || 1200,
-        dateLogged: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-        dateResolved: document.getElementById('newRepairStatus').value === 'RESOLVED' ? new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : null
+        tenantId: s ? s.tenantId : 'COLOPLUS',
+        type: repairType,
+        category: repairType,
+        status: repairStatus,
+        priority: 'High',
+        issue: issueText,
+        technician: techName,
+        genRunHours: genHours,
+        dateLogged: todayFormatted,
+        loggedDate: todayFormatted,
+        adminReviewed: activeSection === 'admin',
+        dateResolved: repairStatus === 'RESOLVED' ? todayFormatted : null
       };
 
       masterRepairs.unshift(ticket);
       saveState();
       closeAddRepairModal();
       document.getElementById('addRepairForm').reset();
-      document.getElementById('repairBadgeCount').innerText = masterRepairs.length;
+
+      const rBadge = document.getElementById('repairBadgeCount');
+      if (rBadge) rBadge.innerText = masterRepairs.length;
+
+      // Sync to Supabase & email Admin via Resend Edge Function
+      if (s) {
+        sbInsertRepair(s.siteId, s.tenantId, repairType, issueText, techName);
+      }
+      if (sb) {
+        try {
+          Promise.resolve(sb.functions.invoke('send-alert-email', {
+            body: {
+              type: 'REPAIR_TICKET',
+              ticket_id: ticket.ticketId,
+              site_id: siteId,
+              tenant_id: ticket.tenantId,
+              state: s ? s.state : '',
+              category: repairType,
+              status: repairStatus,
+              issue: issueText,
+              technician: techName,
+              gen_run_hours: genHours
+            }
+          })).catch(() => {});
+        } catch (err) {}
+      }
+
       renderRepairs();
-      showToast('Logged intervention ticket ' + ticket.ticketId);
+      if (fseSession && fseSession.siteId === siteId && s) renderFseRepairsModule(s);
+      if (isAdminUnlocked && adminSession) updateAdminPortalUiState();
+      else renderAdminTicketAlerts();
+      showToast('Ticket ' + ticket.ticketId + ' logged — Admin alerted on dashboard & email');
     }
 
     // ==================== DIAGNOSTICS DRAWER ====================
