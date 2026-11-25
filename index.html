@@ -4049,7 +4049,7 @@
         const sidMatch = s.siteId.trim().toUpperCase() === siteIdInput;
         const fullTid = (s.tenantId || '').trim().toUpperCase();
         const shortTid = fullTid.split('(')[0].trim();
-        const tidMatch = fullTid === tenantInput || shortTid === tenantInput;
+        const tidMatch = fullTid === tenantInput || shortTid === tenantInput || (tenantInput.length >= 4 && fullTid.includes(tenantInput));
         return sidMatch && tidMatch;
       });
 
@@ -4100,13 +4100,15 @@
       saveState();
 
       if (sb) {
-        sb.rpc('fse_update_contact', {
-          p_site_id: site.siteId,
-          p_tenant_id: site.tenantId,
-          p_fse_name: site.fse,
-          p_fse_phone: site.fsePhone,
-          p_fse_email: fseEmail
-        }).catch(() => {});
+        try {
+          Promise.resolve(sb.rpc('fse_update_contact', {
+            p_site_id: site.siteId,
+            p_tenant_id: site.tenantId,
+            p_fse_name: site.fse,
+            p_fse_phone: site.fsePhone,
+            p_fse_email: fseEmail
+          })).catch(() => {});
+        } catch (err) {}
       }
 
       fseSession = {
@@ -4136,13 +4138,15 @@
       saveState();
       localStorage.setItem('coloplus_fse_session', JSON.stringify(fseSession));
       if (sb) {
-        sb.rpc('fse_update_contact', {
-          p_site_id: site.siteId,
-          p_tenant_id: site.tenantId,
-          p_fse_name: site.fse,
-          p_fse_phone: site.fsePhone,
-          p_fse_email: cleaned
-        }).catch(() => {});
+        try {
+          Promise.resolve(sb.rpc('fse_update_contact', {
+            p_site_id: site.siteId,
+            p_tenant_id: site.tenantId,
+            p_fse_name: site.fse,
+            p_fse_phone: site.fsePhone,
+            p_fse_email: cleaned
+          })).catch(() => {});
+        } catch (err) {}
       }
       updateFseUiState();
       showToast('FSE Email updated for ' + site.siteId);
@@ -5933,12 +5937,14 @@
       renderAdminModuleContent(site);
       if (fseSession && fseSession.siteId === site.siteId) renderFseRepairsModule(site);
       if (sb) {
-        sb.rpc('fse_add_task', {
-          p_site_id: site.siteId,
-          p_title: 'Regular PPM Check (' + site.ppmCycleDays + 'd cycle)',
-          p_due_date: site.nextPpmDate,
-          p_category: 'PPM'
-        }).catch(() => {});
+        try {
+          Promise.resolve(sb.rpc('fse_add_task', {
+            p_site_id: site.siteId,
+            p_title: 'Regular PPM Check (' + site.ppmCycleDays + 'd cycle)',
+            p_due_date: site.nextPpmDate,
+            p_category: 'PPM'
+          })).catch(() => {});
+        } catch (err) {}
       }
       showToast('Admin synced PPM cycle! Next due on ' + site.nextPpmDate);
     }
