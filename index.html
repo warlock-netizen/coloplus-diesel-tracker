@@ -608,33 +608,15 @@
 
               <div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">
                 <div class="flex items-center justify-between border-b border_ui pb-2">
-                  <span class="font-bold uppercase tracking-wider">// SITE PPM CHECKLIST &amp; PHOTO PROOF</span>
+                  <span class="font-bold uppercase tracking-wider">// SITE PPM CHECKLIST &amp; PHOTO/VIDEO PROOF (MAX 20MB)</span>
                   <button onclick="openTicksModal(fseSession.siteId)" class="border_ui px-2 py-1 btn-invert cursor-pointer text-[10px] font-bold">OPEN FULL CHECKLIST</button>
                 </div>
-                <!-- PPM Cycle Period & Auto Calendar Sync -->
-                <form onsubmit="handleSavePpmCycle(event)" class="border_ui p-2.5 bg-black/10 dark:bg-white/5 space-y-2">
-                  <div class="text-[10px] uppercase opacity-60 font-bold">// PPM CYCLE PERIOD (AUTO-SYNCED TO CALENDAR)</div>
-                  <div class="grid grid-cols-3 gap-2">
-                    <div>
-                      <label class="block text-[9px] opacity-60 mb-0.5">LAST PPM DATE</label>
-                      <input type="date" id="fsePpmLastDate" required class="w-full border_ui bg-(--color-card-bg) px-2 py-1 text-[11px] outline-none">
-                    </div>
-                    <div>
-                      <label class="block text-[9px] opacity-60 mb-0.5">CYCLE PERIOD</label>
-                      <select id="fsePpmCycleDays" class="w-full border_ui bg-(--color-card-bg) px-2 py-1 text-[11px] outline-none">
-                        <option value="7">7 Days (Weekly)</option>
-                        <option value="14">14 Days (Bi-Weekly)</option>
-                        <option value="30" selected>30 Days (Monthly)</option>
-                        <option value="90">90 Days (Quarterly)</option>
-                      </select>
-                    </div>
-                    <div class="flex items-end">
-                      <button type="submit" class="w-full border_ui py-1 font-bold nav_active btn-invert cursor-pointer text-[10px]">SYNC CALENDAR</button>
-                    </div>
-                  </div>
-                  <div id="fseNextPpmDisplay" class="text-[10px] text-(--color-accent) font-bold"></div>
-                </form>
-                <div id="fseSitePpmList" class="space-y-1.5 max-h-[340px] overflow-y-auto no-scrollbar">
+                <!-- Read-Only PPM Schedule (Timing Managed by Admin) -->
+                <div class="border_ui p-2.5 bg-black/10 dark:bg-white/5 space-y-1">
+                  <div class="text-[10px] uppercase opacity-60 font-bold">// PPM SCHEDULE (SET BY ADMIN)</div>
+                  <div id="fseNextPpmDisplay" class="text-[11px] text-(--color-accent) font-bold"></div>
+                </div>
+                <div id="fseSitePpmList" class="space-y-1.5 max-h-[380px] overflow-y-auto no-scrollbar">
                   <!-- Populated dynamically -->
                 </div>
               </div>
@@ -4244,60 +4226,42 @@
         ).join('');
       }
 
-      // Site PPM Cycle & Checklist with Picture Attachment
-      const lastDateEl = document.getElementById('fsePpmLastDate');
-      const cycleEl = document.getElementById('fsePpmCycleDays');
+      // Site PPM Schedule (Read-Only for FSE) & Checklist with Photo/Video Attachment (Max 20MB) + Delete
       const nextDispEl = document.getElementById('fseNextPpmDisplay');
-      if (lastDateEl) lastDateEl.value = site.lastPpmDate || new Date().toISOString().slice(0, 10);
-      if (cycleEl) cycleEl.value = String(site.ppmCycleDays || 30);
-      if (nextDispEl) nextDispEl.innerText = 'NEXT PPM DUE DATE ON CALENDAR: ' + (site.nextPpmDate || 'N/A');
+      if (nextDispEl) {
+        nextDispEl.innerText = 'LAST PPM: ' + (site.lastPpmDate || 'N/A') + ' · CYCLE: ' + (site.ppmCycleDays || 30) + ' DAYS · NEXT DUE ON CALENDAR: ' + (site.nextPpmDate || 'N/A');
+      }
 
       const ticks = site.maintenanceTicks || [];
       const ppmEl = document.getElementById('fseSitePpmList');
       if (ticks.length === 0) {
-        ppmEl.innerHTML = '<div class="opacity-60 text-[11px] py-2">Click "OPEN FULL CHECKLIST" to initialize PPM tasks for this site.</div>';
+        ppmEl.innerHTML = '<div class="opacity-60 text-[11px] py-2">No PPM items found.</div>';
       } else {
-        ppmEl.innerHTML = ticks.map((tk, idx) =>
-          '<div class="border_ui p-2 flex items-center justify-between gap-2">' +
+        ppmEl.innerHTML = ticks.map((tk, idx) => {
+          let previewHtml = '';
+          if (tk.photoDataUrl) {
+            if (tk.mediaType === 'video') {
+              previewHtml = '<a href="' + tk.photoDataUrl + '" target="_blank" class="border_ui px-1.5 py-0.5 text-[9px] font-bold text-(--color-accent)" title="' + (tk.mediaName || 'Video') + '">VID (' + (tk.mediaSizeMb || '') + 'MB)</a>';
+            } else {
+              previewHtml = '<a href="' + tk.photoDataUrl + '" target="_blank" title="View Photo"><img src="' + tk.photoDataUrl + '" class="w-7 h-7 object-cover border_ui" alt="PPM"></a>';
+            }
+          }
+          return '<div class="border_ui p-2 flex items-center justify-between gap-2">' +
             '<div onclick="toggleSiteTickFromFse(' + idx + ')" class="cursor-pointer flex-1">' +
               '<span class="text-[11px] font-bold ' + (tk.done ? 'line-through opacity-50' : '') + '">' + (tk.done ? '[✓] ' : '[ ] ') + tk.task + '</span>' +
               '<span class="ml-2 text-[9px] opacity-50">' + (tk.category || 'PPM') + '</span>' +
             '</div>' +
             '<div class="flex items-center gap-1.5 shrink-0">' +
-              (tk.photoDataUrl ? '<a href="' + tk.photoDataUrl + '" target="_blank" title="View Attached Photo"><img src="' + tk.photoDataUrl + '" class="w-7 h-7 object-cover border_ui" alt="PPM"></a>' : '') +
+              previewHtml +
+              (tk.photoDataUrl ? '<button type="button" onclick="deletePpmMedia(' + idx + ')" class="border_ui px-1.5 py-1 text-[9px] font-bold hover:bg-rose-600 hover:text-white cursor-pointer" title="Delete Attachment">DEL</button>' : '') +
               '<label class="border_ui px-2 py-1 text-[9px] cursor-pointer btn-invert font-bold">' +
-                (tk.photoDataUrl ? 'CHANGE PIC' : '+ ATTACH PIC') +
-                '<input type="file" accept="image/*" class="hidden" onchange="attachPpmPhoto(' + idx + ', this)">' +
+                (tk.photoDataUrl ? 'REPLACE' : '+ PIC / VID') +
+                '<input type="file" accept="image/*,video/*" class="hidden" onchange="attachPpmPhoto(' + idx + ', this)">' +
               '</label>' +
             '</div>' +
-          '</div>'
-        ).join('');
+          '</div>';
+        }).join('');
       }
-    }
-
-    function handleSavePpmCycle(e) {
-      e.preventDefault();
-      if (!fseSession) return;
-      const site = masterSites.find(s => s.siteId === fseSession.siteId);
-      if (!site) return;
-
-      site.lastPpmDate = document.getElementById('fsePpmLastDate').value;
-      site.ppmCycleDays = parseInt(document.getElementById('fsePpmCycleDays').value, 10) || 30;
-      synchronizeSite(site);
-      saveState();
-      syncPpmDatesToCalendar();
-      renderCalendar();
-      renderTasks();
-      renderFseRepairsModule(site);
-      if (sb) {
-        sb.rpc('fse_add_task', {
-          p_site_id: site.siteId,
-          p_title: 'Regular PPM Check (' + site.ppmCycleDays + 'd cycle)',
-          p_due_date: site.nextPpmDate,
-          p_category: 'PPM'
-        }).catch(() => {});
-      }
-      showToast('PPM Cycle synced! Next PPM due on ' + site.nextPpmDate + ' (added to Calendar)');
     }
 
     function attachPpmPhoto(idx, inputEl) {
@@ -4306,15 +4270,54 @@
       if (!site || !site.maintenanceTicks || !site.maintenanceTicks[idx]) return;
 
       const file = inputEl.files[0];
+      const MAX_BYTES = 20 * 1024 * 1024; // 20MB limit
+      if (file.size > MAX_BYTES) {
+        alert('Attachment rejected: File size (' + (file.size / (1024 * 1024)).toFixed(1) + ' MB) exceeds the 20 MB maximum limit.');
+        inputEl.value = '';
+        return;
+      }
+
+      const isVideo = file.type.startsWith('video/');
+      const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+
+      // For videos or files > 1.5MB, use ObjectURL in session to avoid localStorage quota overflow
+      if (isVideo || file.size > 1.5 * 1024 * 1024) {
+        site.maintenanceTicks[idx].photoDataUrl = URL.createObjectURL(file);
+        site.maintenanceTicks[idx].mediaType = isVideo ? 'video' : 'image';
+        site.maintenanceTicks[idx].mediaName = file.name;
+        site.maintenanceTicks[idx].mediaSizeMb = sizeMb;
+        site.maintenanceTicks[idx].done = true;
+        try { saveState(); } catch (err) {}
+        renderFseRepairsModule(site);
+        showToast('Attached ' + (isVideo ? 'video' : 'photo') + ' (' + sizeMb + 'MB) for ' + site.maintenanceTicks[idx].task);
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = function(ev) {
         site.maintenanceTicks[idx].photoDataUrl = ev.target.result;
+        site.maintenanceTicks[idx].mediaType = 'image';
+        site.maintenanceTicks[idx].mediaName = file.name;
+        site.maintenanceTicks[idx].mediaSizeMb = sizeMb;
         site.maintenanceTicks[idx].done = true;
-        saveState();
+        try { saveState(); } catch (err) { console.warn('Storage quota reached:', err); }
         renderFseRepairsModule(site);
-        showToast('Attached photo proof for ' + site.maintenanceTicks[idx].task);
+        showToast('Attached photo (' + sizeMb + 'MB) for ' + site.maintenanceTicks[idx].task);
       };
       reader.readAsDataURL(file);
+    }
+
+    function deletePpmMedia(idx) {
+      if (!fseSession) return;
+      const site = masterSites.find(s => s.siteId === fseSession.siteId);
+      if (!site || !site.maintenanceTicks || !site.maintenanceTicks[idx]) return;
+      site.maintenanceTicks[idx].photoDataUrl = null;
+      site.maintenanceTicks[idx].mediaType = null;
+      site.maintenanceTicks[idx].mediaName = null;
+      site.maintenanceTicks[idx].mediaSizeMb = null;
+      saveState();
+      renderFseRepairsModule(site);
+      showToast('Deleted attachment for ' + site.maintenanceTicks[idx].task);
     }
 
     function handleFseFlagMachinery(e) {
@@ -5364,6 +5367,20 @@
               '<input type="text" id="adminFlagIssue" required placeholder="Constant repair issue..." class="sm:col-span-2 border_ui bg-transparent px-2.5 py-1.5 outline-none">' +
               '<button type="submit" class="border_ui px-3 py-1.5 font-bold nav_active btn-invert cursor-pointer">+ FLAG MACHINERY</button>' +
             '</form>' +
+          '</div>' +
+          '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
+            '<div class="font-bold uppercase text-amber-400 border-b border_ui pb-2">// ADMIN PPM TIMING &amp; CALENDAR SYNCHRONIZATION (' + site.siteId + ')</div>' +
+            '<form onsubmit="handleAdminSavePpmCycle(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">' +
+              '<div><label class="block text-[10px] opacity-60 mb-1">LAST PPM DATE</label><input type="date" id="admPpmLastDate" value="' + (site.lastPpmDate || new Date().toISOString().slice(0, 10)) + '" required class="w-full border_ui bg-(--color-card-bg) px-2.5 py-1.5 outline-none"></div>' +
+              '<div><label class="block text-[10px] opacity-60 mb-1">PPM CYCLE PERIOD (DAYS)</label><select id="admPpmCycleDays" class="w-full border_ui bg-(--color-card-bg) px-2.5 py-1.5 outline-none">' +
+                '<option value="7" ' + ((site.ppmCycleDays || 30) == 7 ? 'selected' : '') + '>7 Days (Weekly)</option>' +
+                '<option value="14" ' + ((site.ppmCycleDays || 30) == 14 ? 'selected' : '') + '>14 Days (Bi-Weekly)</option>' +
+                '<option value="30" ' + ((site.ppmCycleDays || 30) == 30 ? 'selected' : '') + '>30 Days (Monthly)</option>' +
+                '<option value="90" ' + ((site.ppmCycleDays || 30) == 90 ? 'selected' : '') + '>90 Days (Quarterly)</option>' +
+              '</select></div>' +
+              '<div class="flex items-end"><button type="submit" class="w-full border_ui py-1.5 font-bold nav_active btn-invert cursor-pointer">SYNC PPM TO CALENDAR</button></div>' +
+            '</form>' +
+            '<div class="text-[11px] text-(--color-accent) font-bold">NEXT SCHEDULED PPM DATE: ' + (site.nextPpmDate || 'N/A') + '</div>' +
           '</div>';
       } else if (adminActiveModule === 'bub') {
         const battHrs = site.batteryAutonomyHours || 8;
@@ -5421,6 +5438,33 @@
             '</div>' +
           '</div>';
       }
+    }
+
+    function handleAdminSavePpmCycle(e) {
+      e.preventDefault();
+      if (!isAdminUnlocked || !adminSession) return;
+      const site = masterSites.find(s => s.siteId === adminSession.siteId);
+      if (!site) return;
+
+      site.lastPpmDate = document.getElementById('admPpmLastDate').value;
+      site.ppmCycleDays = parseInt(document.getElementById('admPpmCycleDays').value, 10) || 30;
+      synchronizeSite(site);
+      saveState();
+      sbUpsertSite(site);
+      syncPpmDatesToCalendar();
+      renderCalendar();
+      renderTasks();
+      renderAdminModuleContent(site);
+      if (fseSession && fseSession.siteId === site.siteId) renderFseRepairsModule(site);
+      if (sb) {
+        sb.rpc('fse_add_task', {
+          p_site_id: site.siteId,
+          p_title: 'Regular PPM Check (' + site.ppmCycleDays + 'd cycle)',
+          p_due_date: site.nextPpmDate,
+          p_category: 'PPM'
+        }).catch(() => {});
+      }
+      showToast('Admin synced PPM cycle! Next due on ' + site.nextPpmDate);
     }
 
     function handleAdminFlagMachinery(e) {
