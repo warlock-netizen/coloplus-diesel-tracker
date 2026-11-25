@@ -623,13 +623,6 @@
               <div id="fseConstantRepairList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
                 <!-- Populated dynamically -->
               </div>
-
-              <!-- Quick Flag Machinery -->
-              <form onsubmit="handleFseFlagMachinery(event)" class="pt-2 border-t border_ui grid grid-cols-1 sm:grid-cols-4 gap-2">
-                <input type="text" id="fseFlagMachineName" required placeholder="Machinery name (e.g. Gen Alternator)" class="border_ui bg-transparent px-2.5 py-1.5 outline-none">
-                <input type="text" id="fseFlagMachineIssue" required placeholder="Recurring fault (e.g. Overheating / Oil leak)" class="sm:col-span-2 border_ui bg-transparent px-2.5 py-1.5 outline-none">
-                <button type="submit" class="border_ui px-3 py-1.5 font-bold nav_active btn-invert cursor-pointer">+ FLAG MACHINERY</button>
-              </form>
             </div>
 
             <!-- Site Repairs & PPM Checklist -->
@@ -5774,11 +5767,6 @@
                 '</div>'
               ).join('') +
             '</div>' +
-            '<form onsubmit="handleAdminFlagMachinery(event)" class="pt-2 border-t border_ui grid grid-cols-1 sm:grid-cols-4 gap-2">' +
-              '<input type="text" id="adminFlagName" required placeholder="Machinery name..." class="border_ui bg-transparent px-2.5 py-1.5 outline-none">' +
-              '<input type="text" id="adminFlagIssue" required placeholder="Constant repair issue..." class="sm:col-span-2 border_ui bg-transparent px-2.5 py-1.5 outline-none">' +
-              '<button type="submit" class="border_ui px-3 py-1.5 font-bold nav_active btn-invert cursor-pointer">+ FLAG MACHINERY</button>' +
-            '</form>' +
           '</div>' +
           '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
             '<div class="font-bold uppercase text-amber-400 border-b border_ui pb-2">// ADMIN PPM TIMING &amp; CALENDAR SYNCHRONIZATION (' + site.siteId + ')</div>' +
