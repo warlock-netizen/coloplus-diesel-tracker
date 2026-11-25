@@ -14,6 +14,9 @@
   <!-- Tailwind CSS Engine -->
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
 
+  <!-- Supabase JS Client v2 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     :root, html[data-theme="light"] {
       color-scheme: light;
@@ -3247,8 +3250,168 @@
       renderRepairs();
       renderAnalytics();
       switchSection(activeSection);
+      syncFromSupabase();
 
       setInterval(tickClock, 1000);
+    }
+
+    // ==================== SUPABASE LIVE SYNC LAYER ====================
+    const SUPABASE_URL = 'https://kfomqkklnqrosxjxdlsu.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_ZmJLPn-Dwa0WAko12liobw_TnjmqK9_';
+    const sb = (window.supabase && window.supabase.createClient)
+      ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+      : null;
+
+    async function syncFromSupabase() {
+      if (!sb) return;
+      try {
+        const { data: sitesRows, error: sitesErr } = await sb
+          .from('sites')
+          .select('*')
+          .eq('is_active', true);
+
+        if (!sitesErr && sitesRows && sitesRows.length > 0) {
+          sitesRows.forEach(row => {
+            const local = masterSites.find(s => s.siteId === row.site_id);
+            const mapped = {
+              siteId: row.site_id,
+              tenantId: row.tenant_id,
+              state: row.state,
+              address: row.address,
+              fse: row.fse_name,
+              fsePhone: row.fse_phone,
+              security: row.security_name || 'On-site Security',
+              securityPhone: row.security_phone || '',
+              powerSource: row.power_source || 'In-house',
+              gridStatus: row.grid_status || 'ONLINE (NEPA AVAILABLE)',
+              gridHoursPerDay: row.grid_hours_per_day !== null ? Number(row.grid_hours_per_day) : 12,
+              nepaTokenStatus: row.nepa_token_status || 'LOADED',
+              loadKw: Number(row.load_kw || 0),
+              tankCap: Number(row.tank_cap || 1000),
+              currentDL: Number(row.current_dl || 0),
+              cpd: Number(row.cpd || 40),
+              batterySoc: row.battery_soc !== null ? Number(row.battery_soc) : 85,
+              batteryVoltage: row.battery_voltage || '52.8 V',
+              batteryAutonomyHours: row.battery_autonomy_hours !== null ? Number(row.battery_autonomy_hours) : 8,
+              batteryStatus: row.battery_status || 'HEALTHY',
+              lastSupplyQty: Number(row.last_supply_qty || 0),
+              lastSupplyDate: row.last_supply_date || '',
+              lastSupplyTime: row.last_supply_time || '',
+              previousSupplyDate: row.previous_supply_date || '',
+              previousSupplyTime: row.previous_supply_time || '',
+              previousSupplyQty: row.previous_supply_qty ? row.previous_supply_qty + ' L' : '',
+              supplier: row.supplier || '',
+              isFocus: true
+            };
+            if (local) {
+              Object.assign(local, mapped);
+            } else {
+              masterSites.push(mapped);
+            }
+            synchronizeSite(local || mapped);
+          });
+          saveState();
+          updateKpis();
+          populateFseLoginDropdown();
+          populateAdminLoginDropdown();
+          if (fseSession) updateFseUiState();
+          if (isAdminUnlocked && adminSession) updateAdminPortalUiState();
+        }
+
+        const { data: tasksRows, error: tasksErr } = await sb
+          .from('calendar_tasks')
+          .select('*')
+          .order('due_date', { ascending: true });
+
+        if (!tasksErr && tasksRows && tasksRows.length > 0) {
+          masterTasks = tasksRows.map(t => ({
+            id: t.id,
+            title: t.title,
+            site: t.site_id || 'ALL SITES',
+            date: t.due_date,
+            category: t.category,
+            done: !!t.done
+          }));
+          localStorage.setItem('coloplus_tasks_v1', JSON.stringify(masterTasks));
+          renderCalendar();
+          renderTasks();
+        }
+      } catch (e) {
+        console.warn('Supabase sync skipped (offline or RLS):', e.message || e);
+      }
+    }
+
+    async function sbInsertDelivery(siteId, qty, dateIso, timeStr, supplier, loggedBy) {
+      if (!sb) return;
+      try {
+        await sb.from('diesel_deliveries').insert({
+          site_id: siteId,
+          qty_litres: qty,
+          received_date: dateIso,
+          received_time: timeStr,
+          supplier: supplier,
+          logged_by: loggedBy
+        });
+      } catch (e) { console.warn('Supabase delivery insert:', e); }
+    }
+
+    async function sbUpsertSite(site) {
+      if (!sb) return;
+      try {
+        await sb.from('sites').upsert({
+          site_id: site.siteId,
+          tenant_id: site.tenantId,
+          state: site.state,
+          address: site.address,
+          fse_name: site.fse,
+          fse_phone: site.fsePhone,
+          security_name: site.security,
+          security_phone: site.securityPhone,
+          power_source: site.powerSource,
+          grid_status: site.gridStatus,
+          grid_hours_per_day: site.gridHoursPerDay,
+          nepa_token_status: site.nepaTokenStatus,
+          tank_cap: site.tankCap,
+          current_dl: site.currentDL,
+          cpd: site.cpd,
+          battery_soc: site.batterySoc,
+          battery_voltage: site.batteryVoltage,
+          battery_autonomy_hours: site.batteryAutonomyHours,
+          battery_status: site.batteryStatus,
+          supplier: site.supplier,
+          is_active: true
+        }, { onConflict: 'site_id' });
+      } catch (e) { console.warn('Supabase site upsert:', e); }
+    }
+
+    async function sbInsertTask(task) {
+      if (!sb) return;
+      try {
+        await sb.from('calendar_tasks').insert({
+          site_id: task.site === 'ALL SITES' ? null : task.site,
+          title: task.title,
+          due_date: task.date,
+          category: task.category,
+          done: task.done
+        });
+      } catch (e) { console.warn('Supabase task insert:', e); }
+    }
+
+    async function sbInsertRepair(siteId, name, issue, loggedBy) {
+      if (!sb) return;
+      try {
+        await sb.from('machinery_repairs').insert({
+          ticket_id: 'RCA-' + Date.now(),
+          site_id: siteId,
+          machinery_name: name,
+          issue: issue,
+          is_constant_repair: true,
+          repeat_count: 1,
+          priority: 'High',
+          status: 'Open',
+          technician: loggedBy
+        });
+      } catch (e) { console.warn('Supabase repair insert:', e); }
     }
 
     // ==================== HOURLY DIESEL SCANNER ====================
@@ -3550,8 +3713,10 @@
       const category = document.getElementById('newTaskCategory').value;
       if (!title || !date) return;
 
-      masterTasks.unshift({ id: 't_' + Date.now(), title, site, date, category, done: false });
+      const newTask = { id: 't_' + Date.now(), title, site, date, category, done: false };
+      masterTasks.unshift(newTask);
       localStorage.setItem('coloplus_tasks_v1', JSON.stringify(masterTasks));
+      sbInsertTask(newTask);
       document.getElementById('newTaskTitle').value = '';
       renderCalendar();
       renderTasks();
@@ -3761,6 +3926,7 @@
       site.cpd = parseFloat(document.getElementById('fseCpdInput').value) || site.cpd;
       synchronizeSite(site);
       saveState();
+      sbInsertDelivery(site.siteId, qty, dateRaw, timeRaw, supplier, fseSession.fseName);
       updateKpis();
       renderSites();
       renderFseFuelModule(site);
@@ -3804,6 +3970,7 @@
 
       synchronizeSite(site);
       saveState();
+      sbInsertDelivery(site.siteId, qty, dateRaw, timeRaw, supplier, fseSession.fseName);
       updateKpis();
       renderSites();
       renderFseFuelModule(site);
@@ -3950,6 +4117,7 @@
       document.getElementById('fseFlagMachineName').value = '';
       document.getElementById('fseFlagMachineIssue').value = '';
       saveState();
+      sbInsertRepair(site.siteId, name, issue, fseSession.fseName);
       renderFseRepairsModule(site);
       showToast('Flagged ' + name + ' as constant-repair machinery');
     }
@@ -3960,6 +4128,7 @@
       if (!site || !site.maintenanceTicks || !site.maintenanceTicks[idx]) return;
       site.maintenanceTicks[idx].done = !site.maintenanceTicks[idx].done;
       saveState();
+      sbInsertRepair(site.siteId, name, issue, fseSession.fseName);
       renderFseRepairsModule(site);
     }
 
@@ -5067,6 +5236,7 @@
       site.currentDL = parseFloat(document.getElementById('admFuelLevel').value) || 0;
       synchronizeSite(site);
       saveState();
+      sbInsertDelivery(site.siteId, qty, dateRaw, timeRaw, supplier, fseSession.fseName);
       updateKpis();
       renderSites();
       renderAdminModuleContent(site);
@@ -5097,6 +5267,7 @@
 
       synchronizeSite(site);
       saveState();
+      sbInsertDelivery(site.siteId, qty, dateRaw, timeRaw, supplier, fseSession.fseName);
       updateKpis();
       renderSites();
       renderAdminModuleContent(site);
@@ -5200,6 +5371,7 @@
       // Synchronize correlated figures immediately
       synchronizeSite(site);
       saveState();
+      sbUpsertSite(site);
       closeEditSiteModal();
       updateKpis();
       renderSites();
