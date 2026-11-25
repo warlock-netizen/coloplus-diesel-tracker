@@ -39,20 +39,32 @@ In the Supabase Dashboard:
    ```
 This automatically deducts 1 hour of `cph` from each active site every hour, updates `current_dl`, and logs alerts to `hourly_diesel_scans` whenever a site drops to `<= 200L` or `<= 2.0` days autonomy.
 
-## 4. Resend Email Alerts (`send-alert-email` Edge Function)
-[`supabase/functions/send-alert-email/index.ts`](./functions/send-alert-email/index.ts) sends critical diesel alerts via **Resend** to the site's `fse_email` and `ADMIN_ALERT_EMAIL`:
+## 4. Resend Email Alerts, Finance Notices, PPM Reminders & Password Recovery
 
-1. Create an API key at [resend.com](https://resend.com).
-2. In Supabase Dashboard (**Edge Functions → Secrets** or via CLI), set:
-   - `RESEND_API_KEY` = `re_...`
-   - `ADMIN_ALERT_EMAIL` = `your-admin-email@example.com`
-   - `RESEND_FROM_EMAIL` = `ColoPlus NOC <onboarding@resend.dev>` (or your verified domain)
-3. Deploy the Edge Function:
+[`supabase/functions/send-alert-email/index.ts`](./functions/send-alert-email/index.ts) uses **Resend** to handle:
+- **Critical Diesel Alerts** (`alert_logs` webhook) → emails **Admin**, **Finance Team**, and **Site FSE**
+- **Diesel Delivery Notices** (`type: "DIESEL_DELIVERY"`) → emails **Finance Team** and **Admin**
+- **PPM Cycle Reminders** (`type: "PPM_REMINDER"`) → emails **Site FSE (`fse_email`)** and **Admin**
+
+### Setup Steps
+1. In **Supabase Dashboard → Edge Functions → Secrets**, add:
+   - `RESEND_API_KEY` = your Resend API key (`re_...`)
+   - `ADMIN_ALERT_EMAIL` = Admin email address
+   - `FINANCE_TEAM_EMAIL` = Finance team email address
+   - `RESEND_FROM_EMAIL` = `ColoPlus NOC <onboarding@resend.dev>` *(or your verified domain)*
+2. Deploy the Edge Function:
    ```bash
    supabase functions deploy send-alert-email
    ```
-4. In Supabase Dashboard → **Database → Webhooks → Create a new hook**:
-   - **Table:** `public.alert_logs`
-   - **Events:** `Insert`
-   - **Type:** `Supabase Edge Functions` → select `send-alert-email`.
+3. In **Database → Webhooks → Create a new hook**:
+   - **Table:** `public.alert_logs` | **Events:** `Insert` | **Target:** `send-alert-email` Edge Function.
+4. **Password Recovery via Resend SMTP:**
+   - Go to **Supabase Dashboard → Project Settings → Authentication → SMTP Settings**.
+   - Enable **Custom SMTP** and enter:
+     - **Host:** `smtp.resend.com`
+     - **Port:** `465`
+     - **Username:** `resend`
+     - **Password:** your Resend API key (`re_...`)
+     - **Sender email:** `onboarding@resend.dev` *(or your verified Resend domain)*
+   - Now clicking **FORGOT PASSWORD?** in the Admin Portal sends recovery emails through Resend.
 

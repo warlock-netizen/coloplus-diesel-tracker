@@ -707,11 +707,16 @@
               <input type="text" id="adminLoginName" required placeholder="e.g. NOC Lead / Regional Supervisor" value="NOC Administrator" class="w-full border_ui bg-transparent px-3 py-2 outline-none focus:border-amber-400">
             </div>
 
-            <div class="pt-2 flex items-center justify-between gap-3">
-              <button type="button" onclick="switchSection('landing')" class="border_ui px-4 py-2 btn-invert cursor-pointer">
-                &lt;&lt; BACK TO INTRO
-              </button>
-              <button type="submit" class="border_ui border-amber-500 bg-amber-500 text-black px-6 py-2 font-bold hover:bg-amber-400 cursor-pointer">
+            <div class="pt-2 flex items-center justify-between gap-3 flex-wrap">
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="switchSection('landing')" class="border_ui px-4 py-2 min-h-[44px] btn-invert cursor-pointer">
+                  &lt;&lt; BACK TO INTRO
+                </button>
+                <button type="button" onclick="handleAdminPasswordReset()" class="border_ui px-3 py-2 min-h-[44px] btn-invert cursor-pointer text-[11px] opacity-80">
+                  FORGOT PASSWORD?
+                </button>
+              </div>
+              <button type="submit" class="border_ui border-amber-500 bg-amber-500 text-black px-6 py-2 min-h-[44px] font-bold hover:bg-amber-400 cursor-pointer">
                 UNLOCK ADMIN PORTAL &gt;&gt;
               </button>
             </div>
@@ -3480,6 +3485,17 @@
           p_supplier: supplier,
           p_logged_by: loggedBy
         });
+        sb.functions.invoke('send-alert-email', {
+          body: {
+            type: 'DIESEL_DELIVERY',
+            site_id: siteId,
+            qty: qty,
+            received_date: dateIso,
+            received_time: timeStr,
+            supplier: supplier,
+            logged_by: loggedBy
+          }
+        }).catch(() => {});
       } catch (e) { console.warn('Supabase delivery RPC:', e); }
     }
 
@@ -5404,6 +5420,31 @@
         '<div class="flex justify-between"><span class="opacity-60">CURRENT FUEL / BUB:</span><span class="font-bold">' + site.currentDL + ' L · ' + (site.batterySoc || 85) + '% BUB</span></div>';
     }
 
+    async function handleAdminPasswordReset() {
+      const email = document.getElementById('adminLoginEmail').value.trim();
+      const errEl = document.getElementById('adminLoginError');
+      if (!email) {
+        if (errEl) {
+          errEl.innerText = 'Enter your Admin Email above first, then click FORGOT PASSWORD?';
+          errEl.classList.remove('hidden');
+        }
+        return;
+      }
+      if (!sb) return;
+      const { error } = await sb.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.href.split('#')[0]
+      });
+      if (error) {
+        if (errEl) {
+          errEl.innerText = 'Password reset error: ' + error.message;
+          errEl.classList.remove('hidden');
+        }
+      } else {
+        if (errEl) errEl.classList.add('hidden');
+        showToast('Password recovery email sent to ' + email + ' via Resend');
+      }
+    }
+
     async function handleAdminPortalLogin(e) {
       e.preventDefault();
       const email = document.getElementById('adminLoginEmail').value.trim();
@@ -5556,7 +5597,10 @@
               '</select></div>' +
               '<div class="flex items-end"><button type="submit" class="w-full border_ui py-1.5 font-bold nav_active btn-invert cursor-pointer">SYNC PPM TO CALENDAR</button></div>' +
             '</form>' +
-            '<div class="text-[11px] text-(--color-accent) font-bold">NEXT SCHEDULED PPM DATE: ' + (site.nextPpmDate || 'N/A') + '</div>' +
+            '<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">' +
+              '<span class="text-[11px] text-(--color-accent) font-bold">NEXT SCHEDULED PPM DATE: ' + (site.nextPpmDate || 'N/A') + '</span>' +
+              '<button type="button" onclick="sendAdminPpmReminders(\'' + site.siteId + '\')" class="border_ui px-3 py-1.5 min-h-[44px] sm:min-h-0 font-bold btn-invert cursor-pointer text-[10px]">SEND PPM REMINDER EMAIL</button>' +
+            '</div>' +
           '</div>';
       } else if (adminActiveModule === 'bub') {
         const battHrs = site.batteryAutonomyHours || 8;
@@ -5768,6 +5812,22 @@
               '<div class="overflow-x-auto">' + bubSvg + '</div>' +
             '</div>' +
           '</div>';
+      }
+    }
+
+    async function sendAdminPpmReminders(siteId) {
+      if (!isAdminUnlocked || !sb) return;
+      try {
+        const { data, error } = await sb.functions.invoke('send-alert-email', {
+          body: { type: 'PPM_REMINDER', site_id: siteId || undefined }
+        });
+        if (error) {
+          showToast('PPM reminder error: ' + error.message);
+        } else {
+          showToast('PPM reminder email triggered via Resend' + (siteId ? ' for ' + siteId : ''));
+        }
+      } catch (e) {
+        showToast('Could not reach send-alert-email Edge Function');
       }
     }
 
