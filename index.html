@@ -813,13 +813,10 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-2.5">
-          <!-- Monthly Calendar Grid -->
+          <!-- Two-Month Calendar Grid -->
           <div class="lg:col-span-2 border_ui p-4 bg-(--color-card-bg)/40 space-y-3">
-            <div class="grid grid-cols-7 gap-1 text-center text-[10px] uppercase opacity-60 font-bold pb-1 border-b border_ui">
-              <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
-            </div>
-            <div id="calendarGridDays" class="grid grid-cols-7 gap-1">
-              <!-- Populated dynamically -->
+            <div id="calendarTwoMonthsContainer" class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+              <!-- Populated dynamically with Month 1 & Month 2 -->
             </div>
           </div>
 
@@ -831,8 +828,14 @@
                 <button onclick="selectCalendarDate(null)" class="border_ui px-2 py-0.5 text-[10px] btn-invert cursor-pointer">SHOW ALL</button>
               </div>
 
-              <form onsubmit="handleAddTask(event)" class="space-y-2 border_ui p-2.5 bg-black/10 dark:bg-white/5">
-                <div class="opacity-60 text-[10px] uppercase font-bold">// ADD NEW TASK</div>
+              <!-- Read-Only Notice for Non-Admins -->
+              <div id="calendarAdminOnlyNotice" class="border_ui border-amber-500/40 bg-amber-500/10 p-2.5 text-[10px] text-amber-300 flex items-center justify-between gap-2">
+                <span>// VIEW-ONLY: Only Admin can add, edit, or delete calendar tasks.</span>
+                <button type="button" onclick="switchSection('admin')" class="border_ui border-amber-400 px-2 py-1 font-bold hover:bg-amber-500 hover:text-black cursor-pointer shrink-0">ADMIN LOGIN</button>
+              </div>
+
+              <form id="calendarAddTaskForm" onsubmit="handleAddTask(event)" class="hidden space-y-2 border_ui p-2.5 bg-black/10 dark:bg-white/5">
+                <div class="opacity-60 text-[10px] uppercase font-bold">// ADD NEW TASK (ADMIN ONLY)</div>
                 <input type="text" id="newTaskTitle" required placeholder="Task description (e.g. Gen PPM / Diesel drop)" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none">
                 <div class="grid grid-cols-2 gap-2">
                   <select id="newTaskSite" class="border_ui bg-(--color-card-bg) px-2 py-1.5 outline-none">
@@ -3890,22 +3893,14 @@
       renderTasks();
     }
 
-    function renderCalendar() {
-      const grid = document.getElementById('calendarGridDays');
-      const label = document.getElementById('calendarMonthLabel');
-      if (!grid || !label) return;
-
-      const year = calendarViewDate.getFullYear();
-      const month = calendarViewDate.getMonth();
-      label.innerText = calendarViewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase();
-
+    function buildMonthGridHtml(year, month, todayStr) {
+      const monthTitle = new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase();
       const firstDay = new Date(year, month, 1).getDay();
       const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const todayStr = new Date().toISOString().slice(0, 10);
 
-      let html = '';
+      let cells = '';
       for (let i = 0; i < firstDay; i++) {
-        html += '<div class="p-2 border_ui opacity-20 min-h-[60px]"></div>';
+        cells += '<div class="p-1.5 border_ui opacity-20 min-h-[54px]"></div>';
       }
       for (let d = 1; d <= daysInMonth; d++) {
         const mm = String(month + 1).padStart(2, '0');
@@ -3913,22 +3908,56 @@
         const dateStr = year + '-' + mm + '-' + dd;
         const dayTasks = masterTasks.filter(t => t.date === dateStr);
         const pendingCount = dayTasks.filter(t => !t.done).length;
+        const hasPpm = dayTasks.some(t => t.category === 'PPM');
         const isSelected = selectedCalendarDate === dateStr;
         const isToday = todayStr === dateStr;
 
-        html += '<button type="button" onclick="selectCalendarDate(\'' + dateStr + '\')" class="p-2 border_ui text-left min-h-[60px] flex flex-col justify-between cursor-pointer btn-invert ' +
+        cells += '<button type="button" onclick="selectCalendarDate(\'' + dateStr + '\')" class="p-1.5 border_ui text-left min-h-[54px] flex flex-col justify-between cursor-pointer btn-invert ' +
           (isSelected ? 'nav_active' : (isToday ? 'border-amber-400' : '')) + '">' +
-          '<div class="flex justify-between items-center w-full"><span class="font-bold">' + d + '</span>' +
-          (isToday ? '<span class="text-[8px] uppercase opacity-75">TODAY</span>' : '') + '</div>' +
-          (dayTasks.length > 0 ? '<div class="text-[9px] mt-1 font-bold ' + (pendingCount > 0 ? 'text-amber-400' : 'text-(--color-accent)') + '">' + dayTasks.length + ' TASK' + (dayTasks.length > 1 ? 'S' : '') + '</div>' : '<div class="text-[9px] opacity-25">—</div>') +
+          '<div class="flex justify-between items-center w-full"><span class="font-bold text-[11px]">' + d + '</span>' +
+          (isToday ? '<span class="text-[8px] uppercase opacity-75">NOW</span>' : '') + '</div>' +
+          (dayTasks.length > 0
+            ? '<div class="text-[8px] mt-1 font-bold ' + (hasPpm ? 'text-amber-400' : (pendingCount > 0 ? 'text-amber-400' : 'text-(--color-accent)')) + '">' +
+              dayTasks.length + (hasPpm ? ' PPM' : ' TSK') + '</div>'
+            : '<div class="text-[8px] opacity-25">—</div>') +
         '</button>';
       }
-      grid.innerHTML = html;
+
+      return '<div class="space-y-2">' +
+        '<div class="font-bold text-xs uppercase tracking-wider border-b border_ui pb-1.5">' + monthTitle + '</div>' +
+        '<div class="grid grid-cols-7 gap-1 text-center text-[9px] uppercase opacity-60 font-bold">' +
+          '<div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>' +
+        '</div>' +
+        '<div class="grid grid-cols-7 gap-1">' + cells + '</div>' +
+      '</div>';
+    }
+
+    function renderCalendar() {
+      const container = document.getElementById('calendarTwoMonthsContainer');
+      const label = document.getElementById('calendarMonthLabel');
+      if (!container || !label) return;
+
+      const d1 = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth(), 1);
+      const d2 = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth() + 1, 1);
+      const todayStr = new Date().toISOString().slice(0, 10);
+
+      const m1Label = d1.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).toUpperCase();
+      const m2Label = d2.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).toUpperCase();
+      label.innerText = m1Label + ' — ' + m2Label;
+
+      container.innerHTML =
+        buildMonthGridHtml(d1.getFullYear(), d1.getMonth(), todayStr) +
+        buildMonthGridHtml(d2.getFullYear(), d2.getMonth(), todayStr);
     }
 
     function renderTasks() {
       const container = document.getElementById('tasksListContainer');
+      const addForm = document.getElementById('calendarAddTaskForm');
+      const notice = document.getElementById('calendarAdminOnlyNotice');
+      if (addForm) addForm.classList.toggle('hidden', !isAdminUnlocked);
+      if (notice) notice.classList.toggle('hidden', isAdminUnlocked);
       if (!container) return;
+
       const list = selectedCalendarDate ? masterTasks.filter(t => t.date === selectedCalendarDate) : masterTasks;
 
       if (list.length === 0) {
@@ -3938,17 +3967,22 @@
 
       container.innerHTML = list.map(t =>
         '<div class="border_ui p-2.5 flex items-start justify-between gap-2">' +
-          '<div onclick="toggleTaskDone(\'' + t.id + '\')" class="cursor-pointer flex-1">' +
+          '<div ' + (isAdminUnlocked ? ('onclick="toggleTaskDone(\'' + t.id + '\')" class="cursor-pointer flex-1"') : 'class="flex-1"') + '>' +
             '<div class="font-bold text-[11px] ' + (t.done ? 'line-through opacity-50' : '') + '">' + (t.done ? '[✓] ' : '[ ] ') + t.title + '</div>' +
             '<div class="text-[10px] opacity-60 mt-0.5">' + t.site + ' · ' + t.date + ' · ' + t.category + '</div>' +
           '</div>' +
-          '<button onclick="deleteTask(\'' + t.id + '\')" class="border_ui px-1.5 py-0.5 text-[9px] hover:bg-rose-600 hover:text-white cursor-pointer">DEL</button>' +
+          (isAdminUnlocked ? '<button onclick="deleteTask(\'' + t.id + '\')" class="border_ui px-1.5 py-0.5 text-[9px] hover:bg-rose-600 hover:text-white cursor-pointer">DEL</button>' : '') +
         '</div>'
       ).join('');
     }
 
     function handleAddTask(e) {
       e.preventDefault();
+      if (!isAdminUnlocked) {
+        showToast('Access Denied: Only Admin can edit the calendar');
+        switchSection('admin');
+        return;
+      }
       const title = document.getElementById('newTaskTitle').value.trim();
       const site = document.getElementById('newTaskSite').value;
       const date = document.getElementById('newTaskDate').value;
@@ -3966,6 +4000,10 @@
     }
 
     function toggleTaskDone(id) {
+      if (!isAdminUnlocked) {
+        showToast('Access Denied: Only Admin can edit calendar tasks');
+        return;
+      }
       const t = masterTasks.find(x => x.id === id);
       if (!t) return;
       t.done = !t.done;
@@ -3975,6 +4013,10 @@
     }
 
     function deleteTask(id) {
+      if (!isAdminUnlocked) {
+        showToast('Access Denied: Only Admin can delete calendar tasks');
+        return;
+      }
       masterTasks = masterTasks.filter(x => x.id !== id);
       localStorage.setItem('coloplus_tasks_v1', JSON.stringify(masterTasks));
       renderCalendar();
@@ -5405,6 +5447,7 @@
         if (addLock) addLock.innerText = '[ADMIN]';
       }
       updateAdminPortalUiState();
+      renderTasks();
     }
 
     // ==================== ADMIN PORTAL LOGIC ====================
