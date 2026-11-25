@@ -3252,21 +3252,54 @@
       if (savedAdmin) adminSession = JSON.parse(savedAdmin);
     } catch (e) { adminSession = null; }
 
-    // Strict Mathematical Correlation Engine
+    // Helper: Parse audit/supply date string into ISO baseline timestamp
+    function parseBaselineTimestamp(s) {
+      if (s.fuelBaselineAt && !isNaN(Date.parse(s.fuelBaselineAt))) {
+        return Date.parse(s.fuelBaselineAt);
+      }
+      if (s.lastSupplyDate) {
+        const cleaned = String(s.lastSupplyDate).trim();
+        // Handle DD-MM-YYYY (e.g. 29-10-2026)
+        const dmy = cleaned.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+        if (dmy) {
+          const iso = dmy[3] + '-' + dmy[2].padStart(2, '0') + '-' + dmy[1].padStart(2, '0') + 'T00:00:00Z';
+          if (!isNaN(Date.parse(iso))) return Date.parse(iso);
+        }
+        // Handle DD-Mon-YYYY or ISO
+        const parsed = Date.parse(cleaned);
+        if (!isNaN(parsed)) return parsed;
+      }
+      return Date.parse('2026-11-02T00:00:00Z');
+    }
+
+    // Strict Mathematical Correlation & Real-Time Fuel Synchronization Engine
     function synchronizeSite(s) {
       s.tankCap = Math.max(100, parseFloat(s.tankCap) || 1000);
-      s.currentDL = Math.max(0, parseFloat(s.currentDL) || 0);
       s.cpd = Math.max(1, parseFloat(s.cpd) || 40);
-      
-      // Correlated metrics
       s.cpd12h = parseFloat((s.cpd / 2).toFixed(1));
       s.cph = parseFloat((s.cpd / 24).toFixed(2));
+
+      // Anchor baseline fuel reading & timestamp, then synchronize to current Date.now()
+      if (s.baselineDL === undefined || s.baselineDL === null || isNaN(parseFloat(s.baselineDL))) {
+        s.baselineDL = Math.max(0, parseFloat(s.currentDL) || 0);
+      } else {
+        s.baselineDL = Math.max(0, parseFloat(s.baselineDL) || 0);
+      }
+      const baselineTs = parseBaselineTimestamp(s);
+      s.fuelBaselineAt = new Date(baselineTs).toISOString();
+
+      const now = new Date();
+      const elapsedHours = Math.max(0, (now.getTime() - baselineTs) / 3600000);
+      s.elapsedHoursSinceBaseline = parseFloat(elapsedHours.toFixed(1));
+      s.burnedSinceBaseline = parseFloat((s.cph * elapsedHours).toFixed(1));
+      s.currentDL = Math.max(0, parseFloat((s.baselineDL - s.burnedSinceBaseline).toFixed(1)));
+
+      // Correlated metrics from synchronized live fuel level
       s.daysRemaining = parseFloat((s.currentDL / s.cpd).toFixed(1));
       s.fillPct = Math.min(100, Math.max(0, Math.round((s.currentDL / s.tankCap) * 100)));
       s.dailyCostNgn = Math.round(s.cpd * 2100);
 
       // Empty forecast calculation
-      const now = new Date();
       const dryTime = new Date(now.getTime() + s.daysRemaining * 24 * 60 * 60 * 1000);
       s.predictedDryDate = dryTime.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' +
                            dryTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
@@ -3382,6 +3415,17 @@
       syncFromSupabase();
 
       setInterval(tickClock, 1000);
+      setInterval(() => {
+        masterSites.forEach(s => synchronizeSite(s));
+        updateKpis();
+        if (fseSession && activeSection === 'fse' && fseActiveModule === 'fuel') {
+          const s = masterSites.find(x => x.siteId === fseSession.siteId);
+          if (s) renderFseFuelModule(s);
+        }
+        if (isAdminUnlocked && adminSession && activeSection === 'admin') {
+          updateAdminPortalUiState();
+        }
+      }, 60000);
     }
 
     // ==================== SUPABASE LIVE SYNC LAYER ====================
@@ -3434,6 +3478,7 @@
               address: row.address,
               fse: row.fse_name,
               fsePhone: row.fse_phone,
+              fseEmail: row.fse_email || '',
               security: row.security_name || 'On-site Security',
               securityPhone: row.security_phone || '',
               powerSource: row.power_source || 'In-house',
@@ -3442,6 +3487,8 @@
               nepaTokenStatus: row.nepa_token_status || 'LOADED',
               loadKw: Number(row.load_kw || 0),
               tankCap: Number(row.tank_cap || 1000),
+              baselineDL: Number(row.current_dl || 0),
+              fuelBaselineAt: row.updated_at || new Date().toISOString(),
               currentDL: Number(row.current_dl || 0),
               cpd: Number(row.cpd || 40),
               batterySoc: row.battery_soc !== null ? Number(row.battery_soc) : 85,
@@ -4231,8 +4278,10 @@
         const barColor = site.status === 'CRITICAL' ? 'bg-rose-500' : (site.status === 'WARNING' ? 'bg-amber-500' : 'bg-emerald-500');
         tankDetailEl.innerHTML =
           '<div class="flex justify-between"><span>Tank Capacity:</span><span class="font-bold">' + site.tankCap + ' L</span></div>' +
-          '<div class="flex justify-between"><span>Current Fuel Level:</span><span class="font-bold">' + site.currentDL + ' L (' + site.fillPct + '%)</span></div>' +
+          '<div class="flex justify-between"><span>Live Synchronized Fuel:</span><span class="font-bold text-(--color-accent)">' + site.currentDL + ' L (' + site.fillPct + '%)</span></div>' +
           '<div class="w-full border_ui h-2.5 bg-black/20 overflow-hidden"><div class="h-full ' + barColor + '" style="width:' + site.fillPct + '%;"></div></div>' +
+          '<div class="flex justify-between"><span>Last Recorded Baseline:</span><span class="opacity-80">' + (site.baselineDL || 0) + ' L (' + (site.fuelBaselineAt || '').slice(0, 10) + ')</span></div>' +
+          '<div class="flex justify-between"><span>Burned Since Baseline:</span><span class="text-amber-400">-' + (site.burnedSinceBaseline || 0) + ' L (' + (site.elapsedHoursSinceBaseline || 0) + 'h elapsed)</span></div>' +
           '<div class="flex justify-between"><span>Hourly Burn (CPH):</span><span class="font-bold">' + site.cph + ' L/hr</span></div>' +
           '<div class="flex justify-between"><span>24h / 12h Burn:</span><span class="font-bold">' + site.cpd + ' L/d · ' + site.cpd12h + ' L/12h</span></div>' +
           '<div class="flex justify-between"><span>Reorder Threshold (200L):</span><span class="font-bold text-amber-400">' + site.refuelDate + '</span></div>';
@@ -4305,7 +4354,9 @@
       site.lastSupplyDate = formattedDate;
       site.lastSupplyTime = timeRaw;
       site.supplier = supplier;
-      site.currentDL = Math.min(site.tankCap, site.currentDL + qty);
+      site.baselineDL = Math.min(site.tankCap, site.currentDL + qty);
+      site.fuelBaselineAt = new Date(dateRaw + 'T' + (timeRaw || '00:00') + ':00').toISOString();
+      site.currentDL = site.baselineDL;
 
       if (!site.refuelHistory) site.refuelHistory = [];
       site.refuelHistory.unshift({
@@ -6053,7 +6104,10 @@
       if (!isAdminUnlocked || !adminSession) return;
       const site = masterSites.find(s => s.siteId === adminSession.siteId);
       if (!site) return;
-      site.currentDL = parseFloat(document.getElementById('admFuelLevel').value) || 0;
+      const newVal = parseFloat(document.getElementById('admFuelLevel').value) || 0;
+      site.baselineDL = newVal;
+      site.fuelBaselineAt = new Date().toISOString();
+      site.currentDL = newVal;
       synchronizeSite(site);
       saveState();
       sbUpsertSite(site);
@@ -6081,7 +6135,9 @@
       site.lastSupplyQty = qty;
       site.lastSupplyDate = formattedDate;
       site.lastSupplyTime = timeRaw;
-      site.currentDL = Math.min(site.tankCap, site.currentDL + qty);
+      site.baselineDL = Math.min(site.tankCap, site.currentDL + qty);
+      site.fuelBaselineAt = new Date(dateRaw + 'T' + (timeRaw || '00:00') + ':00').toISOString();
+      site.currentDL = site.baselineDL;
       if (!site.refuelHistory) site.refuelHistory = [];
       site.refuelHistory.unshift({ date: formattedDate, time: timeRaw, qty, supplier: site.supplier || 'Admin', loggedBy: adminSession.adminName });
 
@@ -6176,7 +6232,10 @@
       if (!site) return;
 
       site.tenantId = document.getElementById('editTenantId').value.trim();
-      site.currentDL = parseFloat(document.getElementById('editCurrentDL').value) || 0;
+      const editedDL = parseFloat(document.getElementById('editCurrentDL').value) || 0;
+      site.baselineDL = editedDL;
+      site.fuelBaselineAt = new Date().toISOString();
+      site.currentDL = editedDL;
       site.cpd = parseFloat(document.getElementById('editCPD').value) || 40;
       site.tankCap = parseFloat(document.getElementById('editTankCap').value) || 1000;
       site.gridStatus = document.getElementById('editGridStatus').value;
