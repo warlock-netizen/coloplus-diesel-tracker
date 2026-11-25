@@ -161,6 +161,41 @@ serve(async (req: Request) => {
     }
 
     // -------------------------------------------------------------------------
+    // MODE 2C: CUSTOM ADMIN EMAIL BROADCAST (Finance / FSE / All FSEs / Custom)
+    // -------------------------------------------------------------------------
+    if (eventType === "CUSTOM_EMAIL") {
+      const target: string = payload.target ?? "FINANCE";
+      const customTo: string = payload.custom_email ?? "";
+      const subject: string = payload.subject ?? "ColoPlus Tech NOC Notice";
+      const bodyText: string = payload.message ?? "";
+      let recipients: string[] = [];
+
+      if (target === "FINANCE" && FINANCE_TEAM_EMAIL) {
+        recipients.push(FINANCE_TEAM_EMAIL);
+      } else if (target === "ADMIN" && ADMIN_ALERT_EMAIL) {
+        recipients.push(ADMIN_ALERT_EMAIL);
+      } else if (target === "ALL_FSES") {
+        const { data: allSites } = await sb.from("sites").select("fse_email").eq("is_active", true);
+        recipients = (allSites ?? []).map((r: { fse_email?: string }) => r.fse_email ?? "").filter(Boolean);
+        if (ADMIN_ALERT_EMAIL) recipients.push(ADMIN_ALERT_EMAIL);
+      } else if (customTo) {
+        recipients.push(customTo);
+      }
+
+      const html = `
+        <div style="font-family: monospace; background:#0b0d10; color:#f4f3ef; padding:24px; border:1px solid #333;">
+          <h2 style="margin:0 0 12px; color:#22c55e;">// COLOPLUS TECH — ADMIN DISPATCH</h2>
+          <div style="white-space:pre-wrap; font-size:13px; line-height:1.6;">${bodyText}</div>
+        </div>
+      `;
+      const result = await sendResendEmail(recipients, subject, html);
+      return new Response(JSON.stringify(result), {
+        status: 200,
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+      });
+    }
+
+    // -------------------------------------------------------------------------
     // MODE 3: CRITICAL DIESEL ALERT (alert_logs webhook -> Admin, Finance & FSE)
     // -------------------------------------------------------------------------
     const record = payload.record ?? payload;

@@ -758,6 +758,9 @@
               <button onclick="exportToCsv()" class="border_ui px-3 py-1.5 btn-invert cursor-pointer font-bold text-[11px]">
                 EXPORT CSV
               </button>
+              <button onclick="deleteAdminSite(adminSession.siteId)" class="border_ui border-rose-500/50 text-rose-400 px-3 py-1.5 hover:bg-rose-600 hover:text-white cursor-pointer font-bold text-[11px]">
+                DEACTIVATE SITE
+              </button>
             </div>
           </div>
 
@@ -767,26 +770,31 @@
           </div>
 
           <!-- Admin Module Tabs -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 text-xs">
             <button id="adminTabBtnRepairs" onclick="openAdminModule('repairs')" class="border_ui p-3 text-left cursor-pointer btn-invert nav_active">
               <div class="text-[10px] opacity-70 uppercase">ADMIN MODULE 01</div>
               <div class="font-bold text-sm">REPAIRS &amp; PPM</div>
-              <div class="text-[10px] opacity-75">Machinery Requiring Constant Repair</div>
+              <div class="text-[10px] opacity-75">Tickets, PPM Proof &amp; Sync</div>
             </button>
             <button id="adminTabBtnBub" onclick="openAdminModule('bub')" class="border_ui p-3 text-left cursor-pointer btn-invert opacity-75">
               <div class="text-[10px] opacity-70 uppercase">ADMIN MODULE 02</div>
               <div class="font-bold text-sm">LIGHT &amp; BATTERY (BUB)</div>
-              <div class="text-[10px] opacity-75">Battery Life &amp; Hours of Light on Site</div>
+              <div class="text-[10px] opacity-75">Battery Life &amp; Hours of Light</div>
             </button>
             <button id="adminTabBtnFuel" onclick="openAdminModule('fuel')" class="border_ui p-3 text-left cursor-pointer btn-invert opacity-75">
               <div class="text-[10px] opacity-70 uppercase">ADMIN MODULE 03</div>
               <div class="font-bold text-sm">FLEET &amp; FUEL</div>
-              <div class="text-[10px] opacity-75">Input Fuel Level, Time &amp; Previous Date</div>
+              <div class="text-[10px] opacity-75">Fuel Input, Ledger &amp; Sync</div>
             </button>
             <button id="adminTabBtnAnalytics" onclick="openAdminModule('analytics')" class="border_ui p-3 text-left cursor-pointer btn-invert opacity-75">
               <div class="text-[10px] opacity-70 uppercase">ADMIN MODULE 04</div>
-              <div class="font-bold text-sm">FLEET ANALYTICS &amp; ALERTS</div>
-              <div class="text-[10px] opacity-75">Runway, BUB vs Grid &amp; Critical Alerts</div>
+              <div class="font-bold text-sm">FLEET ANALYTICS</div>
+              <div class="text-[10px] opacity-75">Runway, BUB &amp; Alerts</div>
+            </button>
+            <button id="adminTabBtnDirectory" onclick="openAdminModule('directory')" class="border_ui p-3 text-left cursor-pointer btn-invert opacity-75">
+              <div class="text-[10px] opacity-70 uppercase">ADMIN MODULE 05</div>
+              <div class="font-bold text-sm">FSE &amp; EMAIL</div>
+              <div class="text-[10px] opacity-75">FSE Emails &amp; Custom Send</div>
             </button>
           </div>
 
@@ -5724,7 +5732,7 @@
 
     function openAdminModule(mod) {
       adminActiveModule = mod;
-      ['repairs', 'bub', 'fuel', 'analytics'].forEach(m => {
+      ['repairs', 'bub', 'fuel', 'analytics', 'directory'].forEach(m => {
         const btn = document.getElementById('adminTabBtn' + m.charAt(0).toUpperCase() + m.slice(1));
         if (btn) btn.className = 'border_ui p-3 text-left cursor-pointer btn-invert ' + (m === mod ? 'nav_active' : 'opacity-75');
       });
@@ -5784,6 +5792,48 @@
               '<span class="text-[11px] text-(--color-accent) font-bold">NEXT SCHEDULED PPM DATE: ' + (site.nextPpmDate || 'N/A') + '</span>' +
               '<button type="button" onclick="sendAdminPpmReminders(\'' + site.siteId + '\')" class="border_ui px-3 py-1.5 min-h-[44px] sm:min-h-0 font-bold btn-invert cursor-pointer text-[10px]">SEND PPM REMINDER EMAIL</button>' +
             '</div>' +
+          '</div>' +
+          '<div class="grid grid-cols-1 lg:grid-cols-2 gap-2.5">' +
+            '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-2.5">' +
+              '<div class="flex items-center justify-between border-b border_ui pb-2">' +
+                '<span class="font-bold uppercase">// SITE REPAIR TICKETS (' + siteTickets.length + ')</span>' +
+                '<button type="button" onclick="openAddRepairModal()" class="border_ui px-2 py-1 text-[10px] font-bold btn-invert cursor-pointer">+ LOG TICKET</button>' +
+              '</div>' +
+              (siteTickets.length === 0
+                ? '<div class="opacity-60 text-[11px] py-2">No repair tickets logged for ' + site.siteId + '.</div>'
+                : siteTickets.map(t =>
+                    '<div class="border_ui p-2.5 space-y-1.5">' +
+                      '<div class="flex items-center justify-between gap-2">' +
+                        '<span class="font-bold">' + t.ticketId + ' · ' + (t.category || t.type || 'REPAIR') + '</span>' +
+                        '<select onchange="updateAdminTicketStatus(\'' + t.ticketId + '\', this.value)" class="border_ui bg-(--color-card-bg) px-1.5 py-0.5 text-[10px] font-bold outline-none cursor-pointer">' +
+                          '<option value="OPEN" ' + ((t.status || '').toUpperCase() === 'OPEN' ? 'selected' : '') + '>OPEN</option>' +
+                          '<option value="IN_PROGRESS" ' + ((t.status || '').toUpperCase().includes('PROGRESS') ? 'selected' : '') + '>IN PROGRESS</option>' +
+                          '<option value="RESOLVED" ' + ((t.status || '').toUpperCase() === 'RESOLVED' ? 'selected' : '') + '>RESOLVED</option>' +
+                        '</select>' +
+                      '</div>' +
+                      '<div class="text-[11px] opacity-85">' + t.issue + '</div>' +
+                      '<div class="text-[10px] opacity-55">Logged: ' + (t.loggedDate || t.dateLogged || 'N/A') + ' · Tech: ' + (t.technician || 'FSE') + '</div>' +
+                    '</div>'
+                  ).join('')) +
+            '</div>' +
+            '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-2.5">' +
+              '<div class="flex items-center justify-between border-b border_ui pb-2">' +
+                '<span class="font-bold uppercase">// 12-ITEM PPM CHECKLIST &amp; FSE PHOTO/VIDEO PROOF</span>' +
+                '<span class="text-[10px] text-(--color-accent) font-bold">' + (site.maintenanceTicks || []).filter(t => t.done).length + '/' + (site.maintenanceTicks || []).length + ' DONE</span>' +
+              '</div>' +
+              '<div class="space-y-1.5 max-h-[340px] overflow-y-auto no-scrollbar">' +
+                (site.maintenanceTicks || []).map(tk =>
+                  '<div class="border_ui p-2 flex items-center justify-between gap-2">' +
+                    '<span class="text-[11px] font-bold ' + (tk.done ? 'text-(--color-accent)' : 'opacity-70') + '">' + (tk.done ? '[✓] ' : '[ ] ') + tk.task + '</span>' +
+                    (tk.photoDataUrl
+                      ? (tk.mediaType === 'video'
+                          ? '<a href="' + tk.photoDataUrl + '" target="_blank" class="border_ui px-2 py-0.5 text-[9px] font-bold text-amber-400">VIEW VIDEO (' + (tk.mediaSizeMb || '') + 'MB)</a>'
+                          : '<a href="' + tk.photoDataUrl + '" target="_blank" title="Inspect Photo"><img src="' + tk.photoDataUrl + '" class="w-8 h-8 object-cover border_ui" alt="' + tk.task + '"></a>')
+                      : '<span class="text-[9px] opacity-40">NO MEDIA</span>') +
+                  '</div>'
+                ).join('') +
+              '</div>' +
+            '</div>' +
           '</div>';
       } else if (adminActiveModule === 'bub') {
         const battHrs = site.batteryAutonomyHours || 8;
@@ -5815,7 +5865,14 @@
       } else if (adminActiveModule === 'fuel') {
         const now = new Date();
         const prevDate = site.previousSupplyDate || (site.refuelHistory && site.refuelHistory.length > 1 ? site.refuelHistory[1].date : 'No prior record');
+        const hist = site.refuelHistory || [];
         container.innerHTML =
+          '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">' +
+            '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">LIVE SYNC FUEL</div><div class="text-xl font-bold mt-1 text-(--color-accent)">' + site.currentDL + ' L</div><div class="text-[10px] opacity-60">' + site.fillPct + '% of ' + site.tankCap + 'L</div></div>' +
+            '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">LAST BASELINE</div><div class="text-xl font-bold mt-1">' + (site.baselineDL || 0) + ' L</div><div class="text-[10px] opacity-60">' + (site.fuelBaselineAt || '').slice(0, 10) + ' (-' + (site.burnedSinceBaseline || 0) + 'L)</div></div>' +
+            '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">AUTONOMY LEFT</div><div class="text-xl font-bold mt-1">' + site.daysRemaining + ' DAYS</div><div class="text-[10px] opacity-60">CPD: ' + site.cpd + ' L/d (' + site.cph + ' L/h)</div></div>' +
+            '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">PREDICTED DRY</div><div class="text-sm font-bold mt-1">' + site.predictedDryDate + '</div><div class="text-[10px] opacity-60">' + site.refuelDate + '</div></div>' +
+          '</div>' +
           '<div class="grid grid-cols-1 lg:grid-cols-2 gap-2.5">' +
             '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
               '<div class="font-bold uppercase border-b border_ui pb-2">// INPUT FUEL LEVEL (' + site.siteId + ')</div>' +
@@ -5839,6 +5896,16 @@
                 '<div class="flex justify-between"><span>Previous Date Received:</span><span class="font-bold text-amber-400">' + prevDate + '</span></div>' +
               '</div>' +
             '</div>' +
+          '</div>' +
+          '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-2">' +
+            '<div class="font-bold uppercase tracking-wider border-b border_ui pb-2">// SITE DIESEL DELIVERY LEDGER (' + site.siteId + ')</div>' +
+            (hist.length === 0
+              ? '<div class="opacity-60 py-2">No delivery history logged yet for this site.</div>'
+              : '<div class="overflow-x-auto"><table class="w-full text-left border-collapse text-[11px]">' +
+                  '<thead><tr class="border-b border_ui opacity-60"><th class="py-1.5 pr-3">DATE</th><th class="py-1.5 pr-3">TIME</th><th class="py-1.5 pr-3">QTY (L)</th><th class="py-1.5 pr-3">SUPPLIER</th><th class="py-1.5">LOGGED BY</th></tr></thead>' +
+                  '<tbody>' + hist.map(h =>
+                    '<tr class="border-b border_ui/50"><td class="py-1.5 pr-3 font-bold">' + (h.date || 'N/A') + '</td><td class="py-1.5 pr-3">' + (h.time || '--:--') + '</td><td class="py-1.5 pr-3 text-(--color-accent) font-bold">+' + (h.qty || h.litersAdded || 0) + ' L</td><td class="py-1.5 pr-3">' + (h.supplier || 'N/A') + '</td><td class="py-1.5 opacity-70">' + (h.loggedBy || h.fse || 'FSE') + '</td></tr>'
+                  ).join('') + '</tbody></table></div>') +
           '</div>';
       } else if (adminActiveModule === 'analytics') {
         const esc = v => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -5995,7 +6062,133 @@
               '<div class="overflow-x-auto">' + bubSvg + '</div>' +
             '</div>' +
           '</div>';
+      } else if (adminActiveModule === 'directory') {
+        const rows = masterSites.map(s =>
+          '<tr class="border-b border_ui/50">' +
+            '<td class="py-2 pr-3 font-bold">' + s.siteId + '</td>' +
+            '<td class="py-2 pr-3">' + s.tenantId + '</td>' +
+            '<td class="py-2 pr-3">' + s.state + '</td>' +
+            '<td class="py-2 pr-3">' + (s.fse || 'N/A') + '</td>' +
+            '<td class="py-2 pr-3">' + (s.fsePhone || 'N/A') + '</td>' +
+            '<td class="py-2 pr-3 ' + (s.fseEmail ? 'text-(--color-accent)' : 'text-amber-400') + '">' + (s.fseEmail || 'NOT SET') + '</td>' +
+            '<td class="py-2 text-right"><button type="button" onclick="adminEditFseEmail(\'' + s.siteId + '\')" class="border_ui px-2 py-0.5 text-[10px] font-bold btn-invert cursor-pointer">EDIT EMAIL</button></td>' +
+          '</tr>'
+        ).join('');
+
+        container.innerHTML =
+          '<div class="space-y-3">' +
+            '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
+              '<div class="flex flex-wrap items-center justify-between gap-2 border-b border_ui pb-2">' +
+                '<span class="font-bold uppercase text-amber-400">// FSE CONTACT &amp; EMAIL DIRECTORY (' + masterSites.length + ' ACTIVE SITES)</span>' +
+                '<button type="button" onclick="sendAdminPpmReminders()" class="border_ui px-3 py-1 text-[10px] font-bold nav_active btn-invert cursor-pointer">SEND PPM REMINDERS TO ALL DUE FSEs</button>' +
+              '</div>' +
+              '<div class="overflow-x-auto"><table class="w-full text-left border-collapse text-[11px]">' +
+                '<thead><tr class="border-b border_ui opacity-60"><th class="py-1.5 pr-3">SITE ID</th><th class="py-1.5 pr-3">TENANT ID</th><th class="py-1.5 pr-3">STATE</th><th class="py-1.5 pr-3">FSE NAME</th><th class="py-1.5 pr-3">PHONE</th><th class="py-1.5 pr-3">FSE EMAIL</th><th class="py-1.5 text-right">ACTION</th></tr></thead>' +
+                '<tbody>' + rows + '</tbody></table></div>' +
+            '</div>' +
+            '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
+              '<div class="font-bold uppercase text-(--color-accent) border-b border_ui pb-2">// CUSTOM EMAIL COMPOSER (VIA RESEND)</div>' +
+              '<form onsubmit="handleAdminSendCustomEmail(event)" class="space-y-2.5">' +
+                '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">' +
+                  '<div><label class="block text-[10px] opacity-60 mb-1">RECIPIENT GROUP</label><select id="admEmailTarget" onchange="document.getElementById(\'admCustomEmailWrap\').classList.toggle(\'hidden\', this.value !== \'CUSTOM\')" class="w-full border_ui bg-(--color-card-bg) px-2.5 py-1.5 outline-none">' +
+                    '<option value="FINANCE">FINANCE TEAM</option>' +
+                    '<option value="ALL_FSES">ALL ACTIVE FSEs</option>' +
+                    '<option value="ADMIN">ADMIN ALERT EMAIL</option>' +
+                    '<option value="CUSTOM">SPECIFIC EMAIL ADDRESS</option>' +
+                  '</select></div>' +
+                  '<div id="admCustomEmailWrap" class="hidden"><label class="block text-[10px] opacity-60 mb-1">RECIPIENT EMAIL</label><input type="email" id="admCustomEmailTo" placeholder="recipient@coloplus.com" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
+                '</div>' +
+                '<div><label class="block text-[10px] opacity-60 mb-1">SUBJECT</label><input type="text" id="admEmailSubject" required placeholder="e.g. Monthly Diesel Budget / Urgent Site PPM Dispatch" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
+                '<div><label class="block text-[10px] opacity-60 mb-1">MESSAGE</label><textarea id="admEmailBody" rows="4" required placeholder="Type your custom message to Finance or Field Engineers..." class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></textarea></div>' +
+                '<button type="submit" class="border_ui px-5 py-2 font-bold nav_active btn-invert cursor-pointer">SEND EMAIL VIA RESEND &gt;&gt;</button>' +
+              '</form>' +
+            '</div>' +
+          '</div>';
       }
+    }
+
+    function updateAdminTicketStatus(ticketId, newStatus) {
+      if (!isAdminUnlocked) return;
+      const t = masterRepairs.find(r => r.ticketId === ticketId);
+      if (!t) return;
+      t.status = newStatus;
+      if (newStatus === 'RESOLVED') {
+        t.adminReviewed = true;
+        t.dateResolved = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      }
+      saveState();
+      renderRepairs();
+      renderAdminTicketAlerts();
+      if (adminSession) {
+        const s = masterSites.find(x => x.siteId === adminSession.siteId);
+        if (s) renderAdminModuleContent(s);
+      }
+      if (fseSession) {
+        const fs = masterSites.find(x => x.siteId === fseSession.siteId);
+        if (fs) renderFseRepairsModule(fs);
+      }
+      showToast('Ticket ' + ticketId + ' updated to ' + newStatus);
+    }
+
+    function adminEditFseEmail(siteId) {
+      if (!isAdminUnlocked) return;
+      const site = masterSites.find(s => s.siteId === siteId);
+      if (!site) return;
+      const val = prompt('Set FSE Email for ' + site.siteId + ' (' + (site.fse || 'FSE') + '):', site.fseEmail || '');
+      if (val === null) return;
+      site.fseEmail = val.trim();
+      saveState();
+      sbUpsertSite(site);
+      renderAdminModuleContent(site);
+      showToast('Updated FSE email for ' + site.siteId);
+    }
+
+    async function handleAdminSendCustomEmail(e) {
+      e.preventDefault();
+      if (!isAdminUnlocked || !sb) return;
+      const target = document.getElementById('admEmailTarget').value;
+      const customEmail = document.getElementById('admCustomEmailTo') ? document.getElementById('admCustomEmailTo').value.trim() : '';
+      const subject = document.getElementById('admEmailSubject').value.trim();
+      const message = document.getElementById('admEmailBody').value.trim();
+
+      try {
+        const { error } = await sb.functions.invoke('send-alert-email', {
+          body: { type: 'CUSTOM_EMAIL', target, custom_email: customEmail, subject, message }
+        });
+        if (error) {
+          showToast('Email error: ' + error.message);
+        } else {
+          document.getElementById('admEmailSubject').value = '';
+          document.getElementById('admEmailBody').value = '';
+          showToast('Custom email sent via Resend!');
+        }
+      } catch (err) {
+        showToast('Failed to send custom email');
+      }
+    }
+
+    async function deleteAdminSite(siteId) {
+      if (!isAdminUnlocked) {
+        showToast('Access Denied: Only Admin can deactivate sites');
+        return;
+      }
+      if (!confirm('Deactivate and remove site ' + siteId + ' from active sites?')) return;
+      masterSites = masterSites.filter(s => s.siteId !== siteId);
+      saveState();
+      if (sb) {
+        try {
+          await sb.from('sites').update({ is_active: false }).eq('site_id', siteId);
+        } catch (err) { console.warn('Supabase deactivate site:', err); }
+      }
+      populateFseLoginDropdown();
+      populateAdminLoginDropdown();
+      if (masterSites.length > 0 && adminSession) {
+        adminSession.siteId = masterSites[0].siteId;
+        localStorage.setItem('coloplus_admin_session', JSON.stringify(adminSession));
+      }
+      updateKpis();
+      updateAdminPortalUiState();
+      showToast('Site ' + siteId + ' deactivated');
     }
 
     async function sendAdminPpmReminders(siteId) {
@@ -6360,15 +6553,21 @@
         ]
       };
 
+      newSite.baselineDL = newSite.currentDL;
+      newSite.fuelBaselineAt = new Date().toISOString();
       synchronizeSite(newSite);
       masterSites.unshift(newSite);
       saveState();
+      sbUpsertSite(newSite);
+      populateFseLoginDropdown();
+      populateAdminLoginDropdown();
       closeAddSiteModal();
       document.getElementById('addSiteForm').reset();
       updateKpis();
       renderSites();
       renderPowerMatrix();
       renderAnalytics();
+      if (isAdminUnlocked && adminSession) updateAdminPortalUiState();
       showToast('Added and synchronized new site ' + siteId);
     }
 
