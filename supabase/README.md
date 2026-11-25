@@ -38,3 +38,21 @@ In the Supabase Dashboard:
    );
    ```
 This automatically deducts 1 hour of `cph` from each active site every hour, updates `current_dl`, and logs alerts to `hourly_diesel_scans` whenever a site drops to `<= 200L` or `<= 2.0` days autonomy.
+
+## 4. Resend Email Alerts (`send-alert-email` Edge Function)
+[`supabase/functions/send-alert-email/index.ts`](./functions/send-alert-email/index.ts) sends critical diesel alerts via **Resend** to the site's `fse_email` and `ADMIN_ALERT_EMAIL`:
+
+1. Create an API key at [resend.com](https://resend.com).
+2. In Supabase Dashboard (**Edge Functions → Secrets** or via CLI), set:
+   - `RESEND_API_KEY` = `re_...`
+   - `ADMIN_ALERT_EMAIL` = `your-admin-email@example.com`
+   - `RESEND_FROM_EMAIL` = `ColoPlus NOC <onboarding@resend.dev>` (or your verified domain)
+3. Deploy the Edge Function:
+   ```bash
+   supabase functions deploy send-alert-email
+   ```
+4. In Supabase Dashboard → **Database → Webhooks → Create a new hook**:
+   - **Table:** `public.alert_logs`
+   - **Events:** `Insert`
+   - **Type:** `Supabase Edge Functions` → select `send-alert-email`.
+
