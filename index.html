@@ -680,6 +680,12 @@
                 <div id="fseSitePpmList" class="space-y-1.5 max-h-[380px] overflow-y-auto no-scrollbar">
                   <!-- Populated dynamically -->
                 </div>
+                <div class="pt-2 border-t border_ui flex items-center justify-between gap-2">
+                  <span id="fsePpmLastSubmittedText" class="text-[10px] opacity-60"></span>
+                  <button type="button" onclick="submitFsePpmReport()" class="border_ui px-4 py-2 min-h-[44px] sm:min-h-0 font-bold nav_active btn-invert cursor-pointer text-[11px]">
+                    SUBMIT PPM REPORT &gt;&gt;
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -4534,6 +4540,11 @@
       if (nextDispEl) {
         nextDispEl.innerText = 'LAST PPM: ' + (site.lastPpmDate || 'N/A') + ' · CYCLE: ' + (site.ppmCycleDays || 30) + ' DAYS · NEXT DUE ON CALENDAR: ' + (site.nextPpmDate || 'N/A');
       }
+      const lastSubEl = document.getElementById('fsePpmLastSubmittedText');
+      if (lastSubEl) {
+        const subs = site.submittedPpms || [];
+        lastSubEl.innerText = subs.length > 0 ? ('Last submitted: ' + subs[0].submittedAt) : 'Not yet submitted';
+      }
 
       const ticks = site.maintenanceTicks || [];
       const ppmEl = document.getElementById('fseSitePpmList');
@@ -4713,6 +4724,41 @@
       sbInsertRepair(site.siteId, site.tenantId, name, issue, fseSession.fseName);
       renderFseRepairsModule(site);
       showToast('Flagged ' + name + ' as constant-repair machinery');
+    }
+
+    function submitFsePpmReport() {
+      if (!fseSession) return;
+      const site = masterSites.find(s => s.siteId === fseSession.siteId);
+      if (!site) return;
+
+      const ticks = site.maintenanceTicks || [];
+      const doneCount = ticks.filter(t => t.done).length;
+      const now = new Date();
+      const submittedDate = now.toISOString().slice(0, 10);
+      const submittedAt = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' +
+                          now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+      if (!site.submittedPpms) site.submittedPpms = [];
+      site.submittedPpms.unshift({
+        id: 'PPM-' + Date.now(),
+        submittedDate: submittedDate,
+        submittedAt: submittedAt,
+        submittedBy: fseSession.fseName || site.fse || 'FSE',
+        completedCount: doneCount,
+        totalCount: ticks.length,
+        items: ticks.map(t => ({
+          task: t.task,
+          done: !!t.done,
+          photoDataUrl: t.photoDataUrl || null,
+          mediaType: t.mediaType || null,
+          mediaSizeMb: t.mediaSizeMb || null
+        }))
+      });
+
+      saveState();
+      renderFseRepairsModule(site);
+      if (isAdminUnlocked && adminSession) updateAdminPortalUiState();
+      showToast('PPM Report submitted (' + doneCount + '/' + ticks.length + ') on ' + submittedAt);
     }
 
     function toggleSiteTickFromFse(idx) {
@@ -5819,18 +5865,20 @@
           '</div>' +
           '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
             '<div class="font-bold uppercase text-amber-400 border-b border_ui pb-2">// ADMIN PPM TIMING &amp; CALENDAR SYNCHRONIZATION (' + site.siteId + ')</div>' +
-            '<form onsubmit="handleAdminSavePpmCycle(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">' +
+            '<form onsubmit="handleAdminSavePpmCycle(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-2.5">' +
               '<div><label class="block text-[10px] opacity-60 mb-1">LAST PPM DATE</label><input type="date" id="admPpmLastDate" value="' + (site.lastPpmDate || new Date().toISOString().slice(0, 10)) + '" required class="w-full border_ui bg-(--color-card-bg) px-2.5 py-1.5 outline-none"></div>' +
-              '<div><label class="block text-[10px] opacity-60 mb-1">PPM CYCLE PERIOD (DAYS)</label><select id="admPpmCycleDays" class="w-full border_ui bg-(--color-card-bg) px-2.5 py-1.5 outline-none">' +
+              '<div><label class="block text-[10px] opacity-60 mb-1">PPM CYCLE PERIOD</label><select id="admPpmCycleDays" onchange="document.getElementById(\'admPpmCustomWrap\').classList.toggle(\'hidden\', this.value !== \'custom\')" class="w-full border_ui bg-(--color-card-bg) px-2.5 py-1.5 outline-none">' +
                 '<option value="7" ' + ((site.ppmCycleDays || 30) == 7 ? 'selected' : '') + '>7 Days (Weekly)</option>' +
                 '<option value="14" ' + ((site.ppmCycleDays || 30) == 14 ? 'selected' : '') + '>14 Days (Bi-Weekly)</option>' +
                 '<option value="30" ' + ((site.ppmCycleDays || 30) == 30 ? 'selected' : '') + '>30 Days (Monthly)</option>' +
                 '<option value="90" ' + ((site.ppmCycleDays || 30) == 90 ? 'selected' : '') + '>90 Days (Quarterly)</option>' +
+                '<option value="custom" ' + (![7, 14, 30, 90].includes(Number(site.ppmCycleDays || 30)) ? 'selected' : '') + '>Custom Days...</option>' +
               '</select></div>' +
+              '<div id="admPpmCustomWrap" class="' + (![7, 14, 30, 90].includes(Number(site.ppmCycleDays || 30)) ? '' : 'hidden') + '"><label class="block text-[10px] opacity-60 mb-1">CUSTOM DAYS</label><input type="number" min="1" max="365" id="admPpmCustomDays" value="' + (site.ppmCycleDays || 30) + '" placeholder="e.g. 21" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
               '<div class="flex items-end"><button type="submit" class="w-full border_ui py-1.5 font-bold nav_active btn-invert cursor-pointer">SYNC PPM TO CALENDAR</button></div>' +
             '</form>' +
             '<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">' +
-              '<span class="text-[11px] text-(--color-accent) font-bold">NEXT SCHEDULED PPM DATE: ' + (site.nextPpmDate || 'N/A') + '</span>' +
+              '<span class="text-[11px] text-(--color-accent) font-bold">CYCLE: ' + (site.ppmCycleDays || 30) + ' DAYS · NEXT SCHEDULED PPM DATE: ' + (site.nextPpmDate || 'N/A') + '</span>' +
               '<button type="button" onclick="sendAdminPpmReminders(\'' + site.siteId + '\')" class="border_ui px-3 py-1.5 min-h-[44px] sm:min-h-0 font-bold btn-invert cursor-pointer text-[10px]">SEND PPM REMINDER EMAIL</button>' +
             '</div>' +
           '</div>' +
@@ -5859,20 +5907,33 @@
             '</div>' +
             '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-2.5">' +
               '<div class="flex items-center justify-between border-b border_ui pb-2">' +
-                '<span class="font-bold uppercase">// 12-ITEM PPM CHECKLIST &amp; FSE PHOTO/VIDEO PROOF</span>' +
-                '<span class="text-[10px] text-(--color-accent) font-bold">' + (site.maintenanceTicks || []).filter(t => t.done).length + '/' + (site.maintenanceTicks || []).length + ' DONE</span>' +
+                '<span class="font-bold uppercase">// SUBMITTED PPM REPORTS (WITH DATE)</span>' +
+                '<span class="text-[10px] text-(--color-accent) font-bold">' + (site.submittedPpms || []).length + ' SUBMITTED</span>' +
               '</div>' +
-              '<div class="space-y-1.5 max-h-[340px] overflow-y-auto no-scrollbar">' +
-                (site.maintenanceTicks || []).map(tk =>
-                  '<div class="border_ui p-2 flex items-center justify-between gap-2">' +
-                    '<span class="text-[11px] font-bold ' + (tk.done ? 'text-(--color-accent)' : 'opacity-70') + '">' + (tk.done ? '[✓] ' : '[ ] ') + tk.task + '</span>' +
-                    (tk.photoDataUrl
-                      ? (tk.mediaType === 'video'
-                          ? '<a href="' + tk.photoDataUrl + '" target="_blank" class="border_ui px-2 py-0.5 text-[9px] font-bold text-amber-400">VIEW VIDEO (' + (tk.mediaSizeMb || '') + 'MB)</a>'
-                          : '<a href="' + tk.photoDataUrl + '" target="_blank" title="Inspect Photo"><img src="' + tk.photoDataUrl + '" class="w-8 h-8 object-cover border_ui" alt="' + tk.task + '"></a>')
-                      : '<span class="text-[9px] opacity-40">NO MEDIA</span>') +
-                  '</div>'
-                ).join('') +
+              '<div class="space-y-2.5 max-h-[360px] overflow-y-auto no-scrollbar">' +
+                ((site.submittedPpms || []).length === 0
+                  ? '<div class="opacity-60 text-[11px] py-3 border_ui p-3 text-center">No PPM reports submitted yet by FSE for ' + site.siteId + '.</div>'
+                  : (site.submittedPpms || []).map(sub =>
+                      '<div class="border_ui p-3 bg-black/10 dark:bg-white/5 space-y-2">' +
+                        '<div class="flex items-center justify-between border-b border_ui pb-1.5">' +
+                          '<div>' +
+                            '<div class="font-bold text-(--color-accent)">DATE: ' + sub.submittedAt + '</div>' +
+                            '<div class="text-[10px] opacity-65">Submitted by: ' + sub.submittedBy + '</div>' +
+                          '</div>' +
+                          '<span class="border_ui px-2 py-0.5 text-[10px] font-bold">' + sub.completedCount + '/' + sub.totalCount + ' CHECKED</span>' +
+                        '</div>' +
+                        '<div class="grid grid-cols-2 gap-1 text-[10px]">' +
+                          (sub.items || []).map(it =>
+                            '<div class="border_ui px-2 py-1 flex items-center justify-between gap-1">' +
+                              '<span class="' + (it.done ? 'font-bold' : 'opacity-50') + '">' + (it.done ? '[✓] ' : '[ ] ') + it.task + '</span>' +
+                              (it.photoDataUrl
+                                ? '<a href="' + it.photoDataUrl + '" target="_blank" class="underline text-amber-400 font-bold shrink-0">' + (it.mediaType === 'video' ? 'VID' : 'PIC') + '</a>'
+                                : '') +
+                            '</div>'
+                          ).join('') +
+                        '</div>' +
+                      '</div>'
+                    ).join('')) +
               '</div>' +
             '</div>' +
           '</div>';
@@ -6255,7 +6316,9 @@
       if (!site) return;
 
       site.lastPpmDate = document.getElementById('admPpmLastDate').value;
-      site.ppmCycleDays = parseInt(document.getElementById('admPpmCycleDays').value, 10) || 30;
+      const selCycle = document.getElementById('admPpmCycleDays').value;
+      const customVal = document.getElementById('admPpmCustomDays') ? parseInt(document.getElementById('admPpmCustomDays').value, 10) : 30;
+      site.ppmCycleDays = selCycle === 'custom' ? Math.max(1, customVal || 30) : (parseInt(selCycle, 10) || 30);
       site.ppmManuallySet = true;
       synchronizeSite(site);
       saveState();
