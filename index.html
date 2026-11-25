@@ -138,9 +138,38 @@
       letter-spacing: 0.04em;
       line-height: 0.95;
     }
+
+    /* Accessibility & UI/UX Pro Max: Visible keyboard focus rings */
+    :focus-visible {
+      outline: 2px solid var(--color-accent);
+      outline-offset: 2px;
+    }
+
+    /* Accessibility: Respect reduced motion preferences */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    /* Mobile-First FSE Experience: >= 44px touch targets on mobile */
+    @media (max-width: 767px) {
+      header button,
+      main button,
+      main input,
+      main select,
+      main textarea,
+      main label.cursor-pointer,
+      #mobileBottomNav button {
+        min-height: 44px;
+      }
+    }
   </style>
 </head>
-<body class="flex flex-col gap-2.5 antialiased selection:bg-neutral-800 selection:text-white">
+<body class="flex flex-col gap-2.5 pb-20 md:pb-[10px] antialiased selection:bg-neutral-800 selection:text-white">
 
   <!-- TOP STATUS BAR (debabratagiri header style) -->
   <header class="border_ui px-4 py-2 flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 bg-(--color-card-bg)/60 text-xs">
@@ -158,7 +187,13 @@
       <span class="cursor-blink font-bold">_</span>
     </div>
 
-    <div class="flex items-center flex-wrap gap-4 text-xs font-mono">
+    <div class="flex items-center flex-wrap gap-3 md:gap-4 text-xs font-mono">
+      <!-- Supabase Sync Status Indicator -->
+      <div id="supabaseSyncBadge" class="border_ui px-2.5 py-1 flex items-center gap-1.5 text-[11px]" title="Database synchronization status">
+        <span id="supabaseSyncDot" class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>
+        <span id="supabaseSyncLabel" class="font-bold tracking-wider">LOCAL CACHE</span>
+      </div>
+
       <div class="flex items-center gap-2">
         <span class="opacity-50">CLOCK:</span>
         <span id="liveClock" class="font-medium">2026-11-02 12:00:00 UTC</span>
@@ -726,7 +761,7 @@
           </div>
 
           <!-- Admin Module Tabs -->
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs">
             <button id="adminTabBtnRepairs" onclick="openAdminModule('repairs')" class="border_ui p-3 text-left cursor-pointer btn-invert nav_active">
               <div class="text-[10px] opacity-70 uppercase">ADMIN MODULE 01</div>
               <div class="font-bold text-sm">REPAIRS &amp; PPM</div>
@@ -741,6 +776,11 @@
               <div class="text-[10px] opacity-70 uppercase">ADMIN MODULE 03</div>
               <div class="font-bold text-sm">FLEET &amp; FUEL</div>
               <div class="text-[10px] opacity-75">Input Fuel Level, Time &amp; Previous Date</div>
+            </button>
+            <button id="adminTabBtnAnalytics" onclick="openAdminModule('analytics')" class="border_ui p-3 text-left cursor-pointer btn-invert opacity-75">
+              <div class="text-[10px] opacity-70 uppercase">ADMIN MODULE 04</div>
+              <div class="font-bold text-sm">FLEET ANALYTICS &amp; ALERTS</div>
+              <div class="text-[10px] opacity-75">Runway, BUB vs Grid &amp; Critical Alerts</div>
             </button>
           </div>
 
@@ -1047,11 +1087,31 @@
 
   </div>
 
+  <!-- STICKY MOBILE BOTTOM NAVIGATION BAR -->
+  <nav id="mobileBottomNav" aria-label="Mobile Navigation" class="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border_ui bg-(--color-card-bg)/95 backdrop-blur-md grid grid-cols-4 gap-1 p-1.5 text-[10px]">
+    <button id="mobNavLandingBtn" onclick="switchSection('landing')" class="border_ui min-h-[44px] flex flex-col items-center justify-center font-bold tracking-wider uppercase cursor-pointer btn-invert nav_active">
+      <span>01</span>
+      <span>INTRO</span>
+    </button>
+    <button id="mobNavFseBtn" onclick="switchSection('fse')" class="border_ui min-h-[44px] flex flex-col items-center justify-center font-bold tracking-wider uppercase cursor-pointer btn-invert opacity-80">
+      <span>02</span>
+      <span>FSE</span>
+    </button>
+    <button id="mobNavAdminBtn" onclick="switchSection('admin')" class="border_ui min-h-[44px] flex flex-col items-center justify-center font-bold tracking-wider uppercase cursor-pointer btn-invert opacity-80">
+      <span>03</span>
+      <span>ADMIN</span>
+    </button>
+    <button id="mobNavCalendarBtn" onclick="switchSection('calendar')" class="border_ui min-h-[44px] flex flex-col items-center justify-center font-bold tracking-wider uppercase cursor-pointer btn-invert opacity-80">
+      <span>04</span>
+      <span>CALENDAR</span>
+    </button>
+  </nav>
+
   <!-- ==================== MODALS & DRAWERS ==================== -->
 
   <!-- 0. FSE DETAIL VERIFICATION POPUP MODAL -->
   <div id="fseDetailPopupModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="border_ui bg-(--color-secondary) text-(--color-primary) w-full max-w-lg p-6 shadow-2xl space-y-4 font-mono text-xs">
+    <div class="border_ui bg-(--color-secondary) text-(--color-primary) w-full max-w-lg p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto font-mono text-xs">
       <div class="flex items-start justify-between border-b border_ui pb-3">
         <div>
           <span class="text-[10px] uppercase tracking-widest text-(--color-accent) font-bold">// SITE &amp; TENANT VERIFIED</span>
@@ -3234,7 +3294,11 @@
           task: item.task,
           category: item.category,
           done: existing ? !!existing.done : false,
-          photoDataUrl: existing ? (existing.photoDataUrl || null) : null
+          photoDataUrl: existing ? (existing.photoDataUrl || null) : null,
+          storagePath: existing ? (existing.storagePath || null) : null,
+          mediaType: existing ? (existing.mediaType || null) : null,
+          mediaName: existing ? (existing.mediaName || null) : null,
+          mediaSizeMb: existing ? (existing.mediaSizeMb || null) : null
         };
       });
 
@@ -3299,13 +3363,38 @@
       ? window.supabase.createClient(NEXT_PUBLIC_SUPABASE_URL_1, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY_1)
       : null;
 
+    function setSupabaseSyncStatus(isLive, detail) {
+      const dot = document.getElementById('supabaseSyncDot');
+      const label = document.getElementById('supabaseSyncLabel');
+      const badge = document.getElementById('supabaseSyncBadge');
+      if (!dot || !label || !badge) return;
+      if (isLive) {
+        dot.className = 'w-2 h-2 rounded-full bg-(--color-accent) inline-block';
+        label.innerText = 'LIVE SYNC';
+        badge.title = detail || 'Connected to Supabase live telemetry';
+      } else {
+        dot.className = 'w-2 h-2 rounded-full bg-amber-400 inline-block';
+        label.innerText = 'LOCAL CACHE';
+        badge.title = detail || 'Using local cache (offline or RLS restricted)';
+      }
+    }
+
     async function syncFromSupabase() {
-      if (!sb) return;
+      if (!sb) {
+        setSupabaseSyncStatus(false, 'Supabase client not initialized');
+        return;
+      }
       try {
         const { data: sitesRows, error: sitesErr } = await sb
           .from('sites')
           .select('*')
           .eq('is_active', true);
+
+        if (sitesErr) {
+          setSupabaseSyncStatus(false, sitesErr.message || 'Supabase query error');
+        } else {
+          setSupabaseSyncStatus(true, 'Synced ' + (sitesRows ? sitesRows.length : 0) + ' active sites');
+        }
 
         if (!sitesErr && sitesRows && sitesRows.length > 0) {
           sitesRows.forEach(row => {
@@ -3375,6 +3464,7 @@
         }
       } catch (e) {
         console.warn('Supabase sync skipped (offline or RLS):', e.message || e);
+        setSupabaseSyncStatus(false, e.message || 'Offline');
       }
     }
 
@@ -3625,6 +3715,19 @@
       const secRepairs = document.getElementById('sectionRepairs');
       const secAnalytics = document.getElementById('sectionAnalytics');
       const pathEl = document.getElementById('headerPath');
+
+      // Reset mobile bottom nav
+      const mobMap = {
+        landing: document.getElementById('mobNavLandingBtn'),
+        fse: document.getElementById('mobNavFseBtn'),
+        admin: document.getElementById('mobNavAdminBtn'),
+        calendar: document.getElementById('mobNavCalendarBtn')
+      };
+      Object.keys(mobMap).forEach(k => {
+        const mb = mobMap[k];
+        if (!mb) return;
+        mb.className = 'border_ui min-h-[44px] flex flex-col items-center justify-center font-bold tracking-wider uppercase cursor-pointer btn-invert ' + (k === sec ? 'nav_active' : 'opacity-80');
+      });
 
       // Reset
       [navLanding, navFse, navAdmin, navCalendar, navFleet, navPower, navRepairs, navAnalytics].forEach(b => {
@@ -4264,7 +4367,7 @@
       }
     }
 
-    function attachPpmPhoto(idx, inputEl) {
+    async function attachPpmPhoto(idx, inputEl) {
       if (!fseSession || !inputEl.files || !inputEl.files[0]) return;
       const site = masterSites.find(s => s.siteId === fseSession.siteId);
       if (!site || !site.maintenanceTicks || !site.maintenanceTicks[idx]) return;
@@ -4277,47 +4380,120 @@
         return;
       }
 
+      const tick = site.maintenanceTicks[idx];
       const isVideo = file.type.startsWith('video/');
       const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
 
-      // For videos or files > 1.5MB, use ObjectURL in session to avoid localStorage quota overflow
+      // 1. Attempt upload to Supabase Storage bucket 'ppm-evidence'
+      if (sb && sb.storage) {
+        try {
+          const safeSite = site.siteId.replace(/[^a-zA-Z0-9_-]/g, '_');
+          const safeTask = (tick.task || 'ppm').replace(/[^a-zA-Z0-9_-]/g, '_');
+          const safeFile = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+          const storagePath = safeSite + '/' + safeTask + '_' + Date.now() + '_' + safeFile;
+
+          showToast('Uploading ' + (isVideo ? 'video' : 'photo') + ' (' + sizeMb + 'MB) to Supabase...');
+          const { error: uploadErr } = await sb.storage
+            .from('ppm-evidence')
+            .upload(storagePath, file, { upsert: true, contentType: file.type || undefined });
+
+          if (!uploadErr) {
+            const { data: pubData } = sb.storage.from('ppm-evidence').getPublicUrl(storagePath);
+            if (pubData && pubData.publicUrl) {
+              const currentTick = site.maintenanceTicks[idx];
+              if (!currentTick) return;
+              // Revoke old blob URL if replacing a local fallback
+              if (currentTick.photoDataUrl && currentTick.photoDataUrl.startsWith('blob:')) {
+                try { URL.revokeObjectURL(currentTick.photoDataUrl); } catch (_) {}
+              }
+              currentTick.photoDataUrl = pubData.publicUrl;
+              currentTick.storagePath = storagePath;
+              currentTick.mediaType = isVideo ? 'video' : 'image';
+              currentTick.mediaName = file.name;
+              currentTick.mediaSizeMb = sizeMb;
+              currentTick.done = true;
+              try { saveState(); } catch (err) {}
+              renderFseRepairsModule(site);
+              showToast('Uploaded ' + (isVideo ? 'video' : 'photo') + ' (' + sizeMb + 'MB) to ppm-evidence');
+              inputEl.value = '';
+              return;
+            }
+          } else {
+            console.warn('Supabase Storage upload failed, falling back to local cache:', uploadErr.message || uploadErr);
+          }
+        } catch (err) {
+          console.warn('Supabase Storage error, falling back to local cache:', err);
+        }
+      }
+
+      // 2. Graceful fallback to local ObjectURL (video or > 1.5MB) or DataURL
+      const fallbackTick = site.maintenanceTicks[idx];
+      if (!fallbackTick) {
+        inputEl.value = '';
+        return;
+      }
       if (isVideo || file.size > 1.5 * 1024 * 1024) {
-        site.maintenanceTicks[idx].photoDataUrl = URL.createObjectURL(file);
-        site.maintenanceTicks[idx].mediaType = isVideo ? 'video' : 'image';
-        site.maintenanceTicks[idx].mediaName = file.name;
-        site.maintenanceTicks[idx].mediaSizeMb = sizeMb;
-        site.maintenanceTicks[idx].done = true;
+        if (fallbackTick.photoDataUrl && fallbackTick.photoDataUrl.startsWith('blob:')) {
+          try { URL.revokeObjectURL(fallbackTick.photoDataUrl); } catch (_) {}
+        }
+        fallbackTick.photoDataUrl = URL.createObjectURL(file);
+        fallbackTick.storagePath = null;
+        fallbackTick.mediaType = isVideo ? 'video' : 'image';
+        fallbackTick.mediaName = file.name;
+        fallbackTick.mediaSizeMb = sizeMb;
+        fallbackTick.done = true;
         try { saveState(); } catch (err) {}
         renderFseRepairsModule(site);
-        showToast('Attached ' + (isVideo ? 'video' : 'photo') + ' (' + sizeMb + 'MB) for ' + site.maintenanceTicks[idx].task);
+        showToast('Saved locally: ' + (isVideo ? 'video' : 'photo') + ' (' + sizeMb + 'MB) for ' + fallbackTick.task);
+        inputEl.value = '';
         return;
       }
 
       const reader = new FileReader();
       reader.onload = function(ev) {
-        site.maintenanceTicks[idx].photoDataUrl = ev.target.result;
-        site.maintenanceTicks[idx].mediaType = 'image';
-        site.maintenanceTicks[idx].mediaName = file.name;
-        site.maintenanceTicks[idx].mediaSizeMb = sizeMb;
-        site.maintenanceTicks[idx].done = true;
+        const asyncTick = site.maintenanceTicks[idx];
+        if (!asyncTick) return;
+        asyncTick.photoDataUrl = ev.target.result;
+        asyncTick.storagePath = null;
+        asyncTick.mediaType = 'image';
+        asyncTick.mediaName = file.name;
+        asyncTick.mediaSizeMb = sizeMb;
+        asyncTick.done = true;
         try { saveState(); } catch (err) { console.warn('Storage quota reached:', err); }
         renderFseRepairsModule(site);
-        showToast('Attached photo (' + sizeMb + 'MB) for ' + site.maintenanceTicks[idx].task);
+        showToast('Saved locally: photo (' + sizeMb + 'MB) for ' + asyncTick.task);
       };
       reader.readAsDataURL(file);
+      inputEl.value = '';
     }
 
-    function deletePpmMedia(idx) {
+    async function deletePpmMedia(idx) {
       if (!fseSession) return;
       const site = masterSites.find(s => s.siteId === fseSession.siteId);
       if (!site || !site.maintenanceTicks || !site.maintenanceTicks[idx]) return;
-      site.maintenanceTicks[idx].photoDataUrl = null;
-      site.maintenanceTicks[idx].mediaType = null;
-      site.maintenanceTicks[idx].mediaName = null;
-      site.maintenanceTicks[idx].mediaSizeMb = null;
+      const initialTick = site.maintenanceTicks[idx];
+
+      if (initialTick.storagePath && sb && sb.storage) {
+        try {
+          await sb.storage.from('ppm-evidence').remove([initialTick.storagePath]);
+        } catch (err) {
+          console.warn('Supabase Storage delete skipped:', err);
+        }
+      }
+      const tick = site.maintenanceTicks[idx];
+      if (!tick) return;
+      if (tick.photoDataUrl && tick.photoDataUrl.startsWith('blob:')) {
+        try { URL.revokeObjectURL(tick.photoDataUrl); } catch (_) {}
+      }
+
+      tick.photoDataUrl = null;
+      tick.storagePath = null;
+      tick.mediaType = null;
+      tick.mediaName = null;
+      tick.mediaSizeMb = null;
       saveState();
       renderFseRepairsModule(site);
-      showToast('Deleted attachment for ' + site.maintenanceTicks[idx].task);
+      showToast('Deleted attachment for ' + tick.task);
     }
 
     function handleFseFlagMachinery(e) {
@@ -5319,7 +5495,7 @@
 
     function openAdminModule(mod) {
       adminActiveModule = mod;
-      ['repairs', 'bub', 'fuel'].forEach(m => {
+      ['repairs', 'bub', 'fuel', 'analytics'].forEach(m => {
         const btn = document.getElementById('adminTabBtn' + m.charAt(0).toUpperCase() + m.slice(1));
         if (btn) btn.className = 'border_ui p-3 text-left cursor-pointer btn-invert ' + (m === mod ? 'nav_active' : 'opacity-75');
       });
@@ -5435,6 +5611,161 @@
                 '<div class="flex justify-between"><span>Latest Received:</span><span class="font-bold text-(--color-accent)">' + (site.lastSupplyQty || 0) + ' L · ' + (site.lastSupplyDate || 'N/A') + ' @ ' + (site.lastSupplyTime || '--:--') + '</span></div>' +
                 '<div class="flex justify-between"><span>Previous Date Received:</span><span class="font-bold text-amber-400">' + prevDate + '</span></div>' +
               '</div>' +
+            '</div>' +
+          '</div>';
+      } else if (adminActiveModule === 'analytics') {
+        const esc = v => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        const activeSites = getActiveScopeSites().slice();
+        activeSites.forEach(s => synchronizeSite(s));
+
+        const criticalSites = activeSites
+          .filter(s => s.currentDL <= 200 || s.daysRemaining <= 2.0)
+          .sort((a, b) => a.daysRemaining - b.daysRemaining);
+        const warningSites = activeSites.filter(s => s.currentDL > 200 && s.daysRemaining > 2.0 && s.daysRemaining <= 4.0);
+        const healthySites = activeSites.filter(s => s.currentDL > 200 && s.daysRemaining > 4.0);
+
+        const avgBub = activeSites.length ? (activeSites.reduce((sum, s) => sum + (Number(s.batteryAutonomyHours) || 0), 0) / activeSites.length).toFixed(1) : '0.0';
+        const avgLight = activeSites.length ? (activeSites.reduce((sum, s) => sum + (s.gridHoursPerDay !== undefined ? Number(s.gridHoursPerDay) : 12), 0) / activeSites.length).toFixed(1) : '0.0';
+
+        // 1. Critical & Reorder Alert Cards
+        const alertCardsHtml = criticalSites.length === 0
+          ? '<div class="border_ui border-emerald-500/40 bg-emerald-500/10 p-3 text-[11px] font-bold text-emerald-400">ALL ' + activeSites.length + ' ACTIVE SITES ARE ABOVE THE 200L / 2.0-DAY CRITICAL THRESHOLD.</div>'
+          : '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">' +
+              criticalSites.map(s => {
+                const safeId = esc(s.siteId);
+                return '<div class="border_ui border-rose-500/60 bg-rose-500/10 p-3 space-y-2">' +
+                  '<div class="flex items-start justify-between gap-2">' +
+                    '<div>' +
+                      '<div class="font-bold text-xs text-rose-400">' + safeId + '</div>' +
+                      '<div class="text-[10px] opacity-75">' + esc(s.state) + ' · ' + esc(s.tenantId) + '</div>' +
+                    '</div>' +
+                    '<span class="border_ui border-rose-500/60 px-1.5 py-0.5 text-[9px] font-bold text-rose-400">CRITICAL / REORDER</span>' +
+                  '</div>' +
+                  '<div class="grid grid-cols-2 gap-1.5 text-[11px] border-t border_ui pt-2">' +
+                    '<div><span class="opacity-60">FUEL:</span> <span class="font-bold text-rose-400">' + s.currentDL + ' L</span></div>' +
+                    '<div><span class="opacity-60">AUTONOMY:</span> <span class="font-bold text-rose-400">' + s.daysRemaining + ' d</span></div>' +
+                  '</div>' +
+                  '<div class="text-[10px] opacity-70">Dry Est: ' + esc(s.predictedDryDate) + '</div>' +
+                  '<div class="flex gap-1.5 pt-1">' +
+                    '<button type="button" onclick="switchAdminSite(\'' + safeId + '\'); openAdminModule(\'fuel\');" class="flex-1 border_ui border-rose-400 bg-rose-600 text-white px-2 py-1.5 font-bold text-[10px] hover:bg-rose-500 cursor-pointer">INSPECT / REFUEL &gt;&gt;</button>' +
+                    '<button type="button" onclick="openEditSiteModal(\'' + safeId + '\')" class="border_ui px-2.5 py-1.5 font-bold text-[10px] btn-invert cursor-pointer">EDIT</button>' +
+                  '</div>' +
+                '</div>';
+              }).join('') +
+            '</div>';
+
+        // 2. SVG Horizontal Bar / Runway Chart (Sorted Ascending: Least Days Left to Most)
+        const sortedRunway = activeSites.slice().sort((a, b) => a.daysRemaining - b.daysRemaining);
+        const maxDays = Math.max(10, ...sortedRunway.map(s => s.daysRemaining));
+        const rLeft = 128;
+        const rWidth = 490;
+        const rRowH = 28;
+        const rTop = 28;
+        const rSvgH = rTop + sortedRunway.length * rRowH + 22;
+        const thresholdX = rLeft + (2.0 / maxDays) * rWidth;
+
+        const runwayTicks = [0, 2, 4, 6, 8, Math.ceil(maxDays)].filter((v, i, arr) => v <= Math.ceil(maxDays) && arr.indexOf(v) === i);
+        const runwayGridSvg = runwayTicks.map(t => {
+          const tx = rLeft + (t / maxDays) * rWidth;
+          return '<line x1="' + tx.toFixed(1) + '" y1="' + (rTop - 6) + '" x2="' + tx.toFixed(1) + '" y2="' + (rSvgH - 18) + '" stroke="currentColor" stroke-opacity="0.12" stroke-width="1"/>' +
+                 '<text x="' + tx.toFixed(1) + '" y="' + (rSvgH - 4) + '" text-anchor="middle" fill="currentColor" fill-opacity="0.55" font-size="9">' + t + 'd</text>';
+        }).join('');
+
+        const runwayBarsSvg = sortedRunway.map((s, idx) => {
+          const y = rTop + idx * rRowH;
+          const barW = Math.max(4, (s.daysRemaining / maxDays) * rWidth);
+          const isCrit = s.currentDL <= 200 || s.daysRemaining <= 2.0;
+          const isWarn = !isCrit && s.daysRemaining <= 4.0;
+          const color = isCrit ? '#ef4444' : (isWarn ? '#f59e0b' : '#22c55e');
+          const safeId = esc(s.siteId);
+          return '<g class="cursor-pointer" tabindex="0" role="button" aria-label="Inspect ' + safeId + ' fuel runway (' + s.daysRemaining + ' days, ' + s.currentDL + 'L)" onclick="switchAdminSite(\'' + safeId + '\'); openAdminModule(\'fuel\');" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();switchAdminSite(\'' + safeId + '\');openAdminModule(\'fuel\');}">' +
+            '<title>' + safeId + ' (' + esc(s.state) + ') — ' + s.daysRemaining + ' days left · ' + s.currentDL + 'L / ' + s.tankCap + 'L (' + s.status + ')</title>' +
+            '<text x="' + (rLeft - 8) + '" y="' + (y + 15) + '" text-anchor="end" fill="currentColor" font-size="10" font-weight="bold">' + safeId + '</text>' +
+            '<rect x="' + rLeft + '" y="' + (y + 4) + '" width="' + rWidth + '" height="16" fill="currentColor" fill-opacity="0.06"/>' +
+            '<rect x="' + rLeft + '" y="' + (y + 4) + '" width="' + barW.toFixed(1) + '" height="16" fill="' + color + '" fill-opacity="0.85"/>' +
+            '<text x="' + (rLeft + rWidth + 8) + '" y="' + (y + 15) + '" fill="currentColor" font-size="10" font-weight="bold">' + s.daysRemaining + 'd · ' + s.currentDL + 'L</text>' +
+          '</g>';
+        }).join('');
+
+        const runwaySvg =
+          '<svg viewBox="0 0 760 ' + rSvgH + '" class="w-full h-auto font-mono" role="img" aria-label="Diesel autonomy runway ranking across 14 active sites">' +
+            runwayGridSvg +
+            runwayBarsSvg +
+            '<line x1="' + thresholdX.toFixed(1) + '" y1="' + (rTop - 10) + '" x2="' + thresholdX.toFixed(1) + '" y2="' + (rSvgH - 18) + '" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4 3"/>' +
+            '<text x="' + (thresholdX + 4).toFixed(1) + '" y="' + (rTop - 12) + '" fill="#ef4444" font-size="9" font-weight="bold">2.0d / 200L CRITICAL</text>' +
+          '</svg>';
+
+        // 3. SVG BUB Battery vs Utility Light Hours Comparison Chart (0 - 24h scale)
+        const bRowH = 32;
+        const bTop = 26;
+        const bSvgH = bTop + activeSites.length * bRowH + 22;
+        const bWidth = 490;
+        const bubGridSvg = [0, 6, 12, 18, 24].map(h => {
+          const hx = rLeft + (h / 24) * bWidth;
+          return '<line x1="' + hx.toFixed(1) + '" y1="' + (bTop - 6) + '" x2="' + hx.toFixed(1) + '" y2="' + (bSvgH - 18) + '" stroke="currentColor" stroke-opacity="0.12" stroke-width="1"/>' +
+                 '<text x="' + hx.toFixed(1) + '" y="' + (bSvgH - 4) + '" text-anchor="middle" fill="currentColor" fill-opacity="0.55" font-size="9">' + h + 'h</text>';
+        }).join('');
+
+        const bubBarsSvg = activeSites.map((s, idx) => {
+          const y = bTop + idx * bRowH;
+          const bubH = Math.min(24, Math.max(0, Number(s.batteryAutonomyHours) || 0));
+          const lightH = Math.min(24, Math.max(0, s.gridHoursPerDay !== undefined ? Number(s.gridHoursPerDay) : 12));
+          const bubW = Math.max(2, (bubH / 24) * bWidth);
+          const lightW = Math.max(2, (lightH / 24) * bWidth);
+          const safeId = esc(s.siteId);
+          return '<g class="cursor-pointer" tabindex="0" role="button" aria-label="Inspect ' + safeId + ' BUB ' + bubH + 'h vs Grid ' + lightH + 'h" onclick="switchAdminSite(\'' + safeId + '\'); openAdminModule(\'bub\');" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();switchAdminSite(\'' + safeId + '\');openAdminModule(\'bub\');}">' +
+            '<title>' + safeId + ' — BUB Autonomy: ' + bubH + 'h (SOC ' + (s.batterySoc || 0) + '%) | Utility Light: ' + lightH + 'h/day</title>' +
+            '<text x="' + (rLeft - 8) + '" y="' + (y + 16) + '" text-anchor="end" fill="currentColor" font-size="10" font-weight="bold">' + safeId + '</text>' +
+            '<rect x="' + rLeft + '" y="' + (y + 3) + '" width="' + bWidth + '" height="9" fill="currentColor" fill-opacity="0.06"/>' +
+            '<rect x="' + rLeft + '" y="' + (y + 3) + '" width="' + bubW.toFixed(1) + '" height="9" fill="#22c55e" fill-opacity="0.9"/>' +
+            '<rect x="' + rLeft + '" y="' + (y + 14) + '" width="' + bWidth + '" height="9" fill="currentColor" fill-opacity="0.06"/>' +
+            '<rect x="' + rLeft + '" y="' + (y + 14) + '" width="' + lightW.toFixed(1) + '" height="9" fill="#f59e0b" fill-opacity="0.9"/>' +
+            '<text x="' + (rLeft + bWidth + 8) + '" y="' + (y + 16) + '" fill="currentColor" font-size="9" font-weight="bold">BUB ' + bubH + 'h / GRID ' + lightH + 'h</text>' +
+          '</g>';
+        }).join('');
+
+        const bubSvg =
+          '<svg viewBox="0 0 760 ' + bSvgH + '" class="w-full h-auto font-mono" role="img" aria-label="BUB battery autonomy versus utility light hours across 14 active sites">' +
+            bubGridSvg +
+            bubBarsSvg +
+          '</svg>';
+
+        container.innerHTML =
+          '<div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">' +
+            '<div class="border_ui p-3 bg-(--color-card-bg)/40"><div class="text-[10px] opacity-60 uppercase">ACTIVE SITES</div><div class="londrina-outline-regular text-3xl mt-0.5">' + activeSites.length + '</div></div>' +
+            '<div class="border_ui border-rose-500/40 p-3 bg-rose-500/10"><div class="text-[10px] text-rose-400 uppercase font-bold">CRITICAL / REORDER</div><div class="londrina-outline-regular text-3xl mt-0.5 text-rose-400">' + criticalSites.length + '</div></div>' +
+            '<div class="border_ui border-amber-500/40 p-3 bg-amber-500/10"><div class="text-[10px] text-amber-400 uppercase font-bold">WARNING (&lt;=4D)</div><div class="londrina-outline-regular text-3xl mt-0.5 text-amber-400">' + warningSites.length + '</div></div>' +
+            '<div class="border_ui border-emerald-500/40 p-3 bg-emerald-500/10"><div class="text-[10px] text-(--color-accent) uppercase font-bold">HEALTHY</div><div class="londrina-outline-regular text-3xl mt-0.5 text-(--color-accent)">' + healthySites.length + '</div></div>' +
+            '<div class="border_ui p-3 bg-(--color-card-bg)/40 col-span-2 sm:col-span-1"><div class="text-[10px] opacity-60 uppercase">AVG BUB / LIGHT</div><div class="font-bold text-sm mt-1.5">' + avgBub + 'h / ' + avgLight + 'h</div></div>' +
+          '</div>' +
+          '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
+            '<div class="flex flex-wrap items-center justify-between gap-2 border-b border_ui pb-2">' +
+              '<span class="font-bold uppercase text-rose-400">// CRITICAL &amp; REORDER SITE ALERTS (&lt;= 200L OR &lt;= 2.0 DAYS)</span>' +
+              '<span class="text-[10px] opacity-70">1-Click Jump to Inspect or Edit</span>' +
+            '</div>' +
+            alertCardsHtml +
+          '</div>' +
+          '<div class="grid grid-cols-1 xl:grid-cols-2 gap-2.5">' +
+            '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
+              '<div class="flex flex-wrap items-center justify-between gap-2 border-b border_ui pb-2">' +
+                '<span class="font-bold uppercase">// DIESEL AUTONOMY RUNWAY (14 ACTIVE SITES)</span>' +
+                '<div class="flex items-center gap-2 text-[10px]">' +
+                  '<span class="text-rose-400 font-bold">■ CRIT</span>' +
+                  '<span class="text-amber-400 font-bold">■ WARN</span>' +
+                  '<span class="text-(--color-accent) font-bold">■ OK</span>' +
+                '</div>' +
+              '</div>' +
+              '<div class="overflow-x-auto">' + runwaySvg + '</div>' +
+            '</div>' +
+            '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
+              '<div class="flex flex-wrap items-center justify-between gap-2 border-b border_ui pb-2">' +
+                '<span class="font-bold uppercase">// BUB BATTERY VS UTILITY LIGHT HOURS</span>' +
+                '<div class="flex items-center gap-3 text-[10px]">' +
+                  '<span class="text-(--color-accent) font-bold">■ BUB AUTONOMY (HRS)</span>' +
+                  '<span class="text-amber-400 font-bold">■ UTILITY LIGHT (HRS/DAY)</span>' +
+                '</div>' +
+              '</div>' +
+              '<div class="overflow-x-auto">' + bubSvg + '</div>' +
             '</div>' +
           '</div>';
       }
@@ -5659,6 +5990,7 @@
       renderSites();
       renderPowerMatrix();
       renderAnalytics();
+      if (isAdminUnlocked && adminSession) updateAdminPortalUiState();
       showToast('Site ' + siteId + ' synchronized & saved');
     }
 
@@ -5682,6 +6014,7 @@
         renderSites();
         renderPowerMatrix();
         renderAnalytics();
+        if (isAdminUnlocked && adminSession) updateAdminPortalUiState();
         showToast('Site ' + siteId + ' reset to audit default');
       }
     }
