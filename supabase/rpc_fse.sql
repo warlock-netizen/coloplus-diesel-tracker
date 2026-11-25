@@ -186,10 +186,42 @@ begin
 end;
 $$;
 
--- Grant execute permissions to anon & authenticated clients
+-- 6. FSE Update Contact & Email (from FSE Detail Popup)
+create or replace function public.fse_update_contact(
+  p_site_id text,
+  p_tenant_id text,
+  p_fse_name text,
+  p_fse_phone text,
+  p_fse_email text
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_site public.sites%rowtype;
+begin
+  select * into v_site from public.fse_verify_site(p_site_id, p_tenant_id);
+  if not found then
+    raise exception 'Unauthorized: Invalid Site ID or Tenant ID';
+  end if;
+
+  update public.sites
+    set fse_name = coalesce(nullif(trim(p_fse_name), ''), fse_name),
+        fse_phone = coalesce(nullif(trim(p_fse_phone), ''), fse_phone),
+        fse_email = coalesce(nullif(trim(p_fse_email), ''), fse_email),
+        updated_at = now()
+    where site_id = v_site.site_id;
+  return true;
+end;
+$$;
+
+-- Grant execute permissions to anon & authenticated clients (fse_update_fuel_level is Admin-only)
+revoke execute on function public.fse_update_fuel_level(text, text, numeric, numeric) from anon;
 grant execute on function public.fse_verify_site(text, text) to anon, authenticated;
-grant execute on function public.fse_update_fuel_level(text, text, numeric, numeric) to anon, authenticated;
 grant execute on function public.fse_log_delivery(text, text, numeric, date, time, text, text) to anon, authenticated;
 grant execute on function public.fse_update_bub_light(text, text, numeric, integer, text, text, numeric, text, text) to anon, authenticated;
 grant execute on function public.fse_log_repair(text, text, text, text, text) to anon, authenticated;
 grant execute on function public.fse_add_task(text, text, date, text) to anon, authenticated;
+grant execute on function public.fse_update_contact(text, text, text, text, text) to anon, authenticated;

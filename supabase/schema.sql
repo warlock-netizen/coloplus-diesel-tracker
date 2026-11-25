@@ -15,6 +15,10 @@ create table if not exists public.sites (
   address text not null,
   fse_name text not null,
   fse_phone text not null,
+  fse_email text,
+  ppm_cycle_days integer not null default 30,
+  last_ppm_date date,
+  next_ppm_date date,
   security_name text,
   security_phone text,
   power_source text default 'In-house',
@@ -102,6 +106,7 @@ create table if not exists public.ppm_checklists (
   task text not null,
   category text not null default 'PPM',
   done boolean not null default false,
+  photo_url text,
   updated_by text,
   updated_at timestamptz not null default now()
 );

@@ -426,22 +426,17 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-2.5 text-xs">
-              <!-- Input Fuel Level -->
-              <div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">
-                <div class="font-bold uppercase tracking-wider border-b border_ui pb-2">// INPUT CURRENT FUEL LEVEL</div>
-                <form onsubmit="handleFseUpdateFuelLevel(event)" class="space-y-3">
-                  <div>
-                    <label class="block text-[10px] uppercase opacity-60 mb-1">CURRENT DIESEL LEVEL IN TANK (LITRES)</label>
-                    <input type="number" step="0.1" min="0" id="fseFuelLevelInput" required class="w-full border_ui bg-transparent px-3 py-2 text-sm font-bold outline-none focus:border-(--color-primary)">
+              <!-- Read-Only Tank Status (Direct Fuel Level Edit is Admin-Only) -->
+              <div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3 flex flex-col justify-between">
+                <div>
+                  <div class="font-bold uppercase tracking-wider border-b border_ui pb-2">// TANK STATUS &amp; CONSUMPTION</div>
+                  <div id="fseTankStatusDetail" class="mt-3 space-y-2 text-[11px]">
+                    <!-- Populated dynamically -->
                   </div>
-                  <div>
-                    <label class="block text-[10px] uppercase opacity-60 mb-1">DAILY BURN RATE CPD (L/DAY)</label>
-                    <input type="number" step="0.1" min="1" id="fseCpdInput" required class="w-full border_ui bg-transparent px-3 py-2 outline-none focus:border-(--color-primary)">
-                  </div>
-                  <button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">
-                    SAVE FUEL LEVEL READING
-                  </button>
-                </form>
+                </div>
+                <div class="border_ui border-amber-500/40 bg-amber-500/10 p-2.5 text-[10px] text-amber-300">
+                  // NOTE: Direct fuel level calibration is restricted to <span class="font-bold">ADMIN PORTAL</span> only. FSEs can log diesel deliveries received below.
+                </div>
               </div>
 
               <!-- Log Diesel Received (Time, Date, Previous Date) -->
@@ -620,10 +615,33 @@
 
               <div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">
                 <div class="flex items-center justify-between border-b border_ui pb-2">
-                  <span class="font-bold uppercase tracking-wider">// SITE PPM MAINTENANCE CHECKLIST</span>
+                  <span class="font-bold uppercase tracking-wider">// SITE PPM CHECKLIST &amp; PHOTO PROOF</span>
                   <button onclick="openTicksModal(fseSession.siteId)" class="border_ui px-2 py-1 btn-invert cursor-pointer text-[10px] font-bold">OPEN FULL CHECKLIST</button>
                 </div>
-                <div id="fseSitePpmList" class="space-y-1.5">
+                <!-- PPM Cycle Period & Auto Calendar Sync -->
+                <form onsubmit="handleSavePpmCycle(event)" class="border_ui p-2.5 bg-black/10 dark:bg-white/5 space-y-2">
+                  <div class="text-[10px] uppercase opacity-60 font-bold">// PPM CYCLE PERIOD (AUTO-SYNCED TO CALENDAR)</div>
+                  <div class="grid grid-cols-3 gap-2">
+                    <div>
+                      <label class="block text-[9px] opacity-60 mb-0.5">LAST PPM DATE</label>
+                      <input type="date" id="fsePpmLastDate" required class="w-full border_ui bg-(--color-card-bg) px-2 py-1 text-[11px] outline-none">
+                    </div>
+                    <div>
+                      <label class="block text-[9px] opacity-60 mb-0.5">CYCLE PERIOD</label>
+                      <select id="fsePpmCycleDays" class="w-full border_ui bg-(--color-card-bg) px-2 py-1 text-[11px] outline-none">
+                        <option value="7">7 Days (Weekly)</option>
+                        <option value="14">14 Days (Bi-Weekly)</option>
+                        <option value="30" selected>30 Days (Monthly)</option>
+                        <option value="90">90 Days (Quarterly)</option>
+                      </select>
+                    </div>
+                    <div class="flex items-end">
+                      <button type="submit" class="w-full border_ui py-1 font-bold nav_active btn-invert cursor-pointer text-[10px]">SYNC CALENDAR</button>
+                    </div>
+                  </div>
+                  <div id="fseNextPpmDisplay" class="text-[10px] text-(--color-accent) font-bold"></div>
+                </form>
+                <div id="fseSitePpmList" class="space-y-1.5 max-h-[340px] overflow-y-auto no-scrollbar">
                   <!-- Populated dynamically -->
                 </div>
               </div>
@@ -1081,6 +1099,10 @@
             <label class="block text-[10px] uppercase opacity-60 mb-1">FSE PHONE / CONTACT</label>
             <input type="text" id="fsePopupPhoneInput" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none focus:border-(--color-primary)">
           </div>
+        </div>
+        <div>
+          <label class="block text-[10px] uppercase opacity-60 mb-1">FSE EMAIL ADDRESS</label>
+          <input type="email" id="fsePopupEmailInput" required placeholder="fse.name@coloplus.com" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none focus:border-(--color-primary)">
         </div>
         <div class="flex justify-end gap-2 pt-2 border-t border_ui">
           <button type="button" onclick="closeFseDetailPopup()" class="border_ui px-4 py-2 btn-invert cursor-pointer">CANCEL</button>
@@ -3215,8 +3237,35 @@
         s.refuelDate = refuelTime.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
       }
 
-      // Ensure arrays exist
+      // Regular 12-item PPM Checklist
+      const REGULAR_PPM_ITEMS = [
+        { task: 'AVR', category: 'PPM' },
+        { task: 'TOP GASKET', category: 'GENERATOR' },
+        { task: 'RADIATOR', category: 'GENERATOR' },
+        { task: 'FAN BELT', category: 'GENERATOR' },
+        { task: 'BREAKER', category: 'GRID' },
+        { task: 'MODULES', category: 'BATTERY' },
+        { task: 'SOLENOIDS', category: 'GENERATOR' },
+        { task: 'KICK STARTERS', category: 'GENERATOR' },
+        { task: 'BUB', category: 'BATTERY' },
+        { task: 'RECTIFIER', category: 'BATTERY' },
+        { task: 'DG RH', category: 'GENERATOR' },
+        { task: 'JANITOR', category: 'PPM' }
+      ];
       if (!s.maintenanceTicks) s.maintenanceTicks = [];
+      REGULAR_PPM_ITEMS.forEach(item => {
+        if (!s.maintenanceTicks.some(t => t.task.toUpperCase() === item.task)) {
+          s.maintenanceTicks.push({ task: item.task, category: item.category, done: false, photoDataUrl: null });
+        }
+      });
+
+      // PPM Cycle Period & Next PPM Due Date
+      if (!s.ppmCycleDays) s.ppmCycleDays = 30;
+      if (!s.lastPpmDate) s.lastPpmDate = new Date().toISOString().slice(0, 10);
+      const lastD = new Date(s.lastPpmDate + 'T00:00:00');
+      const nextD = new Date(lastD.getTime() + Number(s.ppmCycleDays) * 24 * 60 * 60 * 1000);
+      s.nextPpmDate = nextD.toISOString().slice(0, 10);
+
       if (!s.refuelHistory) s.refuelHistory = [];
       if (!s.majorIssues) s.majorIssues = [];
       if (!s.constantRepairAssets) s.constantRepairAssets = [];
@@ -3664,8 +3713,33 @@
         ];
         localStorage.setItem('coloplus_tasks_v1', JSON.stringify(masterTasks));
       }
+      syncPpmDatesToCalendar();
       renderCalendar();
       renderTasks();
+    }
+
+    function syncPpmDatesToCalendar() {
+      // Automatically put each site's next PPM date on the Calendar
+      masterSites.forEach(s => {
+        if (!s.nextPpmDate) return;
+        const autoId = 'ppm_auto_' + s.siteId;
+        const existing = masterTasks.find(t => t.id === autoId);
+        const title = 'Regular PPM Check (' + s.ppmCycleDays + 'd cycle)';
+        if (existing) {
+          existing.date = s.nextPpmDate;
+          existing.title = title;
+        } else {
+          masterTasks.push({
+            id: autoId,
+            title: title,
+            site: s.siteId,
+            date: s.nextPpmDate,
+            category: 'PPM',
+            done: false
+          });
+        }
+      });
+      localStorage.setItem('coloplus_tasks_v1', JSON.stringify(masterTasks));
     }
 
     function changeCalendarMonth(delta) {
@@ -3824,6 +3898,7 @@
 
       document.getElementById('fsePopupNameInput').value = site.fse || 'Regional FSE';
       document.getElementById('fsePopupPhoneInput').value = site.fsePhone || 'Operations Dispatch';
+      document.getElementById('fsePopupEmailInput').value = site.fseEmail || '';
       document.getElementById('fseDetailPopupModal').classList.remove('hidden');
     }
 
@@ -3838,12 +3913,29 @@
       const site = pendingVerifiedFseSite;
       const fseName = document.getElementById('fsePopupNameInput').value.trim();
       const fsePhone = document.getElementById('fsePopupPhoneInput').value.trim();
+      const fseEmail = document.getElementById('fsePopupEmailInput').value.trim();
+
+      site.fse = fseName || site.fse;
+      site.fsePhone = fsePhone || site.fsePhone;
+      site.fseEmail = fseEmail;
+      saveState();
+
+      if (sb) {
+        sb.rpc('fse_update_contact', {
+          p_site_id: site.siteId,
+          p_tenant_id: site.tenantId,
+          p_fse_name: site.fse,
+          p_fse_phone: site.fsePhone,
+          p_fse_email: fseEmail
+        }).catch(() => {});
+      }
 
       fseSession = {
         siteId: site.siteId,
         tenantId: site.tenantId,
-        fseName: fseName || site.fse,
-        fsePhone: fsePhone || site.fsePhone,
+        fseName: site.fse,
+        fsePhone: site.fsePhone,
+        fseEmail: fseEmail,
         loginAt: new Date().toISOString()
       };
       localStorage.setItem('coloplus_fse_session', JSON.stringify(fseSession));
@@ -3886,7 +3978,7 @@
       if (badge) badge.innerText = site.siteId;
 
       document.getElementById('fseActiveSiteHeader').innerText = 'SITE: ' + site.siteId + ' (' + site.tenantId + ')';
-      document.getElementById('fseActiveSiteSub').innerText = site.state + ' · ' + site.address + ' · FSE: ' + fseSession.fseName + ' (' + fseSession.fsePhone + ')';
+      document.getElementById('fseActiveSiteSub').innerText = site.state + ' · ' + site.address + ' · FSE: ' + fseSession.fseName + ' (' + fseSession.fsePhone + (fseSession.fseEmail ? ' · ' + fseSession.fseEmail : '') + ')';
 
       renderFseFuelModule(site);
       renderFseBubModule(site);
@@ -3921,8 +4013,17 @@
         '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">AUTONOMY LEFT</div><div class="text-xl font-bold mt-1 ' + statusColor + '">' + site.daysRemaining + ' DAYS</div><div class="text-[10px] opacity-60">' + site.status + '</div></div>' +
         '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">PREDICTED DRY DATE</div><div class="text-sm font-bold mt-1">' + site.predictedDryDate + '</div><div class="text-[10px] opacity-60">' + site.refuelDate + '</div></div>';
 
-      document.getElementById('fseFuelLevelInput').value = site.currentDL;
-      document.getElementById('fseCpdInput').value = site.cpd;
+      const tankDetailEl = document.getElementById('fseTankStatusDetail');
+      if (tankDetailEl) {
+        const barColor = site.status === 'CRITICAL' ? 'bg-rose-500' : (site.status === 'WARNING' ? 'bg-amber-500' : 'bg-emerald-500');
+        tankDetailEl.innerHTML =
+          '<div class="flex justify-between"><span>Tank Capacity:</span><span class="font-bold">' + site.tankCap + ' L</span></div>' +
+          '<div class="flex justify-between"><span>Current Fuel Level:</span><span class="font-bold">' + site.currentDL + ' L (' + site.fillPct + '%)</span></div>' +
+          '<div class="w-full border_ui h-2.5 bg-black/20 overflow-hidden"><div class="h-full ' + barColor + '" style="width:' + site.fillPct + '%;"></div></div>' +
+          '<div class="flex justify-between"><span>Hourly Burn (CPH):</span><span class="font-bold">' + site.cph + ' L/hr</span></div>' +
+          '<div class="flex justify-between"><span>24h / 12h Burn:</span><span class="font-bold">' + site.cpd + ' L/d · ' + site.cpd12h + ' L/12h</span></div>' +
+          '<div class="flex justify-between"><span>Reorder Threshold (200L):</span><span class="font-bold text-amber-400">' + site.refuelDate + '</span></div>';
+      }
       document.getElementById('fseDeliverySupplier').value = site.supplier || 'In-House';
       const now = new Date();
       document.getElementById('fseDeliveryDate').value = now.toISOString().slice(0, 10);
@@ -4124,19 +4225,77 @@
         ).join('');
       }
 
-      // Site PPM Checklist
+      // Site PPM Cycle & Checklist with Picture Attachment
+      const lastDateEl = document.getElementById('fsePpmLastDate');
+      const cycleEl = document.getElementById('fsePpmCycleDays');
+      const nextDispEl = document.getElementById('fseNextPpmDisplay');
+      if (lastDateEl) lastDateEl.value = site.lastPpmDate || new Date().toISOString().slice(0, 10);
+      if (cycleEl) cycleEl.value = String(site.ppmCycleDays || 30);
+      if (nextDispEl) nextDispEl.innerText = 'NEXT PPM DUE DATE ON CALENDAR: ' + (site.nextPpmDate || 'N/A');
+
       const ticks = site.maintenanceTicks || [];
       const ppmEl = document.getElementById('fseSitePpmList');
       if (ticks.length === 0) {
         ppmEl.innerHTML = '<div class="opacity-60 text-[11px] py-2">Click "OPEN FULL CHECKLIST" to initialize PPM tasks for this site.</div>';
       } else {
         ppmEl.innerHTML = ticks.map((tk, idx) =>
-          '<div onclick="toggleSiteTickFromFse(' + idx + ')" class="border_ui p-2 flex items-center justify-between cursor-pointer hover:border-(--color-primary)">' +
-            '<span class="text-[11px] ' + (tk.done ? 'line-through opacity-50' : '') + '">' + (tk.done ? '[✓] ' : '[ ] ') + tk.task + '</span>' +
-            '<span class="text-[9px] opacity-60">' + (tk.category || 'PPM') + '</span>' +
+          '<div class="border_ui p-2 flex items-center justify-between gap-2">' +
+            '<div onclick="toggleSiteTickFromFse(' + idx + ')" class="cursor-pointer flex-1">' +
+              '<span class="text-[11px] font-bold ' + (tk.done ? 'line-through opacity-50' : '') + '">' + (tk.done ? '[✓] ' : '[ ] ') + tk.task + '</span>' +
+              '<span class="ml-2 text-[9px] opacity-50">' + (tk.category || 'PPM') + '</span>' +
+            '</div>' +
+            '<div class="flex items-center gap-1.5 shrink-0">' +
+              (tk.photoDataUrl ? '<a href="' + tk.photoDataUrl + '" target="_blank" title="View Attached Photo"><img src="' + tk.photoDataUrl + '" class="w-7 h-7 object-cover border_ui" alt="PPM"></a>' : '') +
+              '<label class="border_ui px-2 py-1 text-[9px] cursor-pointer btn-invert font-bold">' +
+                (tk.photoDataUrl ? 'CHANGE PIC' : '+ ATTACH PIC') +
+                '<input type="file" accept="image/*" class="hidden" onchange="attachPpmPhoto(' + idx + ', this)">' +
+              '</label>' +
+            '</div>' +
           '</div>'
         ).join('');
       }
+    }
+
+    function handleSavePpmCycle(e) {
+      e.preventDefault();
+      if (!fseSession) return;
+      const site = masterSites.find(s => s.siteId === fseSession.siteId);
+      if (!site) return;
+
+      site.lastPpmDate = document.getElementById('fsePpmLastDate').value;
+      site.ppmCycleDays = parseInt(document.getElementById('fsePpmCycleDays').value, 10) || 30;
+      synchronizeSite(site);
+      saveState();
+      syncPpmDatesToCalendar();
+      renderCalendar();
+      renderTasks();
+      renderFseRepairsModule(site);
+      if (sb) {
+        sb.rpc('fse_add_task', {
+          p_site_id: site.siteId,
+          p_title: 'Regular PPM Check (' + site.ppmCycleDays + 'd cycle)',
+          p_due_date: site.nextPpmDate,
+          p_category: 'PPM'
+        }).catch(() => {});
+      }
+      showToast('PPM Cycle synced! Next PPM due on ' + site.nextPpmDate + ' (added to Calendar)');
+    }
+
+    function attachPpmPhoto(idx, inputEl) {
+      if (!fseSession || !inputEl.files || !inputEl.files[0]) return;
+      const site = masterSites.find(s => s.siteId === fseSession.siteId);
+      if (!site || !site.maintenanceTicks || !site.maintenanceTicks[idx]) return;
+
+      const file = inputEl.files[0];
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        site.maintenanceTicks[idx].photoDataUrl = ev.target.result;
+        site.maintenanceTicks[idx].done = true;
+        saveState();
+        renderFseRepairsModule(site);
+        showToast('Attached photo proof for ' + site.maintenanceTicks[idx].task);
+      };
+      reader.readAsDataURL(file);
     }
 
     function handleFseFlagMachinery(e) {
@@ -4164,7 +4323,6 @@
       if (!site || !site.maintenanceTicks || !site.maintenanceTicks[idx]) return;
       site.maintenanceTicks[idx].done = !site.maintenanceTicks[idx].done;
       saveState();
-      sbInsertRepair(site.siteId, site.tenantId, name, issue, fseSession.fseName);
       renderFseRepairsModule(site);
     }
 
