@@ -645,18 +645,26 @@
             <h2 class="hero-outline-title text-4xl uppercase mt-1">ADMIN LOGIN WITH SITE DETAILS</h2>
             <p class="text-[11px] opacity-75 mt-1">
               Only authorized Administrators can <span class="font-bold text-amber-400">edit sites, add new sites, or reset audit records</span>. 
-              Authenticate with your Admin PIN and Site Details to manage Repairs &amp; PPM, Light &amp; Battery (BUB), Fleet &amp; Fuel, and Admin Tools.
+              Sign in with your Supabase Admin account and Site Details to manage Repairs &amp; PPM, Light &amp; Battery (BUB), Fleet &amp; Fuel, and Admin Tools.
             </p>
           </div>
 
           <form onsubmit="handleAdminPortalLogin(event)" class="space-y-3 text-xs">
-            <div>
-              <label class="block text-[10px] uppercase opacity-60 mb-1">1. ADMIN PASSCODE</label>
-              <input type="password" id="adminLoginPin" required placeholder="Enter Admin PIN" class="w-full border_ui bg-transparent px-3 py-2 outline-none focus:border-amber-400">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10px] uppercase opacity-60 mb-1">1. ADMIN EMAIL</label>
+                <input type="email" id="adminLoginEmail" required placeholder="admin@coloplus.com" class="w-full border_ui bg-transparent px-3 py-2 outline-none focus:border-amber-400">
+              </div>
+              <div>
+                <label class="block text-[10px] uppercase opacity-60 mb-1">2. ADMIN PASSWORD</label>
+                <input type="password" id="adminLoginPassword" required placeholder="Enter Supabase Password" class="w-full border_ui bg-transparent px-3 py-2 outline-none focus:border-amber-400">
+              </div>
             </div>
 
+            <div id="adminLoginError" class="hidden border_ui border-rose-500/60 bg-rose-500/10 p-2.5 text-rose-400 text-[11px] font-bold"></div>
+
             <div>
-              <label class="block text-[10px] uppercase opacity-60 mb-1">2. SELECT SITE ID (14 ACTIVE SITES)</label>
+              <label class="block text-[10px] uppercase opacity-60 mb-1">3. SELECT SITE ID (14 ACTIVE SITES)</label>
               <select id="adminLoginSiteSelect" onchange="prefillAdminSiteDetails()" required class="w-full border_ui bg-(--color-card-bg) px-3 py-2 outline-none cursor-pointer">
                 <!-- Populated dynamically -->
               </select>
@@ -667,7 +675,7 @@
             </div>
 
             <div>
-              <label class="block text-[10px] uppercase opacity-60 mb-1">3. ADMIN / SUPERVISOR NAME</label>
+              <label class="block text-[10px] uppercase opacity-60 mb-1">4. ADMIN / SUPERVISOR NAME</label>
               <input type="text" id="adminLoginName" required placeholder="e.g. NOC Lead / Regional Supervisor" value="NOC Administrator" class="w-full border_ui bg-transparent px-3 py-2 outline-none focus:border-amber-400">
             </div>
 
@@ -3341,24 +3349,54 @@
       }
     }
 
-    async function sbInsertDelivery(siteId, qty, dateIso, timeStr, supplier, loggedBy) {
+    async function sbInsertDelivery(siteId, tenantId, qty, dateIso, timeStr, supplier, loggedBy) {
       if (!sb) return;
       try {
-        await sb.from('diesel_deliveries').insert({
-          site_id: siteId,
-          qty_litres: qty,
-          received_date: dateIso,
-          received_time: timeStr,
-          supplier: supplier,
-          logged_by: loggedBy
+        await sb.rpc('fse_log_delivery', {
+          p_site_id: siteId,
+          p_tenant_id: tenantId || '',
+          p_qty: qty,
+          p_date: dateIso,
+          p_time: timeStr,
+          p_supplier: supplier,
+          p_logged_by: loggedBy
         });
-      } catch (e) { console.warn('Supabase delivery insert:', e); }
+      } catch (e) { console.warn('Supabase delivery RPC:', e); }
+    }
+
+    async function sbUpdateFuelLevel(siteId, tenantId, currentDL, cpd) {
+      if (!sb) return;
+      try {
+        await sb.rpc('fse_update_fuel_level', {
+          p_site_id: siteId,
+          p_tenant_id: tenantId || '',
+          p_current_dl: currentDL,
+          p_cpd: cpd
+        });
+      } catch (e) { console.warn('Supabase fuel RPC:', e); }
+    }
+
+    async function sbUpdateBubLight(site) {
+      if (!sb) return;
+      try {
+        await sb.rpc('fse_update_bub_light', {
+          p_site_id: site.siteId,
+          p_tenant_id: site.tenantId || '',
+          p_batt_hrs: site.batteryAutonomyHours,
+          p_batt_soc: site.batterySoc,
+          p_batt_volt: site.batteryVoltage || '52.8 V',
+          p_batt_status: site.batteryStatus || 'HEALTHY',
+          p_grid_hrs: site.gridHoursPerDay,
+          p_grid_status: site.gridStatus || 'PHCN ONLINE',
+          p_token_status: site.nepaTokenStatus || 'LOADED'
+        });
+      } catch (e) { console.warn('Supabase BUB/light RPC:', e); }
     }
 
     async function sbUpsertSite(site) {
       if (!sb) return;
       try {
-        await sb.from('sites').upsert({
+        const { error } = await sb.from('sites').upsert({
           site_id: site.siteId,
           tenant_id: site.tenantId,
           state: site.state,
@@ -3381,37 +3419,33 @@
           supplier: site.supplier,
           is_active: true
         }, { onConflict: 'site_id' });
+        if (error) console.warn('Supabase site upsert error:', error.message);
       } catch (e) { console.warn('Supabase site upsert:', e); }
     }
 
     async function sbInsertTask(task) {
       if (!sb) return;
       try {
-        await sb.from('calendar_tasks').insert({
-          site_id: task.site === 'ALL SITES' ? null : task.site,
-          title: task.title,
-          due_date: task.date,
-          category: task.category,
-          done: task.done
+        await sb.rpc('fse_add_task', {
+          p_site_id: task.site || 'ALL SITES',
+          p_title: task.title,
+          p_due_date: task.date,
+          p_category: task.category
         });
-      } catch (e) { console.warn('Supabase task insert:', e); }
+      } catch (e) { console.warn('Supabase task RPC:', e); }
     }
 
-    async function sbInsertRepair(siteId, name, issue, loggedBy) {
+    async function sbInsertRepair(siteId, tenantId, name, issue, loggedBy) {
       if (!sb) return;
       try {
-        await sb.from('machinery_repairs').insert({
-          ticket_id: 'RCA-' + Date.now(),
-          site_id: siteId,
-          machinery_name: name,
-          issue: issue,
-          is_constant_repair: true,
-          repeat_count: 1,
-          priority: 'High',
-          status: 'Open',
-          technician: loggedBy
+        await sb.rpc('fse_log_repair', {
+          p_site_id: siteId,
+          p_tenant_id: tenantId || '',
+          p_machinery: name,
+          p_issue: issue,
+          p_logged_by: loggedBy
         });
-      } catch (e) { console.warn('Supabase repair insert:', e); }
+      } catch (e) { console.warn('Supabase repair RPC:', e); }
     }
 
     // ==================== HOURLY DIESEL SCANNER ====================
@@ -3926,7 +3960,7 @@
       site.cpd = parseFloat(document.getElementById('fseCpdInput').value) || site.cpd;
       synchronizeSite(site);
       saveState();
-      sbInsertDelivery(site.siteId, qty, dateRaw, timeRaw, supplier, fseSession.fseName);
+      sbUpdateFuelLevel(site.siteId, site.tenantId, site.currentDL, site.cpd);
       updateKpis();
       renderSites();
       renderFseFuelModule(site);
@@ -3970,7 +4004,7 @@
 
       synchronizeSite(site);
       saveState();
-      sbInsertDelivery(site.siteId, qty, dateRaw, timeRaw, supplier, fseSession.fseName);
+      sbUpdateFuelLevel(site.siteId, site.tenantId, site.currentDL, site.cpd);
       updateKpis();
       renderSites();
       renderFseFuelModule(site);
@@ -4011,6 +4045,7 @@
       site.batteryStatus = document.getElementById('fseBubHealthInput').value;
 
       saveState();
+      sbUpdateBubLight(site);
       renderPowerMatrix();
       renderFseBubModule(site);
       showToast('Updated Battery Life & BUB telemetry for ' + site.siteId);
@@ -4027,6 +4062,7 @@
       site.nepaTokenStatus = document.getElementById('fseTokenStatusInput').value;
 
       saveState();
+      sbUpdateBubLight(site);
       renderPowerMatrix();
       renderFseBubModule(site);
       showToast('Updated site light hours (' + site.gridHoursPerDay + ' hrs/day) for ' + site.siteId);
@@ -4117,7 +4153,7 @@
       document.getElementById('fseFlagMachineName').value = '';
       document.getElementById('fseFlagMachineIssue').value = '';
       saveState();
-      sbInsertRepair(site.siteId, name, issue, fseSession.fseName);
+      sbInsertRepair(site.siteId, site.tenantId, name, issue, fseSession.fseName);
       renderFseRepairsModule(site);
       showToast('Flagged ' + name + ' as constant-repair machinery');
     }
@@ -4128,7 +4164,7 @@
       if (!site || !site.maintenanceTicks || !site.maintenanceTicks[idx]) return;
       site.maintenanceTicks[idx].done = !site.maintenanceTicks[idx].done;
       saveState();
-      sbInsertRepair(site.siteId, name, issue, fseSession.fseName);
+      sbInsertRepair(site.siteId, site.tenantId, name, issue, fseSession.fseName);
       renderFseRepairsModule(site);
     }
 
@@ -5012,27 +5048,51 @@
         '<div class="flex justify-between"><span class="opacity-60">CURRENT FUEL / BUB:</span><span class="font-bold">' + site.currentDL + ' L · ' + (site.batterySoc || 85) + '% BUB</span></div>';
     }
 
-    function handleAdminPortalLogin(e) {
+    async function handleAdminPortalLogin(e) {
       e.preventDefault();
-      const pin = document.getElementById('adminLoginPin').value.trim();
-      if (pin !== '1234') {
-        alert('Incorrect Admin Passcode. Only authorized Admins can access site editing.');
+      const email = document.getElementById('adminLoginEmail').value.trim();
+      const password = document.getElementById('adminLoginPassword').value;
+      const errEl = document.getElementById('adminLoginError');
+      if (errEl) errEl.classList.add('hidden');
+
+      if (!sb) {
+        if (errEl) { errEl.innerText = 'Supabase client not initialized.'; errEl.classList.remove('hidden'); }
         return;
       }
+
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
+      if (error || !data || !data.user) {
+        if (errEl) {
+          errEl.innerText = 'Admin login failed: ' + (error ? error.message : 'Invalid credentials');
+          errEl.classList.remove('hidden');
+        }
+        return;
+      }
+
+      const role = data.user.app_metadata && data.user.app_metadata.role;
+      if (role !== 'admin') {
+        await sb.auth.signOut();
+        if (errEl) {
+          errEl.innerText = 'Access Denied: Account does not have app_metadata.role = "admin".';
+          errEl.classList.remove('hidden');
+        }
+        return;
+      }
+
       const siteId = document.getElementById('adminLoginSiteSelect').value;
-      const adminName = document.getElementById('adminLoginName').value.trim() || 'NOC Administrator';
+      const adminName = document.getElementById('adminLoginName').value.trim() || email;
 
       isAdminUnlocked = true;
       localStorage.setItem('coloplus_admin_unlocked', 'true');
-      adminSession = { siteId, adminName, loginAt: new Date().toISOString() };
+      adminSession = { siteId, adminName, email, loginAt: new Date().toISOString() };
       localStorage.setItem('coloplus_admin_session', JSON.stringify(adminSession));
 
-      document.getElementById('adminLoginPin').value = '';
+      document.getElementById('adminLoginPassword').value = '';
       updateAdminUi();
       renderSites();
       renderRepairs();
       openAdminModule(adminActiveModule || 'repairs');
-      showToast('Admin Portal Unlocked for ' + siteId);
+      showToast('Supabase Admin Authenticated for ' + siteId);
     }
 
     function switchAdminSite(siteId) {
@@ -5044,7 +5104,8 @@
       showToast('Admin switched to site ' + siteId);
     }
 
-    function logoutAdminPortal() {
+    async function logoutAdminPortal() {
+      if (sb) await sb.auth.signOut();
       adminSession = null;
       localStorage.removeItem('coloplus_admin_session');
       lockAdminAccess();
@@ -5236,7 +5297,7 @@
       site.currentDL = parseFloat(document.getElementById('admFuelLevel').value) || 0;
       synchronizeSite(site);
       saveState();
-      sbInsertDelivery(site.siteId, qty, dateRaw, timeRaw, supplier, fseSession.fseName);
+      sbUpsertSite(site);
       updateKpis();
       renderSites();
       renderAdminModuleContent(site);
@@ -5267,7 +5328,7 @@
 
       synchronizeSite(site);
       saveState();
-      sbInsertDelivery(site.siteId, qty, dateRaw, timeRaw, supplier, fseSession.fseName);
+      sbInsertDelivery(site.siteId, site.tenantId, qty, dateRaw, timeRaw, site.supplier || 'Admin', adminSession.adminName);
       updateKpis();
       renderSites();
       renderAdminModuleContent(site);
