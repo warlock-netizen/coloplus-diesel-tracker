@@ -4996,78 +4996,16 @@
       if (sub) sub.innerText = site.state + ' · ' + site.address + ' · Admin: ' + adminSession.adminName;
       const quick = document.getElementById('adminQuickSiteSwitch');
       if (quick) quick.value = site.siteId;
+      const navBadge = document.getElementById('adminNavStatusBadge');
+      if (navBadge) navBadge.innerText = site.siteId;
       const pathEl = document.getElementById('headerPath');
       if (PORTAL_MODE === 'admin' && pathEl) {
         pathEl.innerText = adminActiveModule === 'issues' ? '// ADMIN PORTAL — OVERVIEW' : ('// ADMIN PORTAL — ' + site.siteId);
       }
       const siteHdrBar = document.getElementById('adminSiteHeaderBar');
-      const snapBar = document.getElementById('adminSiteSnapshotStrip');
       const isOverview = adminActiveModule === 'issues';
       if (siteHdrBar) siteHdrBar.classList.toggle('hidden', isOverview);
-      if (snapBar) snapBar.classList.toggle('hidden', isOverview || adminActiveModule === 'calendar');
 
-      // Render Selected-Site Snapshot Strip (Compact Animated Tank + Gen/Usage, Issues/Tickets, Last/Next PPM & Prev PPM Status)
-      const snapEl = document.getElementById('adminSiteSnapshotStrip');
-      if (snapEl) {
-        const siteTickets = masterRepairs.filter(r => r.siteId === site.siteId);
-        const openTickets = siteTickets.filter(r => (r.status || '').toUpperCase() !== 'RESOLVED').length;
-        const issuesList = site.majorIssues || [];
-        const latestPpm = (site.submittedPpms && site.submittedPpms.length > 0) ? site.submittedPpms[0] : null;
-        let prevPpmStatusLabel = 'NOT SUBMITTED';
-        let prevPpmColor = 'text-rose-400';
-        let prevPpmSub = 'No FSE submission on file';
-        if (latestPpm) {
-          const st = (latestPpm.reviewStatus || 'PENDING').toUpperCase();
-          if (st === 'ACCEPTED') {
-            prevPpmStatusLabel = 'SUBMITTED · ACCEPTED';
-            prevPpmColor = 'text-emerald-400';
-          } else if (st === 'OVERRIDDEN') {
-            prevPpmStatusLabel = 'SUBMITTED · OVERRIDDEN';
-            prevPpmColor = 'text-amber-400';
-          } else {
-            prevPpmStatusLabel = 'SUBMITTED · PENDING';
-            prevPpmColor = 'text-amber-400';
-          }
-          prevPpmSub = latestPpm.submittedAt + ' (' + latestPpm.completedCount + '/' + latestPpm.totalCount + ')';
-        }
-
-        snapEl.innerHTML =
-          '<div class="lg:col-span-4 border_ui p-2.5 bg-(--color-card-bg)/50 flex items-center gap-3">' +
-            '<div class="shrink-0">' +
-              buildTankSvg(site, 'snap', 'w-16 h-20') +
-            '</div>' +
-            '<div class="min-w-0 flex-1 space-y-0.5">' +
-              '<div class="text-[9px] uppercase opacity-60">LIVE TANK · GEN &amp; DAILY USAGE</div>' +
-              '<div class="font-bold text-sm text-amber-400">' + normalizeGenKva(genKva) + ' kVA · ' + site.cpd + ' L/day</div>' +
-              '<div class="text-[11px] font-bold">' + site.currentDL + ' L <span class="opacity-60 font-normal">/ ' + site.tankCap + ' L</span></div>' +
-              '<div class="text-[10px] opacity-65">' + (site.autonomyBreakdown || (site.daysRemaining + 'd')) + ' · ' + site.cph + ' L/hr</div>' +
-            '</div>' +
-          '</div>' +
-          '<div class="lg:col-span-8 grid grid-cols-2 sm:grid-cols-4 gap-2">' +
-            '<div class="border_ui p-2.5 bg-(--color-card-bg)/50 flex flex-col justify-between">' +
-              '<div class="text-[9px] uppercase opacity-60">ISSUES &amp; TICKETS</div>' +
-              '<div class="font-bold text-sm ' + (openTickets > 0 ? 'text-rose-400' : 'text-emerald-400') + ' mt-0.5">' + openTickets + ' OPEN / ' + siteTickets.length + ' TOTAL</div>' +
-              '<div class="text-[10px] opacity-65 truncate">' + (issuesList.length > 0 ? issuesList[0] : 'No major issues flagged') + '</div>' +
-            '</div>' +
-            '<div class="border_ui p-2.5 bg-(--color-card-bg)/50 flex flex-col justify-between">' +
-              '<div class="text-[9px] uppercase opacity-60">LAST PPM DATE</div>' +
-              '<div class="font-bold text-sm mt-0.5">' + (site.lastPpmDate || 'NOT RECORDED') + '</div>' +
-              '<div class="text-[10px] opacity-65">Cycle: ' + (site.ppmCycleDays || 30) + ' days</div>' +
-            '</div>' +
-            '<div class="border_ui p-2.5 bg-(--color-card-bg)/50 flex flex-col justify-between">' +
-              '<div class="text-[9px] uppercase opacity-60">NEXT SCHEDULED PPM</div>' +
-              '<div class="font-bold text-sm text-(--color-accent) mt-0.5">' + (site.nextPpmDate || 'NOT SCHEDULED') + '</div>' +
-              '<div class="text-[10px] opacity-65">Synced with Calendar</div>' +
-            '</div>' +
-            '<div class="border_ui p-2.5 bg-(--color-card-bg)/50 flex flex-col justify-between">' +
-              '<div class="text-[9px] uppercase opacity-60">PREVIOUS PPM STATUS</div>' +
-              '<div class="font-bold text-xs mt-1 ' + prevPpmColor + '">' + prevPpmStatusLabel + '</div>' +
-              '<div class="text-[10px] opacity-65 truncate">' + prevPpmSub + '</div>' +
-            '</div>' +
-          '</div>';
-      }
-
-      renderAdminTicketAlerts();
       renderAdminModuleContent(site);
     }
 
@@ -5303,6 +5241,16 @@
           '</div>';
       } else if (adminActiveModule === 'repairs') {
         const siteTickets = masterRepairs.filter(r => r.siteId === site.siteId);
+        const latestPpm = (site.submittedPpms && site.submittedPpms.length > 0) ? site.submittedPpms[0] : null;
+        let prevPpmStatusLabel = 'NOT SUBMITTED';
+        let prevPpmColor = 'text-rose-400';
+        let prevPpmSub = 'No FSE submission on file';
+        if (latestPpm) {
+          const st = (latestPpm.reviewStatus || 'PENDING').toUpperCase();
+          prevPpmStatusLabel = st === 'ACCEPTED' ? 'SUBMITTED · ACCEPTED' : (st === 'OVERRIDDEN' ? 'SUBMITTED · OVERRIDDEN' : 'SUBMITTED · PENDING');
+          prevPpmColor = st === 'ACCEPTED' ? 'text-emerald-400' : 'text-amber-400';
+          prevPpmSub = latestPpm.submittedAt + ' (' + latestPpm.completedCount + '/' + latestPpm.totalCount + ')';
+        }
         const constantAssets = [...(site.constantRepairAssets || [])];
         siteTickets.forEach(t => {
           const ex = constantAssets.find(a => a.name.toLowerCase() === (t.category || 'Generator').toLowerCase());
@@ -5317,6 +5265,11 @@
           );
         }
         container.innerHTML =
+          '<div class="grid grid-cols-1 sm:grid-cols-3 gap-2">' +
+            '<div class="border_ui p-3 bg-(--color-card-bg)/50"><div class="text-[9px] uppercase opacity-60">LAST PPM DATE</div><div class="font-bold text-sm mt-0.5">' + (site.lastPpmDate || 'NOT RECORDED') + '</div><div class="text-[10px] opacity-65">Cycle: ' + (site.ppmCycleDays || 30) + ' days</div></div>' +
+            '<div class="border_ui p-3 bg-(--color-card-bg)/50"><div class="text-[9px] uppercase opacity-60">NEXT SCHEDULED PPM</div><div class="font-bold text-sm text-(--color-accent) mt-0.5">' + (site.nextPpmDate || 'NOT SCHEDULED') + '</div><div class="text-[10px] opacity-65">Unique Zero-Clash Slot</div></div>' +
+            '<div class="border_ui p-3 bg-(--color-card-bg)/50"><div class="text-[9px] uppercase opacity-60">PREVIOUS PPM STATUS</div><div class="font-bold text-xs mt-1 ' + prevPpmColor + '">' + prevPpmStatusLabel + '</div><div class="text-[10px] opacity-65 truncate">' + prevPpmSub + '</div></div>' +
+          '</div>' +
           '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
             '<div class="flex justify-between items-center border-b border_ui pb-2">' +
               '<span class="font-bold uppercase text-amber-400">// MACHINERY REQUIRING CONSTANT REPAIR (' + site.siteId + ')</span>' +
@@ -5500,13 +5453,21 @@
           '</div>' +
           '<div class="grid grid-cols-1 lg:grid-cols-2 gap-2.5">' +
             '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
-              '<div class="font-bold uppercase border-b border_ui pb-2">// EDIT FUEL LEVEL &amp; DAILY USAGE — ' + site.siteId + ' ONLY</div>' +
+              '<div class="font-bold uppercase border-b border_ui pb-2">// EDIT FUEL, GEN &amp; TANK — ' + site.siteId + '</div>' +
               '<form onsubmit="handleAdminUpdateFuel(event)" class="space-y-2.5">' +
                 '<div class="grid grid-cols-2 gap-2">' +
-                  '<div><label class="block text-[10px] opacity-60 mb-1">CURRENT FUEL LEVEL (LITRES)</label><input type="number" step="0.1" min="0" max="' + site.tankCap + '" id="admFuelLevel" value="' + site.currentDL + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 font-bold outline-none"></div>' +
+                  '<div><label class="block text-[10px] opacity-60 mb-1">CURRENT FUEL LEVEL (LITRES)</label><input type="number" step="0.1" min="0" id="admFuelLevel" value="' + site.currentDL + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 font-bold outline-none"></div>' +
                   '<div><label class="block text-[10px] opacity-60 mb-1">DAILY USAGE (LITRES / DAY)</label><input type="number" step="0.5" min="0.5" id="admFuelCpd" value="' + site.cpd + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 font-bold outline-none"></div>' +
                 '</div>' +
-                '<button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">SAVE FUEL LEVEL &amp; DAILY USAGE</button>' +
+                '<div class="grid grid-cols-3 gap-2">' +
+                  '<div><label class="block text-[10px] opacity-60 mb-1">GEN TYPE (kVA)</label><select id="admFuelGenKva" class="w-full border_ui bg-(--color-card-bg) px-2 py-1.5 outline-none">' +
+                    '<option value="15" ' + (normalizeGenKva(genKva) === 15 ? 'selected' : '') + '>15 kVA</option>' +
+                    '<option value="20" ' + (normalizeGenKva(genKva) === 20 ? 'selected' : '') + '>20 kVA</option>' +
+                  '</select></div>' +
+                  '<div><label class="block text-[10px] opacity-60 mb-1">TANK CAP (L)</label><input type="number" step="50" min="100" id="admFuelTankCap" value="' + site.tankCap + '" required class="w-full border_ui bg-transparent px-2 py-1.5 outline-none"></div>' +
+                  '<div><label class="block text-[10px] opacity-60 mb-1">SUPPLIER</label><input type="text" id="admFuelSupplier" value="' + (site.supplier || '') + '" placeholder="Vendor" class="w-full border_ui bg-transparent px-2 py-1.5 outline-none"></div>' +
+                '</div>' +
+                '<button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">SAVE FUEL, GEN &amp; TANK</button>' +
               '</form>' +
             '</div>' +
             '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
@@ -5514,7 +5475,7 @@
               '<form onsubmit="handleAdminLogDelivery(event)" class="space-y-2">' +
                 '<div class="grid grid-cols-3 gap-2">' +
                   '<input type="number" id="admDelQty" required placeholder="Qty (L)" class="border_ui bg-transparent px-2 py-1.5 outline-none">' +
-                  '<input type="date" id="admDelDate" value="' + now.toISOString().slice(0, 10) + '" required class="border_ui bg-(--color-card-bg) px-2 py-1.5 outline-none">' +
+                  '<input type="date" id="admDelDate" value="' + getLocalTodayIso() + '" required class="border_ui bg-(--color-card-bg) px-2 py-1.5 outline-none">' +
                   '<input type="time" id="admDelTime" value="' + now.toTimeString().slice(0, 5) + '" required class="border_ui bg-(--color-card-bg) px-2 py-1.5 outline-none">' +
                 '</div>' +
                 '<button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">+ RECORD DIESEL DELIVERY</button>' +
@@ -5655,18 +5616,18 @@
                     '<button type="button" onclick="sendAdminPpmReminders(\'' + site.siteId + '\')" class="border_ui px-2.5 py-1 text-[10px] font-bold nav_active btn-invert cursor-pointer">PPM REMINDER</button>' +
                   '</div>' +
                 '</div>' +
-                '<div class="border_ui p-2.5 bg-black/10 dark:bg-white/5 text-[11px] space-y-1">' +
-                  '<div class="flex justify-between"><span class="opacity-60">SITE ID:</span><span class="font-bold text-(--color-accent)">' + site.siteId + '</span></div>' +
-                  '<div class="flex justify-between"><span class="opacity-60">STATE / LOCATION:</span><span class="font-bold">' + site.state + '</span></div>' +
-                  '<div class="flex justify-between"><span class="opacity-60">ADDRESS:</span><span class="truncate max-w-[240px]" title="' + (site.address || '') + '">' + (site.address || 'N/A') + '</span></div>' +
-                '</div>' +
                 '<form onsubmit="handleAdminSaveFseProfile(event)" class="space-y-2.5">' +
+                  '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">' +
+                    '<div><label class="block text-[10px] opacity-60 mb-1">TENANT ID</label><input type="text" id="admProfileTenantId" value="' + (site.tenantId || '') + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
+                    '<div><label class="block text-[10px] opacity-60 mb-1">STATE / REGION</label><input type="text" id="admProfileState" value="' + (site.state || '') + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
+                  '</div>' +
+                  '<div><label class="block text-[10px] opacity-60 mb-1">SITE ADDRESS</label><input type="text" id="admProfileAddress" value="' + (site.address || '') + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
                   '<div><label class="block text-[10px] opacity-60 mb-1">FSE NAME</label><input type="text" id="admProfileFseName" value="' + (site.fse || '') + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
                   '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">' +
                     '<div><label class="block text-[10px] opacity-60 mb-1">FSE PHONE NUMBER</label><input type="text" id="admProfileFsePhone" value="' + (site.fsePhone || '') + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
                     '<div><label class="block text-[10px] opacity-60 mb-1">FSE EMAIL</label><input type="email" id="admProfileFseEmail" value="' + (site.fseEmail || '') + '" placeholder="fse@coloplus.com" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
                   '</div>' +
-                  '<button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">SAVE FSE PROFILE</button>' +
+                  '<button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">SAVE SITE &amp; FSE PROFILE</button>' +
                 '</form>' +
               '</div>' +
 
@@ -5692,25 +5653,22 @@
               '</div>' +
             '</div>' +
 
-            '<!-- Saved Finance Team Email Settings & Live Test -->' +
+            '<!-- Saved Finance Team Email Settings -->' +
             '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
               '<div class="flex flex-wrap items-center justify-between gap-2 border-b border_ui pb-2">' +
                 '<div>' +
                   '<div class="font-bold uppercase text-amber-400">// FINANCE TEAM EMAIL CHANNEL (SAVED AUTOMATICALLY)</div>' +
-                  '<div class="text-[10px] opacity-65">Store Finance Team email once so it auto-fills &amp; receives automatic reminders and test emails.</div>' +
+                  '<div class="text-[10px] opacity-65">Store Finance Team email once so it auto-fills &amp; receives automatic reminders.</div>' +
                 '</div>' +
                 '<span class="border_ui px-2 py-0.5 text-[10px] font-bold ' + (emailChannelSettings.financeEmail ? 'text-emerald-400 border-emerald-500/40' : 'text-amber-400 border-amber-500/40') + '">' + (emailChannelSettings.financeEmail ? 'SAVED: ' + emailChannelSettings.financeEmail : 'NOT SAVED YET') + '</span>' +
               '</div>' +
               '<div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-end">' +
-                '<div class="sm:col-span-6">' +
+                '<div class="sm:col-span-9">' +
                   '<label class="block text-[10px] opacity-60 mb-1">FINANCE TEAM EMAIL ADDRESS</label>' +
                   '<input type="email" id="admFinanceEmailInput" value="' + (emailChannelSettings.financeEmail || '') + '" placeholder="finance@coloplus.com" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none focus:border-(--color-primary)">' +
                 '</div>' +
                 '<div class="sm:col-span-3">' +
                   '<button type="button" onclick="saveAdminFinanceEmail()" class="w-full border_ui py-1.5 font-bold nav_active btn-invert cursor-pointer">SAVE EMAIL</button>' +
-                '</div>' +
-                '<div class="sm:col-span-3">' +
-                  '<button type="button" onclick="sendTestFinanceEmail()" class="w-full border_ui border-amber-400 py-1.5 font-bold text-amber-400 hover:bg-amber-500 hover:text-black cursor-pointer">SEND TEST EMAIL</button>' +
                 '</div>' +
               '</div>' +
             '</div>' +
@@ -5863,11 +5821,15 @@
       const site = masterSites.find(s => s.siteId === adminSession.siteId);
       if (!site) return;
 
+      if (document.getElementById('admProfileTenantId')) site.tenantId = document.getElementById('admProfileTenantId').value.trim() || site.tenantId;
+      if (document.getElementById('admProfileState')) site.state = document.getElementById('admProfileState').value.trim() || site.state;
+      if (document.getElementById('admProfileAddress')) site.address = document.getElementById('admProfileAddress').value.trim() || site.address;
       site.fse = document.getElementById('admProfileFseName').value.trim() || site.fse;
       site.fsePhone = document.getElementById('admProfileFsePhone').value.trim();
       site.fseEmail = document.getElementById('admProfileFseEmail').value.trim();
       saveState();
       sbUpsertSite(site);
+      populateAdminLoginDropdown();
       renderSites();
       updateAdminPortalUiState();
       if (fseSession && fseSession.siteId === site.siteId) {
@@ -5877,7 +5839,7 @@
         localStorage.setItem('coloplus_fse_session', JSON.stringify(fseSession));
         updateFseUiState();
       }
-      showToast('Saved FSE profile for ' + site.siteId);
+      showToast('Saved site & FSE profile for ' + site.siteId);
     }
 
     function handleAdminSaveSecurityProfile(e) {
@@ -6286,6 +6248,15 @@
       if (!isAdminUnlocked || !adminSession) return;
       const site = masterSites.find(s => s.siteId === adminSession.siteId);
       if (!site) return;
+      const tankCapInput = document.getElementById('admFuelTankCap');
+      if (tankCapInput) site.tankCap = Math.max(100, parseFloat(tankCapInput.value) || site.tankCap);
+      const genKvaInput = document.getElementById('admFuelGenKva');
+      if (genKvaInput) {
+        site.genSize = normalizeGenKva(genKvaInput.value);
+        site.loadKw = site.genSize;
+      }
+      const supInput = document.getElementById('admFuelSupplier');
+      if (supInput) site.supplier = supInput.value.trim();
       const newVal = Math.max(0, Math.min(site.tankCap, parseFloat(document.getElementById('admFuelLevel').value) || 0));
       const cpdInput = document.getElementById('admFuelCpd');
       if (cpdInput) site.cpd = Math.max(0.5, parseFloat(cpdInput.value) || site.cpd);
@@ -6300,7 +6271,7 @@
       renderSites();
       updateAdminPortalUiState();
       if (fseSession && fseSession.siteId === site.siteId) renderFseFuelModule(site);
-      showToast('Updated ' + site.siteId + ': ' + newVal + 'L · ' + site.cpd + ' L/d (' + site.autonomyBreakdown + ')');
+      showToast('Updated ' + site.siteId + ': ' + newVal + 'L · ' + site.genSize + ' kVA · ' + site.cpd + ' L/d');
     }
 
     function handleAdminLogDelivery(e) {

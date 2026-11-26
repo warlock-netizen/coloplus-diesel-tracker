@@ -183,19 +183,13 @@
           </div>
           <div class="flex items-center gap-2 flex-wrap">
             <select id="adminQuickSiteSwitch" onchange="switchAdminSite(this.value)" class="border_ui bg-(--color-card-bg) px-2.5 py-1.5 text-[11px] outline-none cursor-pointer"></select>
-            <button onclick="openEditSiteModal(adminSession.siteId)" class="border_ui border-amber-400 bg-amber-500 text-black px-3 py-1.5 font-bold hover:bg-amber-400 cursor-pointer text-[11px]">
-              EDIT SITE
-            </button>
             <button onclick="logoutAdminPortal()" class="border_ui border-rose-500/50 px-3 py-1.5 hover:bg-rose-600 hover:text-white cursor-pointer font-bold text-[11px]">
               LOGOUT
             </button>
           </div>
         </div>
 
-        <!-- Selected Site Snapshot Strip (Hidden on standalone 00. OVERVIEW page) -->
-        <div id="adminSiteSnapshotStrip" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-2 text-xs"></div>
-
-        <!-- Active Admin Module Container (Issues / Repairs & PPM / BUB / Fuel / Telemetry / FSE & Email) -->
+        <!-- Active Admin Module Container (Overview / Repairs & PPM / BUB / Fuel / Telemetry / FSE & Email) -->
         <div id="adminModuleContainer" class="space-y-2.5 text-xs"></div>
 
         <!-- Admin Module 06: Calendar & Team Email Channel -->
