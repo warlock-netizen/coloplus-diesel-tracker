@@ -66,9 +66,10 @@
       transition: background-color 0.2s ease, color 0.2s ease;
     }
 
-    /* Guarantee solid, non-transparent backgrounds on all modals, drawers, cards & selects */
+    /* Guarantee solid, non-transparent backgrounds on all modals, drawers, cards, mobile nav & selects */
     .bg-\(--color-secondary\) { background-color: var(--color-secondary) !important; }
     .bg-\(--color-card-bg\),
+    .bg-\(--color-card-bg\)\/95,
     .bg-\(--color-card-bg\)\/60,
     .bg-\(--color-card-bg\)\/50,
     .bg-\(--color-card-bg\)\/40,
@@ -78,6 +79,10 @@
     .text-\(--color-primary\) { color: var(--color-primary) !important; }
     .text-\(--color-secondary\) { color: var(--color-secondary) !important; }
     .text-\(--color-accent\) { color: var(--color-accent) !important; }
+    .hover\:bg-\(--color-primary\):hover { background-color: var(--color-primary) !important; }
+    .hover\:text-\(--color-secondary\):hover { color: var(--color-secondary) !important; }
+    .hover\:border-\(--color-primary\):hover { border-color: var(--color-primary) !important; }
+    .focus\:border-\(--color-primary\):focus { border-color: var(--color-primary) !important; }
 
     /* High-contrast daylight overrides so Light Mode is crisp and readable */
     html[data-theme="light"] .text-amber-300,
@@ -482,17 +487,17 @@
             <button id="fseTabBtnFuel" onclick="openFseModule('fuel')" class="border_ui p-3 text-left cursor-pointer btn-invert nav_active">
               <div class="text-[10px] opacity-70 uppercase">MODULE 01</div>
               <div class="font-bold text-sm">FLEET &amp; FUEL</div>
-              <div class="text-[10px] opacity-75">Input Fuel Level, Time &amp; Previous Date</div>
+              <div class="text-[10px] opacity-75">Animated Tank, Gen kVA, Daily Usage &amp; Delivery</div>
             </button>
             <button id="fseTabBtnBub" onclick="openFseModule('bub')" class="border_ui p-3 text-left cursor-pointer btn-invert opacity-75">
               <div class="text-[10px] opacity-70 uppercase">MODULE 02</div>
               <div class="font-bold text-sm">LIGHT &amp; BATTERY (BUB)</div>
-              <div class="text-[10px] opacity-75">Battery Life &amp; Hours of Light on Site</div>
+              <div class="text-[10px] opacity-75">View-Only Telemetry (Admin Edit Only)</div>
             </button>
             <button id="fseTabBtnRepairs" onclick="openFseModule('repairs')" class="border_ui p-3 text-left cursor-pointer btn-invert opacity-75">
               <div class="text-[10px] opacity-70 uppercase">MODULE 03</div>
               <div class="font-bold text-sm">REPAIRS &amp; PPM</div>
-              <div class="text-[10px] opacity-75">Machinery Requiring Constant Repair</div>
+              <div class="text-[10px] opacity-75">Tickets, 12-Item PPM &amp; Media Proof</div>
             </button>
           </div>
 
@@ -561,79 +566,18 @@
             </div>
           </div>
 
-          <!-- FSE MODULE 2: LIGHT & BATTERY (BUB) -->
+          <!-- FSE MODULE 2: LIGHT & BATTERY (BUB) — READ-ONLY (ADMIN EDIT ONLY) -->
           <div id="fseModuleBub" class="hidden space-y-2.5">
             <div id="fseBubKpiRow" class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
               <!-- Populated dynamically -->
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-2.5 text-xs">
-              <!-- Battery Life (BUB) -->
-              <div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">
-                <div class="font-bold uppercase tracking-wider border-b border_ui pb-2">// BATTERY LIFE &amp; BUB TELEMETRY</div>
-                <form onsubmit="handleFseSaveBub(event)" class="space-y-2.5">
-                  <div class="grid grid-cols-2 gap-2">
-                    <div>
-                      <label class="block text-[10px] uppercase opacity-60 mb-1">BATTERY LIFE (HOURS OFF-GRID)</label>
-                      <input type="number" step="0.5" min="0" id="fseBubHoursInput" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none focus:border-(--color-primary)">
-                    </div>
-                    <div>
-                      <label class="block text-[10px] uppercase opacity-60 mb-1">BATTERY CHARGE SOC (%)</label>
-                      <input type="number" min="0" max="100" id="fseBubSocInput" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none focus:border-(--color-primary)">
-                    </div>
-                  </div>
-                  <div class="grid grid-cols-2 gap-2">
-                    <div>
-                      <label class="block text-[10px] uppercase opacity-60 mb-1">BANK VOLTAGE (V)</label>
-                      <input type="text" id="fseBubVoltageInput" required placeholder="e.g. 52.8 V" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none focus:border-(--color-primary)">
-                    </div>
-                    <div>
-                      <label class="block text-[10px] uppercase opacity-60 mb-1">BATTERY HEALTH</label>
-                      <select id="fseBubHealthInput" class="w-full border_ui bg-(--color-card-bg) px-2.5 py-1.5 outline-none">
-                        <option value="HEALTHY">HEALTHY</option>
-                        <option value="DEGRADED">DEGRADED</option>
-                        <option value="CRITICAL / REPLACE">CRITICAL / REPLACE</option>
-                      </select>
-                    </div>
-                  </div>
-                  <button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">
-                    UPDATE BATTERY LIFE TELEMETRY
-                  </button>
-                </form>
-              </div>
+            <div id="fseBubReadOnlyCards" class="grid grid-cols-1 lg:grid-cols-2 gap-2.5 text-xs">
+              <!-- Populated dynamically -->
+            </div>
 
-              <!-- No. of Hours of Light on Site -->
-              <div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">
-                <div class="font-bold uppercase tracking-wider border-b border_ui pb-2">// NO. OF HOURS OF LIGHT ON SITE (GRID)</div>
-                <form onsubmit="handleFseSaveLight(event)" class="space-y-2.5">
-                  <div>
-                    <label class="block text-[10px] uppercase opacity-60 mb-1">NO. OF HOURS OF LIGHT ON SITE (HRS / DAY)</label>
-                    <input type="number" step="0.5" min="0" max="24" id="fseLightHoursInput" required class="w-full border_ui bg-transparent px-3 py-2 text-sm font-bold outline-none focus:border-(--color-primary)">
-                  </div>
-                  <div class="grid grid-cols-2 gap-2">
-                    <div>
-                      <label class="block text-[10px] uppercase opacity-60 mb-1">GRID STATUS (NEPA / PHCN)</label>
-                      <select id="fseGridStatusInput" class="w-full border_ui bg-(--color-card-bg) px-2.5 py-1.5 outline-none">
-                        <option value="PHCN ONLINE">PHCN ONLINE</option>
-                        <option value="INTERMITTENT">INTERMITTENT</option>
-                        <option value="OUTAGE">OUTAGE</option>
-                        <option value="NON PHCN">NON PHCN</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label class="block text-[10px] uppercase opacity-60 mb-1">PREPAID TOKEN STATUS</label>
-                      <select id="fseTokenStatusInput" class="w-full border_ui bg-(--color-card-bg) px-2.5 py-1.5 outline-none">
-                        <option value="LOADED">LOADED</option>
-                        <option value="LOW UNITS">LOW UNITS</option>
-                        <option value="EXPIRED / NONE">EXPIRED / NONE</option>
-                      </select>
-                    </div>
-                  </div>
-                  <button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">
-                    UPDATE SITE LIGHT HOURS
-                  </button>
-                </form>
-              </div>
+            <div class="border_ui border-amber-500/40 bg-amber-500/10 p-3 text-[11px] text-amber-300">
+              // VIEW-ONLY: Light (Grid/NEPA) &amp; Battery (BUB) telemetry is managed exclusively in the <span class="font-bold">ADMIN PORTAL</span>.
             </div>
           </div>
 
@@ -724,7 +668,7 @@
             <div id="adminLoginError" class="hidden border_ui border-rose-500/60 bg-rose-500/10 p-2.5 text-rose-400 text-[11px] font-bold"></div>
 
             <div>
-              <label class="block text-[10px] uppercase opacity-60 mb-1">3. SELECT SITE ID (14 ACTIVE SITES)</label>
+              <label class="block text-[10px] uppercase opacity-60 mb-1">3. SELECT SITE ID (ALL ACTIVE SITES)</label>
               <select id="adminLoginSiteSelect" onchange="prefillAdminSiteDetails()" required class="w-full border_ui bg-(--color-card-bg) px-3 py-2 outline-none cursor-pointer">
                 <!-- Populated dynamically -->
               </select>
@@ -805,22 +749,27 @@
             <!-- Populated dynamically -->
           </div>
 
+          <!-- Selected Site Quick Snapshot Strip (Gen, Usage, Issues, Tickets, Last/Next PPM & Submission Status) -->
+          <div id="adminSiteSnapshotStrip" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 text-xs">
+            <!-- Populated dynamically -->
+          </div>
+
           <!-- Admin Module Tabs -->
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 text-xs">
             <button id="adminTabBtnRepairs" onclick="openAdminModule('repairs')" class="border_ui p-3 text-left cursor-pointer btn-invert nav_active">
               <div class="text-[10px] opacity-70 uppercase">ADMIN MODULE 01</div>
               <div class="font-bold text-sm">REPAIRS &amp; PPM</div>
-              <div class="text-[10px] opacity-75">Tickets, PPM Proof &amp; Sync</div>
+              <div class="text-[10px] opacity-75">Issues, Tickets &amp; Accept/Override PPM</div>
             </button>
             <button id="adminTabBtnBub" onclick="openAdminModule('bub')" class="border_ui p-3 text-left cursor-pointer btn-invert opacity-75">
               <div class="text-[10px] opacity-70 uppercase">ADMIN MODULE 02</div>
               <div class="font-bold text-sm">LIGHT &amp; BATTERY (BUB)</div>
-              <div class="text-[10px] opacity-75">Battery Life &amp; Hours of Light</div>
+              <div class="text-[10px] opacity-75">Admin-Only Light &amp; BUB Controls</div>
             </button>
             <button id="adminTabBtnFuel" onclick="openAdminModule('fuel')" class="border_ui p-3 text-left cursor-pointer btn-invert opacity-75">
               <div class="text-[10px] opacity-70 uppercase">ADMIN MODULE 03</div>
               <div class="font-bold text-sm">FLEET &amp; FUEL</div>
-              <div class="text-[10px] opacity-75">Fuel Input, Ledger &amp; Sync</div>
+              <div class="text-[10px] opacity-75">Animated Tank, Gen kVA &amp; Daily Usage</div>
             </button>
             <button id="adminTabBtnAnalytics" onclick="openAdminModule('analytics')" class="border_ui p-3 text-left cursor-pointer btn-invert opacity-75">
               <div class="text-[10px] opacity-70 uppercase">ADMIN MODULE 04</div>
@@ -830,7 +779,7 @@
             <button id="adminTabBtnDirectory" onclick="openAdminModule('directory')" class="border_ui p-3 text-left cursor-pointer btn-invert opacity-75">
               <div class="text-[10px] opacity-70 uppercase">ADMIN MODULE 05</div>
               <div class="font-bold text-sm">FSE &amp; EMAIL</div>
-              <div class="text-[10px] opacity-75">FSE Emails &amp; Custom Send</div>
+              <div class="text-[10px] opacity-75">Site FSE, Security &amp; Email</div>
             </button>
           </div>
 
@@ -1200,6 +1149,27 @@
     </div>
   </div>
 
+  <!-- 0B. ADMIN PASSWORD RECOVERY MODAL -->
+  <div id="passwordRecoveryModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="border_ui bg-(--color-secondary) text-(--color-primary) w-full max-w-md p-6 shadow-2xl space-y-4 font-mono text-xs">
+      <div class="flex items-start justify-between border-b border_ui pb-3">
+        <div>
+          <span class="text-[10px] uppercase tracking-widest text-amber-400 font-bold">// SUPABASE AUTH RECOVERY</span>
+          <h3 class="hero-outline-title text-3xl uppercase mt-0.5">SET NEW PASSWORD</h3>
+        </div>
+        <button type="button" onclick="document.getElementById('passwordRecoveryModal').classList.add('hidden')" class="border_ui px-2 py-1 btn-invert cursor-pointer">CLOSE</button>
+      </div>
+      <form onsubmit="handleCompletePasswordRecovery(event)" class="space-y-3">
+        <div>
+          <label class="block text-[10px] uppercase opacity-60 mb-1">NEW ADMIN PASSWORD (MIN 6 CHARS)</label>
+          <input type="password" id="newRecoveryPassword" minlength="6" required placeholder="Enter new password" class="w-full border_ui bg-transparent px-3 py-2 outline-none focus:border-(--color-primary)">
+        </div>
+        <div id="recoveryErrorMsg" class="hidden border_ui border-rose-500/60 bg-rose-500/10 p-2 text-rose-400 text-[11px]"></div>
+        <button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">UPDATE ADMIN PASSWORD &gt;&gt;</button>
+      </form>
+    </div>
+  </div>
+
   <!-- 1. MAINTENANCE & RCA TICKS CHECKLIST MODAL -->
   <div id="ticksModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="border_ui bg-(--color-secondary) text-(--color-primary) w-full max-w-xl p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto no-scrollbar font-mono text-xs">
@@ -1436,15 +1406,15 @@
             </select>
           </div>
           <div>
-            <label class="opacity-60 text-[10px] block mb-1">GEN SIZE (KW/H)</label>
+            <label class="opacity-60 text-[10px] block mb-1">GENERATOR TYPE (kVA)</label>
             <select id="editGenSize" onchange="document.getElementById('editGenSizeCustomWrap').classList.toggle('hidden', this.value !== 'custom')" class="w-full border_ui bg-(--color-card-bg) px-2 py-1 outline-none">
-              <option value="15">15 kW/h</option>
-              <option value="20">20 kW/h</option>
-              <option value="30">30 kW/h</option>
-              <option value="custom">Custom kW/h...</option>
+              <option value="15">15 kVA</option>
+              <option value="20">20 kVA</option>
+              <option value="30">30 kVA</option>
+              <option value="custom">Custom kVA...</option>
             </select>
             <div id="editGenSizeCustomWrap" class="hidden mt-1.5">
-              <input type="number" step="0.5" min="1" id="editGenSizeCustom" placeholder="Enter kW/h" class="w-full border_ui bg-transparent px-2 py-1 outline-none">
+              <input type="number" step="0.5" min="1" id="editGenSizeCustom" placeholder="Enter kVA" class="w-full border_ui bg-transparent px-2 py-1 outline-none">
             </div>
           </div>
         </div>
@@ -1520,10 +1490,10 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-3 gap-3">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div>
             <label class="opacity-60 text-[10px] block mb-1">CURRENT DIESEL (L)</label>
-            <input type="number" id="newCurrentDL" value="500" required class="w-full border_ui bg-transparent px-2.5 py-1.5 focus:border-(--color-primary) outline-none">
+            <input type="number" id="newCurrentDL" value="0" required class="w-full border_ui bg-transparent px-2.5 py-1.5 focus:border-(--color-primary) outline-none">
           </div>
           <div>
             <label class="opacity-60 text-[10px] block mb-1">DAILY CPD (24H)</label>
@@ -1532,6 +1502,14 @@
           <div>
             <label class="opacity-60 text-[10px] block mb-1">TANK CAPACITY</label>
             <input type="number" id="newTankCap" value="1000" required class="w-full border_ui bg-transparent px-2.5 py-1.5 focus:border-(--color-primary) outline-none">
+          </div>
+          <div>
+            <label class="opacity-60 text-[10px] block mb-1">GEN TYPE (kVA)</label>
+            <select id="newGenSize" class="w-full border_ui bg-(--color-card-bg) px-2 py-1.5 outline-none">
+              <option value="15">15 kVA</option>
+              <option value="20">20 kVA</option>
+              <option value="30">30 kVA</option>
+            </select>
           </div>
         </div>
 
@@ -3484,6 +3462,7 @@
       renderRepairs();
       renderAnalytics();
       switchSection(activeSection);
+      initSupabaseAuthListeners();
       syncFromSupabase();
 
       setInterval(tickClock, 1000);
@@ -3523,6 +3502,71 @@
       }
     }
 
+    async function initSupabaseAuthListeners() {
+      if (!sb || !sb.auth) return;
+      try {
+        sb.auth.onAuthStateChange((event, session) => {
+          if (event === 'PASSWORD_RECOVERY') {
+            openPasswordRecoveryModal();
+          } else if (event === 'SIGNED_OUT') {
+            if (isAdminUnlocked) {
+              isAdminUnlocked = false;
+              localStorage.setItem('coloplus_admin_unlocked', 'false');
+              adminSession = null;
+              localStorage.removeItem('coloplus_admin_session');
+              updateAdminUi();
+            }
+          }
+        });
+        const { data } = await sb.auth.getSession();
+        const session = data && data.session;
+        const hasAdminRole = !!(session && session.user && session.user.app_metadata && session.user.app_metadata.role === 'admin');
+        if (isAdminUnlocked && !hasAdminRole) {
+          isAdminUnlocked = false;
+          localStorage.setItem('coloplus_admin_unlocked', 'false');
+          adminSession = null;
+          localStorage.removeItem('coloplus_admin_session');
+          updateAdminUi();
+        }
+      } catch (e) {
+        console.warn('Supabase auth listener init:', e);
+      }
+    }
+
+    function openPasswordRecoveryModal() {
+      const m = document.getElementById('passwordRecoveryModal');
+      const err = document.getElementById('recoveryErrorMsg');
+      if (err) err.classList.add('hidden');
+      if (m) m.classList.remove('hidden');
+    }
+
+    function closePasswordRecoveryModal() {
+      const m = document.getElementById('passwordRecoveryModal');
+      if (m) m.classList.add('hidden');
+    }
+
+    async function handleCompletePasswordRecovery(e) {
+      e.preventDefault();
+      const errEl = document.getElementById('recoveryErrorMsg');
+      const passInput = document.getElementById('newRecoveryPassword');
+      const p1 = passInput ? passInput.value : '';
+      if (errEl) errEl.classList.add('hidden');
+      if (p1.length < 6) {
+        if (errEl) { errEl.innerText = 'Password must be at least 6 characters.'; errEl.classList.remove('hidden'); }
+        return;
+      }
+      if (!sb || !sb.auth) return;
+      const { error } = await sb.auth.updateUser({ password: p1 });
+      if (error) {
+        if (errEl) { errEl.innerText = 'Password update failed: ' + error.message; errEl.classList.remove('hidden'); }
+        return;
+      }
+      if (passInput) passInput.value = '';
+      closePasswordRecoveryModal();
+      showToast('Admin password updated successfully! You can now log in.');
+      switchSection('admin');
+    }
+
     async function syncFromSupabase() {
       if (!sb) {
         setSupabaseSyncStatus(false, 'Supabase client not initialized');
@@ -3543,6 +3587,7 @@
         if (!sitesErr && sitesRows && sitesRows.length > 0) {
           sitesRows.forEach(row => {
             const local = masterSites.find(s => s.siteId === row.site_id);
+            const genKva = Number(row.load_kw || (local && (local.genSize || local.loadKw)) || 15);
             const mapped = {
               siteId: row.site_id,
               tenantId: row.tenant_id,
@@ -3550,14 +3595,15 @@
               address: row.address,
               fse: row.fse_name,
               fsePhone: row.fse_phone,
-              fseEmail: row.fse_email || '',
+              fseEmail: row.fse_email || (local ? local.fseEmail : '') || '',
               security: row.security_name || 'On-site Security',
               securityPhone: row.security_phone || '',
               powerSource: row.power_source || 'In-house',
               gridStatus: row.grid_status || 'ONLINE (NEPA AVAILABLE)',
               gridHoursPerDay: row.grid_hours_per_day !== null ? Number(row.grid_hours_per_day) : 12,
               nepaTokenStatus: row.nepa_token_status || 'LOADED',
-              loadKw: Number(row.load_kw || 0),
+              genSize: genKva,
+              loadKw: genKva,
               tankCap: Number(row.tank_cap || 1000),
               baselineDL: Number(row.current_dl || 0),
               fuelBaselineAt: row.updated_at || new Date().toISOString(),
@@ -3574,6 +3620,10 @@
               previousSupplyTime: row.previous_supply_time || '',
               previousSupplyQty: row.previous_supply_qty ? row.previous_supply_qty + ' L' : '',
               supplier: row.supplier || '',
+              ppmCycleDays: Number(row.ppm_cycle_days || (local && local.ppmCycleDays) || 30),
+              lastPpmDate: row.last_ppm_date || (local && local.lastPpmDate) || '',
+              nextPpmDate: row.next_ppm_date || (local && local.nextPpmDate) || '',
+              ppmManuallySet: !!(row.last_ppm_date && row.ppm_cycle_days) || !!(local && local.ppmManuallySet),
               isFocus: true
             };
             if (local) {
@@ -3583,13 +3633,101 @@
             }
             synchronizeSite(local || mapped);
           });
-          saveState();
-          updateKpis();
-          populateFseLoginDropdown();
-          populateAdminLoginDropdown();
-          if (fseSession) updateFseUiState();
-          if (isAdminUnlocked && adminSession) updateAdminPortalUiState();
         }
+
+        // Sync diesel deliveries ledger cross-device
+        const { data: delRows, error: delErr } = await sb
+          .from('diesel_deliveries')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(200);
+        if (!delErr && delRows && delRows.length > 0) {
+          const bySite = {};
+          delRows.forEach(d => {
+            if (!bySite[d.site_id]) bySite[d.site_id] = [];
+            bySite[d.site_id].push({
+              date: d.received_date,
+              time: d.received_time || '--:--',
+              qty: Number(d.qty || 0),
+              litersAdded: Number(d.qty || 0),
+              supplier: d.supplier || 'N/A',
+              loggedBy: d.logged_by || 'FSE'
+            });
+          });
+          Object.keys(bySite).forEach(sid => {
+            const st = masterSites.find(s => s.siteId === sid);
+            if (st) st.refuelHistory = bySite[sid];
+          });
+        }
+
+        // Sync machinery repair tickets cross-device
+        const { data: repRows, error: repErr } = await sb
+          .from('machinery_repairs')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(200);
+        if (!repErr && repRows && repRows.length > 0) {
+          repRows.forEach(r => {
+            const tid = r.ticket_id || ('SB-REP-' + r.id);
+            const existing = masterRepairs.find(m => m.ticketId === tid);
+            const mappedTicket = {
+              ticketId: tid,
+              siteId: r.site_id,
+              tenantId: (masterSites.find(s => s.siteId === r.site_id) || {}).tenantId || 'COLOPLUS',
+              type: r.machinery_name || 'Generator',
+              category: r.machinery_name || 'Generator',
+              status: r.status || 'OPEN',
+              priority: r.severity || 'High',
+              issue: r.issue || '',
+              technician: r.logged_by || 'FSE',
+              dateLogged: (r.created_at || '').slice(0, 10),
+              loggedDate: (r.created_at || '').slice(0, 10),
+              adminReviewed: (r.status || '').toUpperCase() === 'RESOLVED'
+            };
+            if (existing) Object.assign(existing, mappedTicket);
+            else masterRepairs.unshift(mappedTicket);
+          });
+        }
+
+        // Sync submitted PPM reports cross-device (including Admin Accept/Override status)
+        const { data: ppmRows, error: ppmErr } = await sb
+          .from('submitted_ppms')
+          .select('*')
+          .order('submitted_at', { ascending: false })
+          .limit(200);
+        if (!ppmErr && ppmRows && ppmRows.length > 0) {
+          const ppmBySite = {};
+          ppmRows.forEach(p => {
+            if (!ppmBySite[p.site_id]) ppmBySite[p.site_id] = [];
+            const dtStr = p.submitted_at ? new Date(p.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + new Date(p.submitted_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : (p.submitted_date || '');
+            ppmBySite[p.site_id].push({
+              id: p.submission_id || String(p.id),
+              submittedDate: p.submitted_date || (p.submitted_at || '').slice(0, 10),
+              submittedAt: dtStr,
+              submittedBy: p.submitted_by || 'FSE',
+              completedCount: Number(p.completed_count || 0),
+              totalCount: Number(p.total_count || 12),
+              items: Array.isArray(p.items) ? p.items : [],
+              reviewStatus: p.review_status || 'PENDING',
+              adminNote: p.admin_note || '',
+              reviewedBy: p.reviewed_by || '',
+              reviewedAt: p.reviewed_at ? new Date(p.reviewed_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : ''
+            });
+          });
+          Object.keys(ppmBySite).forEach(sid => {
+            const st = masterSites.find(s => s.siteId === sid);
+            if (st) st.submittedPpms = ppmBySite[sid];
+          });
+        }
+
+        saveState();
+        updateKpis();
+        populateFseLoginDropdown();
+        populateAdminLoginDropdown();
+        renderSites();
+        renderRepairs();
+        if (fseSession) updateFseUiState();
+        if (isAdminUnlocked && adminSession) updateAdminPortalUiState();
 
         const { data: tasksRows, error: tasksErr } = await sb
           .from('calendar_tasks')
@@ -3681,6 +3819,7 @@
           address: site.address,
           fse_name: site.fse,
           fse_phone: site.fsePhone,
+          fse_email: site.fseEmail || '',
           security_name: site.security,
           security_phone: site.securityPhone,
           power_source: site.powerSource,
@@ -3696,6 +3835,9 @@
           battery_autonomy_hours: site.batteryAutonomyHours,
           battery_status: site.batteryStatus,
           supplier: site.supplier,
+          ppm_cycle_days: Number(site.ppmCycleDays || 30),
+          last_ppm_date: site.lastPpmDate || null,
+          next_ppm_date: site.nextPpmDate || null,
           is_active: true
         }, { onConflict: 'site_id' });
         if (error) console.warn('Supabase site upsert error:', error.message);
@@ -4137,6 +4279,9 @@
       if (!t) return;
       t.done = !t.done;
       localStorage.setItem('coloplus_tasks_v1', JSON.stringify(masterTasks));
+      if (sb && !String(id).startsWith('ppm_auto_') && !String(id).startsWith('t_')) {
+        try { Promise.resolve(sb.from('calendar_tasks').update({ done: t.done }).eq('id', id)).catch(() => {}); } catch (err) {}
+      }
       renderCalendar();
       renderTasks();
     }
@@ -4148,6 +4293,9 @@
       }
       masterTasks = masterTasks.filter(x => x.id !== id);
       localStorage.setItem('coloplus_tasks_v1', JSON.stringify(masterTasks));
+      if (sb && !String(id).startsWith('ppm_auto_') && !String(id).startsWith('t_')) {
+        try { Promise.resolve(sb.from('calendar_tasks').delete().eq('id', id)).catch(() => {}); } catch (err) {}
+      }
       renderCalendar();
       renderTasks();
     }
@@ -4336,28 +4484,105 @@
       });
     }
 
+    // Reusable Animated Diesel Tank + Generator Type + Daily Usage Widget
+    function buildAnimatedTankHtml(site) {
+      const genKva = Number(site.genSize || site.loadKw || 15);
+      const fillPct = Math.max(0, Math.min(100, Number(site.fillPct || 0)));
+      const visualHeight = fillPct > 0 ? Math.max(10, fillPct) : 0;
+      let fluidColor = '#10b981';
+      let badgeCls = 'text-emerald-400 border-emerald-500/40';
+      let stateLabel = 'NORMAL';
+      if (site.currentDL <= 0 || fillPct <= 0) {
+        fluidColor = '#ef4444';
+        badgeCls = 'text-rose-400 border-rose-500/50';
+        stateLabel = 'EMPTY (0 L)';
+      } else if (site.status === 'CRITICAL' || fillPct <= 20) {
+        fluidColor = '#ef4444';
+        badgeCls = 'text-rose-400 border-rose-500/50';
+        stateLabel = 'CRITICAL';
+      } else if (site.status === 'WARNING' || fillPct <= 45) {
+        fluidColor = '#f59e0b';
+        badgeCls = 'text-amber-400 border-amber-500/50';
+        stateLabel = 'REORDER';
+      }
+
+      return '<div class="grid grid-cols-1 sm:grid-cols-12 gap-3 p-3 border_ui bg-black/10 dark:bg-white/5 items-center">' +
+        '<div class="sm:col-span-5 flex items-center justify-center gap-2">' +
+          '<div class="h-36 flex flex-col justify-between text-[9px] opacity-60 select-none text-right pr-1 font-bold">' +
+            '<span>100%</span>' +
+            '<span>75%</span>' +
+            '<span class="text-amber-400">50%</span>' +
+            '<span class="text-rose-400">25%</span>' +
+            '<span>0%</span>' +
+          '</div>' +
+          '<div class="w-24 h-36 border_ui bg-black/30 relative overflow-hidden flex flex-col justify-end">' +
+            '<div class="absolute inset-0 flex flex-col justify-between pointer-events-none z-10 py-1 opacity-25">' +
+              '<div class="w-full border-b border_ui border-dashed"></div>' +
+              '<div class="w-full border-b border_ui border-dashed"></div>' +
+              '<div class="w-full border-b border-amber-500 border-dashed"></div>' +
+              '<div class="w-full border-b border-rose-500 border-dashed"></div>' +
+              '<div class="w-full border-b border_ui border-dashed"></div>' +
+            '</div>' +
+            '<div class="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">' +
+              '<span class="px-1.5 py-0.5 text-[11px] font-bold bg-black/60 text-white border_ui">' + fillPct + '%</span>' +
+            '</div>' +
+            '<div class="w-full relative transition-all duration-700 overflow-hidden" style="height: ' + visualHeight + '%; background-color: ' + fluidColor + ';">' +
+              (visualHeight > 0 ? (
+                '<div class="w-[200%] h-3.5 absolute -top-2 left-0 liquid-wave opacity-60">' +
+                  '<svg viewBox="0 0 1200 120" preserveAspectRatio="none" class="w-full h-full fill-white">' +
+                    '<path d="M0,0 C150,90 350,-40 500,45 C650,130 900,10 1200,50 L1200,120 L0,120 Z"></path>' +
+                  '</svg>' +
+                '</div>' +
+                '<div class="w-1.5 h-1.5 rounded-full bg-white/70 absolute bubble-1"></div>' +
+                '<div class="w-1 h-1 rounded-full bg-white/60 absolute bubble-2"></div>'
+              ) : '') +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="sm:col-span-7 space-y-2 text-[11px]">' +
+          '<div class="flex items-center justify-between gap-2 border-b border_ui pb-1.5">' +
+            '<span class="font-bold uppercase tracking-wider">LIVE DIESEL TANK</span>' +
+            '<span class="border_ui px-2 py-0.5 text-[9px] font-bold ' + badgeCls + '">' + stateLabel + '</span>' +
+          '</div>' +
+          '<div class="grid grid-cols-2 gap-2">' +
+            '<div class="border_ui p-2 bg-black/15">' +
+              '<div class="text-[9px] opacity-60 uppercase">GENERATOR TYPE</div>' +
+              '<div class="font-bold text-sm text-amber-400 mt-0.5">' + genKva + ' kVA</div>' +
+            '</div>' +
+            '<div class="border_ui p-2 bg-black/15">' +
+              '<div class="text-[9px] opacity-60 uppercase">DAILY USAGE (CPD)</div>' +
+              '<div class="font-bold text-sm text-(--color-accent) mt-0.5">' + site.cpd + ' L/day</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="space-y-1 pt-0.5">' +
+            '<div class="flex justify-between"><span class="opacity-65">Fuel Level / Tank Cap:</span><span class="font-bold">' + site.currentDL + ' L / ' + site.tankCap + ' L</span></div>' +
+            '<div class="flex justify-between"><span class="opacity-65">Hourly / 12h Usage:</span><span class="font-bold">' + site.cph + ' L/hr · ' + site.cpd12h + ' L/12h</span></div>' +
+            '<div class="flex justify-between"><span class="opacity-65">Autonomy / Dry Forecast:</span><span class="font-bold">' + site.daysRemaining + 'd · ' + site.predictedDryDate + '</span></div>' +
+            '<div class="flex justify-between"><span class="opacity-65">Reorder Benchmark (200L):</span><span class="font-bold text-amber-400">' + site.refuelDate + '</span></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }
+
     // FSE Module 1: Fleet & Fuel
     function renderFseFuelModule(site) {
       const kpiEl = document.getElementById('fseFuelKpiRow');
+      const genKva = Number(site.genSize || site.loadKw || 15);
       const statusColor = site.status === 'CRITICAL' ? 'text-rose-500' : (site.status === 'WARNING' ? 'text-amber-500' : 'text-emerald-500');
       kpiEl.innerHTML =
         '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">CURRENT FUEL LEVEL</div><div class="text-xl font-bold mt-1">' + site.currentDL + ' L</div><div class="text-[10px] opacity-60">' + site.fillPct + '% of ' + site.tankCap + 'L Tank</div></div>' +
-        '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">DAILY BURN (CPD)</div><div class="text-xl font-bold mt-1 text-amber-500">' + site.cpd + ' L/d</div><div class="text-[10px] opacity-60">' + site.cph + ' L/hr · 12h: ' + site.cpd12h + 'L</div></div>' +
-        '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">AUTONOMY LEFT</div><div class="text-xl font-bold mt-1 ' + statusColor + '">' + site.daysRemaining + ' DAYS</div><div class="text-[10px] opacity-60">' + site.status + '</div></div>' +
-        '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">PREDICTED DRY DATE</div><div class="text-sm font-bold mt-1">' + site.predictedDryDate + '</div><div class="text-[10px] opacity-60">' + site.refuelDate + '</div></div>';
+        '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">GENERATOR TYPE</div><div class="text-xl font-bold mt-1 text-amber-400">' + genKva + ' kVA</div><div class="text-[10px] opacity-60">' + (site.powerSource || 'In-house') + '</div></div>' +
+        '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">DAILY USAGE (CPD)</div><div class="text-xl font-bold mt-1 text-(--color-accent)">' + site.cpd + ' L/day</div><div class="text-[10px] opacity-60">' + site.cph + ' L/hr · 12h: ' + site.cpd12h + 'L</div></div>' +
+        '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">AUTONOMY LEFT</div><div class="text-xl font-bold mt-1 ' + statusColor + '">' + site.daysRemaining + ' DAYS</div><div class="text-[10px] opacity-60">' + site.predictedDryDate + '</div></div>';
 
       const tankDetailEl = document.getElementById('fseTankStatusDetail');
       if (tankDetailEl) {
-        const barColor = site.status === 'CRITICAL' ? 'bg-rose-500' : (site.status === 'WARNING' ? 'bg-amber-500' : 'bg-emerald-500');
         tankDetailEl.innerHTML =
-          '<div class="flex justify-between"><span>Tank Capacity:</span><span class="font-bold">' + site.tankCap + ' L</span></div>' +
-          '<div class="flex justify-between"><span>Live Synchronized Fuel:</span><span class="font-bold text-(--color-accent)">' + site.currentDL + ' L (' + site.fillPct + '%)</span></div>' +
-          '<div class="w-full border_ui h-2.5 bg-black/20 overflow-hidden"><div class="h-full ' + barColor + '" style="width:' + site.fillPct + '%;"></div></div>' +
-          '<div class="flex justify-between"><span>Last Recorded Baseline:</span><span class="opacity-80">' + (site.baselineDL || 0) + ' L (' + (site.fuelBaselineAt || '').slice(0, 10) + ')</span></div>' +
-          '<div class="flex justify-between"><span>Burned Since Baseline:</span><span class="text-amber-400">-' + (site.burnedSinceBaseline || 0) + ' L (' + (site.elapsedHoursSinceBaseline || 0) + 'h elapsed)</span></div>' +
-          '<div class="flex justify-between"><span>Hourly Burn (CPH):</span><span class="font-bold">' + site.cph + ' L/hr</span></div>' +
-          '<div class="flex justify-between"><span>24h / 12h Burn:</span><span class="font-bold">' + site.cpd + ' L/d · ' + site.cpd12h + ' L/12h</span></div>' +
-          '<div class="flex justify-between"><span>Reorder Threshold (200L):</span><span class="font-bold text-amber-400">' + site.refuelDate + '</span></div>';
+          buildAnimatedTankHtml(site) +
+          '<div class="border_ui p-2.5 bg-black/10 dark:bg-white/5 space-y-1 mt-2">' +
+            '<div class="flex justify-between"><span>Last Recorded Baseline:</span><span class="opacity-80">' + (site.baselineDL || 0) + ' L (' + (site.fuelBaselineAt || '').slice(0, 10) + ')</span></div>' +
+            '<div class="flex justify-between"><span>Burned Since Baseline:</span><span class="text-amber-400">-' + (site.burnedSinceBaseline || 0) + ' L (' + (site.elapsedHoursSinceBaseline || 0) + 'h elapsed)</span></div>' +
+          '</div>';
       }
       document.getElementById('fseDeliverySupplier').value = site.supplier || 'In-House';
       const now = new Date();
@@ -4366,7 +4591,7 @@
 
       const prevDate = site.previousSupplyDate || (site.refuelHistory && site.refuelHistory.length > 1 ? site.refuelHistory[1].date : 'No prior record');
       const prevTime = site.previousSupplyTime || (site.refuelHistory && site.refuelHistory.length > 1 ? (site.refuelHistory[1].time || '--:--') : '--:--');
-      const prevQty = site.previousSupplyQty || (site.refuelHistory && site.refuelHistory.length > 1 ? site.refuelHistory[1].qty + ' L' : 'N/A');
+      const prevQty = site.previousSupplyQty || (site.refuelHistory && site.refuelHistory.length > 1 ? (site.refuelHistory[1].qty || site.refuelHistory[1].litersAdded || 0) + ' L' : 'N/A');
 
       document.getElementById('fseDeliveryDatesBox').innerHTML =
         '<div class="opacity-50 text-[9px] uppercase font-bold">// DIESEL DELIVERY TIMELINE</div>' +
@@ -4381,26 +4606,9 @@
           '<table class="w-full text-left border-collapse text-[11px]">' +
             '<thead><tr class="border-b border_ui opacity-60"><th class="py-1.5 pr-3">DATE RECEIVED</th><th class="py-1.5 pr-3">TIME</th><th class="py-1.5 pr-3">QTY (L)</th><th class="py-1.5 pr-3">SUPPLIER</th><th class="py-1.5">LOGGED BY</th></tr></thead>' +
             '<tbody>' + hist.map(h =>
-              '<tr class="border-b border_ui/50"><td class="py-1.5 pr-3 font-bold">' + h.date + '</td><td class="py-1.5 pr-3">' + (h.time || '--:--') + '</td><td class="py-1.5 pr-3 text-(--color-accent) font-bold">+' + h.qty + ' L</td><td class="py-1.5 pr-3">' + (h.supplier || 'N/A') + '</td><td class="py-1.5 opacity-70">' + (h.loggedBy || 'FSE') + '</td></tr>'
+              '<tr class="border-b border_ui/50"><td class="py-1.5 pr-3 font-bold">' + h.date + '</td><td class="py-1.5 pr-3">' + (h.time || '--:--') + '</td><td class="py-1.5 pr-3 text-(--color-accent) font-bold">+' + (h.qty || h.litersAdded || 0) + ' L</td><td class="py-1.5 pr-3">' + (h.supplier || 'N/A') + '</td><td class="py-1.5 opacity-70">' + (h.loggedBy || h.fse || 'FSE') + '</td></tr>'
             ).join('') + '</tbody></table>';
       }
-    }
-
-    function handleFseUpdateFuelLevel(e) {
-      e.preventDefault();
-      if (!fseSession) return;
-      const site = masterSites.find(s => s.siteId === fseSession.siteId);
-      if (!site) return;
-
-      site.currentDL = parseFloat(document.getElementById('fseFuelLevelInput').value) || 0;
-      site.cpd = parseFloat(document.getElementById('fseCpdInput').value) || site.cpd;
-      synchronizeSite(site);
-      saveState();
-      sbUpdateFuelLevel(site.siteId, site.tenantId, site.currentDL, site.cpd);
-      updateKpis();
-      renderSites();
-      renderFseFuelModule(site);
-      showToast('Updated fuel level for ' + site.siteId + ' to ' + site.currentDL + ' L');
     }
 
     function handleFseLogDelivery(e) {
@@ -4436,74 +4644,60 @@
         date: formattedDate,
         time: timeRaw,
         qty: qty,
+        litersAdded: qty,
         supplier: supplier,
         loggedBy: fseSession.fseName
       });
 
       synchronizeSite(site);
       saveState();
-      sbUpdateFuelLevel(site.siteId, site.tenantId, site.currentDL, site.cpd);
+      sbInsertDelivery(site.siteId, site.tenantId, qty, dateRaw, timeRaw, supplier, fseSession.fseName);
       updateKpis();
       renderSites();
       renderFseFuelModule(site);
       showToast('Recorded +' + qty + 'L delivery at ' + timeRaw + ' on ' + formattedDate);
     }
 
-    // FSE Module 2: Light & Battery (BUB)
+    // FSE Module 2: Light & Battery (BUB) — READ-ONLY (Admin Edit Only)
     function renderFseBubModule(site) {
       const soc = site.batterySoc || 85;
       const battHrs = site.batteryAutonomyHours || 8;
       const lightHrs = site.gridHoursPerDay !== undefined ? site.gridHoursPerDay : 12;
       const totalOffload = (parseFloat(battHrs) + parseFloat(lightHrs)).toFixed(1);
+      const battColor = soc > 70 ? 'bg-emerald-500' : (soc > 40 ? 'bg-amber-500' : 'bg-rose-500');
 
-      document.getElementById('fseBubKpiRow').innerHTML =
-        '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">BATTERY LIFE (OFF-GRID)</div><div class="text-xl font-bold mt-1 text-(--color-accent)">' + battHrs + ' HRS</div><div class="text-[10px] opacity-60">' + (site.batteryStatus || 'HEALTHY') + '</div></div>' +
-        '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">BATTERY SOC / VOLTS</div><div class="text-xl font-bold mt-1">' + soc + '%</div><div class="text-[10px] opacity-60">' + (site.batteryVoltage || '52.8 V') + '</div></div>' +
-        '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">HOURS OF LIGHT ON SITE</div><div class="text-xl font-bold mt-1 text-amber-400">' + lightHrs + ' HRS/D</div><div class="text-[10px] opacity-60">' + (site.gridStatus || 'PHCN ONLINE') + '</div></div>' +
-        '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">TOTAL GEN OFFLOAD</div><div class="text-xl font-bold mt-1">' + totalOffload + ' HRS/D</div><div class="text-[10px] opacity-60">Light + BUB Backup</div></div>';
+      const kpiRow = document.getElementById('fseBubKpiRow');
+      if (kpiRow) {
+        kpiRow.innerHTML =
+          '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">BATTERY LIFE (OFF-GRID)</div><div class="text-xl font-bold mt-1 text-(--color-accent)">' + battHrs + ' HRS</div><div class="text-[10px] opacity-60">' + (site.batteryStatus || 'HEALTHY') + '</div></div>' +
+          '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">BATTERY SOC / VOLTS</div><div class="text-xl font-bold mt-1">' + soc + '%</div><div class="text-[10px] opacity-60">' + (site.batteryVoltage || '52.8 V') + '</div></div>' +
+          '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">HOURS OF LIGHT ON SITE</div><div class="text-xl font-bold mt-1 text-amber-400">' + lightHrs + ' HRS/D</div><div class="text-[10px] opacity-60">' + (site.gridStatus || 'PHCN ONLINE') + '</div></div>' +
+          '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">TOTAL GEN OFFLOAD</div><div class="text-xl font-bold mt-1">' + totalOffload + ' HRS/D</div><div class="text-[10px] opacity-60">Light + BUB Backup</div></div>';
+      }
 
-      document.getElementById('fseBubHoursInput').value = battHrs;
-      document.getElementById('fseBubSocInput').value = soc;
-      document.getElementById('fseBubVoltageInput').value = site.batteryVoltage || '52.8 V';
-      document.getElementById('fseBubHealthInput').value = site.batteryStatus || 'HEALTHY';
-      document.getElementById('fseLightHoursInput').value = lightHrs;
-      document.getElementById('fseGridStatusInput').value = site.gridStatus || 'PHCN ONLINE';
-      document.getElementById('fseTokenStatusInput').value = site.nepaTokenStatus || 'LOADED';
-    }
-
-    function handleFseSaveBub(e) {
-      e.preventDefault();
-      if (!fseSession) return;
-      const site = masterSites.find(s => s.siteId === fseSession.siteId);
-      if (!site) return;
-
-      site.batteryAutonomyHours = parseFloat(document.getElementById('fseBubHoursInput').value) || 0;
-      site.batterySoc = parseInt(document.getElementById('fseBubSocInput').value, 10) || 0;
-      site.batteryVoltage = document.getElementById('fseBubVoltageInput').value.trim();
-      site.batteryStatus = document.getElementById('fseBubHealthInput').value;
-
-      saveState();
-      sbUpdateBubLight(site);
-      renderPowerMatrix();
-      renderFseBubModule(site);
-      showToast('Updated Battery Life & BUB telemetry for ' + site.siteId);
-    }
-
-    function handleFseSaveLight(e) {
-      e.preventDefault();
-      if (!fseSession) return;
-      const site = masterSites.find(s => s.siteId === fseSession.siteId);
-      if (!site) return;
-
-      site.gridHoursPerDay = parseFloat(document.getElementById('fseLightHoursInput').value) || 0;
-      site.gridStatus = document.getElementById('fseGridStatusInput').value;
-      site.nepaTokenStatus = document.getElementById('fseTokenStatusInput').value;
-
-      saveState();
-      sbUpdateBubLight(site);
-      renderPowerMatrix();
-      renderFseBubModule(site);
-      showToast('Updated site light hours (' + site.gridHoursPerDay + ' hrs/day) for ' + site.siteId);
+      const cardsEl = document.getElementById('fseBubReadOnlyCards');
+      if (cardsEl) {
+        cardsEl.innerHTML =
+          '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-2.5">' +
+            '<div class="font-bold uppercase tracking-wider border-b border_ui pb-2">// BATTERY LIFE &amp; BUB STATUS (READ-ONLY)</div>' +
+            '<div class="space-y-1.5 text-[11px]">' +
+              '<div class="flex justify-between"><span class="opacity-65">Battery Autonomy:</span><span class="font-bold text-(--color-accent)">' + battHrs + ' hrs off-grid</span></div>' +
+              '<div class="flex justify-between"><span class="opacity-65">State of Charge (SOC):</span><span class="font-bold">' + soc + '%</span></div>' +
+              '<div class="w-full border_ui h-2 bg-black/20 overflow-hidden"><div class="h-full ' + battColor + '" style="width:' + soc + '%;"></div></div>' +
+              '<div class="flex justify-between"><span class="opacity-65">Bank Voltage:</span><span class="font-bold">' + (site.batteryVoltage || '52.8 V') + '</span></div>' +
+              '<div class="flex justify-between"><span class="opacity-65">Battery Health:</span><span class="font-bold">' + (site.batteryStatus || 'HEALTHY') + '</span></div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-2.5">' +
+            '<div class="font-bold uppercase tracking-wider border-b border_ui pb-2">// UTILITY LIGHT &amp; GRID STATUS (READ-ONLY)</div>' +
+            '<div class="space-y-1.5 text-[11px]">' +
+              '<div class="flex justify-between"><span class="opacity-65">Hours of Light / Day:</span><span class="font-bold text-amber-400">' + lightHrs + ' hrs/day</span></div>' +
+              '<div class="flex justify-between"><span class="opacity-65">Utility Grid Status:</span><span class="font-bold">' + (site.gridStatus || 'PHCN ONLINE') + '</span></div>' +
+              '<div class="flex justify-between"><span class="opacity-65">Prepaid Token Status:</span><span class="font-bold">' + (site.nepaTokenStatus || 'LOADED') + '</span></div>' +
+              '<div class="flex justify-between"><span class="opacity-65">Total Gen Offload:</span><span class="font-bold">' + totalOffload + ' hrs/day</span></div>' +
+            '</div>' +
+          '</div>';
+      }
     }
 
     // FSE Module 3: Repairs & PPM (Machinery Requiring Constant Repair)
@@ -4734,25 +4928,6 @@
       showToast('Deleted attachment for ' + tick.task);
     }
 
-    function handleFseFlagMachinery(e) {
-      e.preventDefault();
-      if (!fseSession) return;
-      const site = masterSites.find(s => s.siteId === fseSession.siteId);
-      if (!site) return;
-
-      const name = document.getElementById('fseFlagMachineName').value.trim();
-      const issue = document.getElementById('fseFlagMachineIssue').value.trim();
-      if (!site.constantRepairAssets) site.constantRepairAssets = [];
-      site.constantRepairAssets.unshift({ name, issue, count: 1, severity: 'High' });
-
-      document.getElementById('fseFlagMachineName').value = '';
-      document.getElementById('fseFlagMachineIssue').value = '';
-      saveState();
-      sbInsertRepair(site.siteId, site.tenantId, name, issue, fseSession.fseName);
-      renderFseRepairsModule(site);
-      showToast('Flagged ' + name + ' as constant-repair machinery');
-    }
-
     function submitFsePpmReport() {
       if (!fseSession) return;
       const site = masterSites.find(s => s.siteId === fseSession.siteId);
@@ -4765,14 +4940,17 @@
       const submittedAt = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' +
                           now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
-      if (!site.submittedPpms) site.submittedPpms = [];
-      site.submittedPpms.unshift({
+      const sub = {
         id: 'PPM-' + Date.now(),
         submittedDate: submittedDate,
         submittedAt: submittedAt,
         submittedBy: fseSession.fseName || site.fse || 'FSE',
         completedCount: doneCount,
         totalCount: ticks.length,
+        reviewStatus: 'PENDING',
+        adminNote: '',
+        reviewedBy: '',
+        reviewedAt: '',
         items: ticks.map(t => ({
           task: t.task,
           done: !!t.done,
@@ -4780,12 +4958,30 @@
           mediaType: t.mediaType || null,
           mediaSizeMb: t.mediaSizeMb || null
         }))
-      });
+      };
+
+      if (!site.submittedPpms) site.submittedPpms = [];
+      site.submittedPpms.unshift(sub);
 
       saveState();
+      if (sb) {
+        try {
+          Promise.resolve(sb.rpc('fse_submit_ppm', {
+            p_site_id: site.siteId,
+            p_tenant_id: site.tenantId || '',
+            p_submission_id: sub.id,
+            p_submitted_by: sub.submittedBy,
+            p_submitted_date: sub.submittedDate,
+            p_completed_count: sub.completedCount,
+            p_total_count: sub.totalCount,
+            p_items: sub.items
+          })).catch(() => {});
+        } catch (err) {}
+      }
+
       renderFseRepairsModule(site);
       if (isAdminUnlocked && adminSession) updateAdminPortalUiState();
-      showToast('PPM Report submitted (' + doneCount + '/' + ticks.length + ') on ' + submittedAt);
+      showToast('PPM Report submitted (' + doneCount + '/' + ticks.length + ') — awaiting Admin review');
     }
 
     function toggleSiteTickFromFse(idx) {
@@ -5664,7 +5860,12 @@
         sel.innerHTML = opts;
         prefillAdminSiteDetails();
       }
-      if (quick) quick.innerHTML = opts;
+      if (quick) {
+        quick.innerHTML = opts + '<option value="__ADD_NEW_SITE__">＋ ADD NEW SITE...</option>';
+        if (adminSession && adminSession.siteId) {
+          quick.value = adminSession.siteId;
+        }
+      }
     }
 
     function prefillAdminSiteDetails() {
@@ -5754,6 +5955,12 @@
 
     function switchAdminSite(siteId) {
       if (!isAdminUnlocked) return;
+      if (siteId === '__ADD_NEW_SITE__') {
+        const quick = document.getElementById('adminQuickSiteSwitch');
+        if (quick && adminSession && adminSession.siteId) quick.value = adminSession.siteId;
+        openAddSiteModal();
+        return;
+      }
       if (!adminSession) adminSession = { siteId, adminName: 'NOC Administrator' };
       adminSession.siteId = siteId;
       localStorage.setItem('coloplus_admin_session', JSON.stringify(adminSession));
@@ -5786,10 +5993,63 @@
       loginView.classList.add('hidden');
       workspaceView.classList.remove('hidden');
 
-      document.getElementById('adminActiveSiteHeader').innerText = 'SITE: ' + site.siteId + ' (' + site.tenantId + ') · GEN: ' + (site.genSize || site.loadKw || 15) + ' kW/h';
+      const genKva = Number(site.genSize || site.loadKw || 15);
+      document.getElementById('adminActiveSiteHeader').innerText = 'SITE: ' + site.siteId + ' (' + site.tenantId + ') · GEN: ' + genKva + ' kVA';
       document.getElementById('adminActiveSiteSub').innerText = site.state + ' · ' + site.address + ' · Admin: ' + adminSession.adminName;
       const quick = document.getElementById('adminQuickSiteSwitch');
       if (quick) quick.value = site.siteId;
+
+      // Render Selected-Site Snapshot Strip (Gen/Usage, Issues & Tickets, Last PPM, Next PPM, Prev PPM Submitted Status)
+      const snapEl = document.getElementById('adminSiteSnapshotStrip');
+      if (snapEl) {
+        const siteTickets = masterRepairs.filter(r => r.siteId === site.siteId);
+        const openTickets = siteTickets.filter(r => (r.status || '').toUpperCase() !== 'RESOLVED').length;
+        const issuesList = site.majorIssues || [];
+        const latestPpm = (site.submittedPpms && site.submittedPpms.length > 0) ? site.submittedPpms[0] : null;
+        let prevPpmStatusLabel = 'NOT SUBMITTED';
+        let prevPpmColor = 'text-rose-400';
+        let prevPpmSub = 'No FSE submission on file';
+        if (latestPpm) {
+          const st = (latestPpm.reviewStatus || 'PENDING').toUpperCase();
+          if (st === 'ACCEPTED') {
+            prevPpmStatusLabel = 'SUBMITTED · ACCEPTED';
+            prevPpmColor = 'text-emerald-400';
+          } else if (st === 'OVERRIDDEN') {
+            prevPpmStatusLabel = 'SUBMITTED · OVERRIDDEN';
+            prevPpmColor = 'text-amber-400';
+          } else {
+            prevPpmStatusLabel = 'SUBMITTED · PENDING';
+            prevPpmColor = 'text-amber-400';
+          }
+          prevPpmSub = latestPpm.submittedAt + ' (' + latestPpm.completedCount + '/' + latestPpm.totalCount + ')';
+        }
+        snapEl.innerHTML =
+          '<div class="border_ui p-2.5 bg-(--color-card-bg)/50">' +
+            '<div class="text-[9px] uppercase opacity-60">GEN TYPE &amp; DAILY USAGE</div>' +
+            '<div class="font-bold text-sm text-amber-400 mt-0.5">' + genKva + ' kVA · ' + site.cpd + ' L/d</div>' +
+            '<div class="text-[10px] opacity-65">Fuel: ' + site.currentDL + ' L (' + site.fillPct + '%)</div>' +
+          '</div>' +
+          '<div class="border_ui p-2.5 bg-(--color-card-bg)/50">' +
+            '<div class="text-[9px] uppercase opacity-60">SITE ISSUES &amp; TICKETS</div>' +
+            '<div class="font-bold text-sm ' + (openTickets > 0 ? 'text-rose-400' : 'text-emerald-400') + ' mt-0.5">' + openTickets + ' OPEN / ' + siteTickets.length + ' TICKETS</div>' +
+            '<div class="text-[10px] opacity-65 truncate">' + (issuesList.length > 0 ? issuesList[0] : 'No major issues flagged') + '</div>' +
+          '</div>' +
+          '<div class="border_ui p-2.5 bg-(--color-card-bg)/50">' +
+            '<div class="text-[9px] uppercase opacity-60">LAST PPM DATE</div>' +
+            '<div class="font-bold text-sm mt-0.5">' + (site.lastPpmDate || 'NOT RECORDED') + '</div>' +
+            '<div class="text-[10px] opacity-65">Cycle: ' + (site.ppmCycleDays || 30) + ' days</div>' +
+          '</div>' +
+          '<div class="border_ui p-2.5 bg-(--color-card-bg)/50">' +
+            '<div class="text-[9px] uppercase opacity-60">NEXT SCHEDULED PPM</div>' +
+            '<div class="font-bold text-sm text-(--color-accent) mt-0.5">' + (site.nextPpmDate || 'NOT SCHEDULED') + '</div>' +
+            '<div class="text-[10px] opacity-65">Synced with Calendar</div>' +
+          '</div>' +
+          '<div class="border_ui p-2.5 bg-(--color-card-bg)/50">' +
+            '<div class="text-[9px] uppercase opacity-60">PREVIOUS PPM STATUS</div>' +
+            '<div class="font-bold text-xs mt-1 ' + prevPpmColor + '">' + prevPpmStatusLabel + '</div>' +
+            '<div class="text-[10px] opacity-65 truncate">' + prevPpmSub + '</div>' +
+          '</div>';
+      }
 
       renderAdminTicketAlerts();
       renderAdminModuleContent(site);
@@ -5933,22 +6193,32 @@
                   ).join('')) +
             '</div>' +
             '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-2.5">' +
-              '<div class="flex items-center justify-between border-b border_ui pb-2">' +
-                '<span class="font-bold uppercase">// SUBMITTED PPM REPORTS (WITH DATE)</span>' +
-                '<span class="text-[10px] text-(--color-accent) font-bold">' + (site.submittedPpms || []).length + ' SUBMITTED</span>' +
+              '<div class="flex flex-wrap items-center justify-between gap-2 border-b border_ui pb-2">' +
+                '<span class="font-bold uppercase">// SUBMITTED PPM REPORTS (ACCEPT / OVERRIDE)</span>' +
+                '<div class="flex items-center gap-2">' +
+                  '<span class="text-[10px] text-(--color-accent) font-bold">' + (site.submittedPpms || []).length + ' SUBMITTED</span>' +
+                  '<button type="button" onclick="adminOverrideLogPpm(\'' + site.siteId + '\')" class="border_ui border-amber-400 px-2 py-0.5 text-[10px] font-bold text-amber-400 hover:bg-amber-500 hover:text-black cursor-pointer">+ ADMIN OVERRIDE PPM</button>' +
+                '</div>' +
               '</div>' +
-              '<div class="space-y-2.5 max-h-[360px] overflow-y-auto no-scrollbar">' +
+              '<div class="space-y-2.5 max-h-[380px] overflow-y-auto no-scrollbar">' +
                 ((site.submittedPpms || []).length === 0
-                  ? '<div class="opacity-60 text-[11px] py-3 border_ui p-3 text-center">No PPM reports submitted yet by FSE for ' + site.siteId + '.</div>'
-                  : (site.submittedPpms || []).map(sub =>
-                      '<div class="border_ui p-3 bg-black/10 dark:bg-white/5 space-y-2">' +
-                        '<div class="flex items-center justify-between border-b border_ui pb-1.5">' +
+                  ? '<div class="opacity-70 text-[11px] py-3 border_ui p-3 text-center">No PPM report submitted yet by FSE for ' + site.siteId + '. Use <span class="font-bold text-amber-400">+ ADMIN OVERRIDE PPM</span> if needed.</div>'
+                  : (site.submittedPpms || []).map(sub => {
+                      const revSt = (sub.reviewStatus || 'PENDING').toUpperCase();
+                      const revBadgeCls = revSt === 'ACCEPTED'
+                        ? 'border-emerald-500/50 text-emerald-400 bg-emerald-500/10'
+                        : (revSt === 'OVERRIDDEN'
+                          ? 'border-amber-500/50 text-amber-400 bg-amber-500/10'
+                          : 'border-rose-500/40 text-rose-300 bg-rose-500/10');
+                      return '<div class="border_ui p-3 bg-black/10 dark:bg-white/5 space-y-2">' +
+                        '<div class="flex flex-wrap items-center justify-between gap-2 border-b border_ui pb-1.5">' +
                           '<div>' +
                             '<div class="font-bold text-(--color-accent)">DATE: ' + sub.submittedAt + '</div>' +
-                            '<div class="text-[10px] opacity-65">Submitted by: ' + sub.submittedBy + '</div>' +
+                            '<div class="text-[10px] opacity-65">Submitted by: ' + sub.submittedBy + ' · ' + sub.completedCount + '/' + sub.totalCount + ' Checked</div>' +
                           '</div>' +
-                          '<span class="border_ui px-2 py-0.5 text-[10px] font-bold">' + sub.completedCount + '/' + sub.totalCount + ' CHECKED</span>' +
+                          '<span class="border_ui px-2 py-0.5 text-[10px] font-bold ' + revBadgeCls + '">' + revSt + '</span>' +
                         '</div>' +
+                        (sub.adminNote ? '<div class="border_ui border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[10px] text-amber-300"><span class="font-bold">ADMIN NOTE:</span> ' + sub.adminNote + (sub.reviewedBy ? ' — ' + sub.reviewedBy : '') + '</div>' : '') +
                         '<div class="grid grid-cols-2 gap-1 text-[10px]">' +
                           (sub.items || []).map(it =>
                             '<div class="border_ui px-2 py-1 flex items-center justify-between gap-1">' +
@@ -5959,8 +6229,12 @@
                             '</div>'
                           ).join('') +
                         '</div>' +
-                      '</div>'
-                    ).join('')) +
+                        '<div class="pt-1.5 border-t border_ui flex flex-wrap items-center justify-end gap-2">' +
+                          '<button type="button" onclick="reviewSubmittedPpm(\'' + site.siteId + '\', \'' + sub.id + '\', \'ACCEPTED\')" class="border_ui border-emerald-500/60 px-3 py-1 text-[10px] font-bold text-emerald-400 hover:bg-emerald-500 hover:text-black cursor-pointer">ACCEPT PPM</button>' +
+                          '<button type="button" onclick="reviewSubmittedPpm(\'' + site.siteId + '\', \'' + sub.id + '\', \'OVERRIDDEN\')" class="border_ui border-amber-500/60 px-3 py-1 text-[10px] font-bold text-amber-400 hover:bg-amber-500 hover:text-black cursor-pointer">OVERRIDE PPM</button>' +
+                        '</div>' +
+                      '</div>';
+                    }).join('')) +
               '</div>' +
             '</div>' +
           '</div>';
@@ -5968,7 +6242,17 @@
         const battHrs = site.batteryAutonomyHours || 8;
         const soc = site.batterySoc || 85;
         const lightHrs = site.gridHoursPerDay !== undefined ? site.gridHoursPerDay : 12;
+        const totalOffload = (parseFloat(battHrs) + parseFloat(lightHrs)).toFixed(1);
         container.innerHTML =
+          '<div class="border_ui border-amber-500/40 bg-amber-500/10 p-2.5 text-[11px] text-amber-300">' +
+            '// ADMIN-ONLY CONTROL: Changes to Light &amp; Battery (BUB) sync directly to FSE Portal (read-only for FSEs) and Supabase.' +
+          '</div>' +
+          '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">' +
+            '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">BATTERY LIFE</div><div class="text-xl font-bold mt-1 text-(--color-accent)">' + battHrs + ' HRS</div><div class="text-[10px] opacity-60">' + (site.batteryStatus || 'HEALTHY') + '</div></div>' +
+            '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">SOC / VOLTAGE</div><div class="text-xl font-bold mt-1">' + soc + '%</div><div class="text-[10px] opacity-60">' + (site.batteryVoltage || '52.8 V') + '</div></div>' +
+            '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">HOURS OF LIGHT</div><div class="text-xl font-bold mt-1 text-amber-400">' + lightHrs + ' HRS/D</div><div class="text-[10px] opacity-60">' + (site.gridStatus || 'PHCN ONLINE') + '</div></div>' +
+            '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">TOTAL GEN OFFLOAD</div><div class="text-xl font-bold mt-1">' + totalOffload + ' HRS/D</div><div class="text-[10px] opacity-60">Token: ' + (site.nepaTokenStatus || 'LOADED') + '</div></div>' +
+          '</div>' +
           '<div class="grid grid-cols-1 lg:grid-cols-2 gap-2.5">' +
             '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
               '<div class="font-bold uppercase border-b border_ui pb-2">// BATTERY LIFE &amp; BUB (' + site.siteId + ')</div>' +
@@ -5976,6 +6260,14 @@
                 '<div class="grid grid-cols-2 gap-2">' +
                   '<div><label class="block text-[10px] opacity-60 mb-1">BATTERY LIFE (HRS OFF-GRID)</label><input type="number" step="0.5" min="0" id="admBubHrs" value="' + battHrs + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
                   '<div><label class="block text-[10px] opacity-60 mb-1">BATTERY SOC (%)</label><input type="number" min="0" max="100" id="admBubSoc" value="' + soc + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
+                '</div>' +
+                '<div class="grid grid-cols-2 gap-2">' +
+                  '<div><label class="block text-[10px] opacity-60 mb-1">BANK VOLTAGE</label><input type="text" id="admBubVoltage" value="' + (site.batteryVoltage || '52.8 V') + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
+                  '<div><label class="block text-[10px] opacity-60 mb-1">BATTERY HEALTH</label><select id="admBubHealth" class="w-full border_ui bg-(--color-card-bg) px-2.5 py-1.5 outline-none">' +
+                    '<option value="HEALTHY" ' + ((site.batteryStatus || 'HEALTHY') === 'HEALTHY' ? 'selected' : '') + '>HEALTHY</option>' +
+                    '<option value="DEGRADED" ' + ((site.batteryStatus || '') === 'DEGRADED' ? 'selected' : '') + '>DEGRADED</option>' +
+                    '<option value="FAULTY / REPLACE" ' + ((site.batteryStatus || '').includes('FAULTY') ? 'selected' : '') + '>FAULTY / REPLACE</option>' +
+                  '</select></div>' +
                 '</div>' +
                 '<button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">SAVE BATTERY TELEMETRY</button>' +
               '</form>' +
@@ -5985,29 +6277,51 @@
               '<form onsubmit="handleAdminSaveLight(event)" class="space-y-2.5">' +
                 '<div class="grid grid-cols-2 gap-2">' +
                   '<div><label class="block text-[10px] opacity-60 mb-1">HOURS OF LIGHT (HRS/DAY)</label><input type="number" step="0.5" min="0" max="24" id="admLightHrs" value="' + lightHrs + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
-                  '<div><label class="block text-[10px] opacity-60 mb-1">GRID STATUS</label><input type="text" id="admGridStatus" value="' + (site.gridStatus || 'PHCN ONLINE') + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
+                  '<div><label class="block text-[10px] opacity-60 mb-1">GRID STATUS</label><select id="admGridStatus" class="w-full border_ui bg-(--color-card-bg) px-2.5 py-1.5 outline-none">' +
+                    '<option value="ONLINE (NEPA AVAILABLE)" ' + ((site.gridStatus || '').includes('ONLINE') ? 'selected' : '') + '>ONLINE (NEPA AVAILABLE)</option>' +
+                    '<option value="INTERMITTENT GRID" ' + ((site.gridStatus || '').includes('INTERMITTENT') ? 'selected' : '') + '>INTERMITTENT GRID</option>' +
+                    '<option value="NO GRID / OUTAGE" ' + ((site.gridStatus || '').includes('OUTAGE') || (site.gridStatus || '').includes('NO GRID') ? 'selected' : '') + '>NO GRID / OUTAGE</option>' +
+                  '</select></div>' +
                 '</div>' +
-                '<button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">SAVE LIGHT HOURS</button>' +
+                '<div><label class="block text-[10px] opacity-60 mb-1">PREPAID TOKEN STATUS</label><select id="admTokenStatus" class="w-full border_ui bg-(--color-card-bg) px-2.5 py-1.5 outline-none">' +
+                  '<option value="LOADED" ' + ((site.nepaTokenStatus || 'LOADED') === 'LOADED' ? 'selected' : '') + '>LOADED</option>' +
+                  '<option value="LOW BALANCE" ' + ((site.nepaTokenStatus || '') === 'LOW BALANCE' ? 'selected' : '') + '>LOW BALANCE</option>' +
+                  '<option value="EXPIRED / OUT" ' + ((site.nepaTokenStatus || '').includes('EXPIRED') ? 'selected' : '') + '>EXPIRED / OUT</option>' +
+                '</select></div>' +
+                '<button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">SAVE LIGHT &amp; GRID TELEMETRY</button>' +
               '</form>' +
             '</div>' +
           '</div>';
       } else if (adminActiveModule === 'fuel') {
         const now = new Date();
+        const genKva = Number(site.genSize || site.loadKw || 15);
         const prevDate = site.previousSupplyDate || (site.refuelHistory && site.refuelHistory.length > 1 ? site.refuelHistory[1].date : 'No prior record');
         const hist = site.refuelHistory || [];
         container.innerHTML =
-          '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">' +
-            '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">LIVE SYNC FUEL</div><div class="text-xl font-bold mt-1 text-(--color-accent)">' + site.currentDL + ' L</div><div class="text-[10px] opacity-60">' + site.fillPct + '% of ' + site.tankCap + 'L</div></div>' +
-            '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">LAST BASELINE</div><div class="text-xl font-bold mt-1">' + (site.baselineDL || 0) + ' L</div><div class="text-[10px] opacity-60">' + (site.fuelBaselineAt || '').slice(0, 10) + ' (-' + (site.burnedSinceBaseline || 0) + 'L)</div></div>' +
-            '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">AUTONOMY LEFT</div><div class="text-xl font-bold mt-1">' + site.daysRemaining + ' DAYS</div><div class="text-[10px] opacity-60">CPD: ' + site.cpd + ' L/d (' + site.cph + ' L/h)</div></div>' +
-            '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">PREDICTED DRY</div><div class="text-sm font-bold mt-1">' + site.predictedDryDate + '</div><div class="text-[10px] opacity-60">' + site.refuelDate + '</div></div>' +
+          '<div class="grid grid-cols-1 lg:grid-cols-12 gap-2.5">' +
+            '<div class="lg:col-span-7 border_ui p-4 bg-(--color-card-bg)/40 space-y-2.5">' +
+              '<div class="flex items-center justify-between border-b border_ui pb-2">' +
+                '<span class="font-bold uppercase">// ANIMATED DIESEL TANK, GEN TYPE &amp; DAILY USAGE (' + site.siteId + ')</span>' +
+                '<span class="border_ui px-2 py-0.5 text-[10px] font-bold text-amber-400">' + genKva + ' kVA · ' + site.cpd + ' L/DAY</span>' +
+              '</div>' +
+              buildAnimatedTankHtml(site) +
+            '</div>' +
+            '<div class="lg:col-span-5 grid grid-cols-2 gap-2 text-xs">' +
+              '<div class="border_ui p-3 card_surface flex flex-col justify-between"><div class="opacity-50 text-[10px] uppercase">LIVE SYNC FUEL</div><div class="text-xl font-bold mt-1 text-(--color-accent)">' + site.currentDL + ' L</div><div class="text-[10px] opacity-60">' + site.fillPct + '% of ' + site.tankCap + 'L</div></div>' +
+              '<div class="border_ui p-3 card_surface flex flex-col justify-between"><div class="opacity-50 text-[10px] uppercase">GENERATOR TYPE</div><div class="text-xl font-bold mt-1 text-amber-400">' + genKva + ' kVA</div><div class="text-[10px] opacity-60">' + (site.powerSource || 'In-house') + '</div></div>' +
+              '<div class="border_ui p-3 card_surface flex flex-col justify-between"><div class="opacity-50 text-[10px] uppercase">DAILY USAGE (CPD)</div><div class="text-xl font-bold mt-1">' + site.cpd + ' L/d</div><div class="text-[10px] opacity-60">' + site.cph + ' L/h · 12h: ' + site.cpd12h + 'L</div></div>' +
+              '<div class="border_ui p-3 card_surface flex flex-col justify-between"><div class="opacity-50 text-[10px] uppercase">AUTONOMY / DRY</div><div class="text-lg font-bold mt-1">' + site.daysRemaining + ' DAYS</div><div class="text-[10px] opacity-60">' + site.predictedDryDate + '</div></div>' +
+            '</div>' +
           '</div>' +
           '<div class="grid grid-cols-1 lg:grid-cols-2 gap-2.5">' +
             '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
-              '<div class="font-bold uppercase border-b border_ui pb-2">// INPUT FUEL LEVEL (' + site.siteId + ')</div>' +
+              '<div class="font-bold uppercase border-b border_ui pb-2">// INPUT FUEL LEVEL &amp; DAILY USAGE (' + site.siteId + ')</div>' +
               '<form onsubmit="handleAdminUpdateFuel(event)" class="space-y-2.5">' +
-                '<div><label class="block text-[10px] opacity-60 mb-1">CURRENT FUEL LEVEL (LITRES)</label><input type="number" step="0.1" min="0" id="admFuelLevel" value="' + site.currentDL + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 font-bold outline-none"></div>' +
-                '<button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">SAVE FUEL LEVEL</button>' +
+                '<div class="grid grid-cols-2 gap-2">' +
+                  '<div><label class="block text-[10px] opacity-60 mb-1">CURRENT FUEL LEVEL (LITRES)</label><input type="number" step="0.1" min="0" id="admFuelLevel" value="' + site.currentDL + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 font-bold outline-none"></div>' +
+                  '<div><label class="block text-[10px] opacity-60 mb-1">DAILY USAGE (CPD L/DAY)</label><input type="number" step="0.5" min="1" id="admFuelCpd" value="' + site.cpd + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 font-bold outline-none"></div>' +
+                '</div>' +
+                '<button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">SAVE FUEL LEVEL &amp; USAGE</button>' +
               '</form>' +
             '</div>' +
             '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
@@ -6192,48 +6506,234 @@
             '</div>' +
           '</div>';
       } else if (adminActiveModule === 'directory') {
-        const rows = masterSites.map(s =>
-          '<tr class="border-b border_ui/50">' +
-            '<td class="py-2 pr-3 font-bold">' + s.siteId + '</td>' +
-            '<td class="py-2 pr-3">' + s.tenantId + '</td>' +
-            '<td class="py-2 pr-3">' + s.state + '</td>' +
-            '<td class="py-2 pr-3">' + (s.fse || 'N/A') + '</td>' +
-            '<td class="py-2 pr-3">' + (s.fsePhone || 'N/A') + '</td>' +
-            '<td class="py-2 pr-3 ' + (s.fseEmail ? 'text-(--color-accent)' : 'text-amber-400') + '">' + (s.fseEmail || 'NOT SET') + '</td>' +
-            '<td class="py-2 text-right"><button type="button" onclick="adminEditFseEmail(\'' + s.siteId + '\')" class="border_ui px-2 py-0.5 text-[10px] font-bold btn-invert cursor-pointer">EDIT EMAIL</button></td>' +
-          '</tr>'
-        ).join('');
+        const cleanFsePhone = (site.fsePhone || '').replace(/[^0-9]/g, '');
+        const cleanSecPhone = (site.securityPhone || '').replace(/[^0-9]/g, '');
 
         container.innerHTML =
           '<div class="space-y-3">' +
-            '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
-              '<div class="flex flex-wrap items-center justify-between gap-2 border-b border_ui pb-2">' +
-                '<span class="font-bold uppercase text-amber-400">// FSE CONTACT &amp; EMAIL DIRECTORY (' + masterSites.length + ' ACTIVE SITES)</span>' +
-                '<button type="button" onclick="sendAdminPpmReminders()" class="border_ui px-3 py-1 text-[10px] font-bold nav_active btn-invert cursor-pointer">SEND PPM REMINDERS TO ALL DUE FSEs</button>' +
+            '<div class="grid grid-cols-1 lg:grid-cols-2 gap-2.5">' +
+              '<!-- Selected Site FSE Profile -->' +
+              '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
+                '<div class="flex flex-wrap items-center justify-between gap-2 border-b border_ui pb-2">' +
+                  '<div>' +
+                    '<div class="font-bold uppercase text-amber-400">// FSE PROFILE — ' + site.siteId + '</div>' +
+                    '<div class="text-[10px] opacity-65">' + site.state + ' · Tenant: ' + site.tenantId + '</div>' +
+                  '</div>' +
+                  '<div class="flex items-center gap-1.5">' +
+                    (cleanFsePhone ? '<a href="tel:' + cleanFsePhone + '" class="border_ui px-2 py-1 text-[10px] font-bold btn-invert">CALL</a><a href="https://wa.me/234' + cleanFsePhone.replace(/^0/, '') + '" target="_blank" class="border_ui px-2 py-1 text-[10px] font-bold btn-invert">WA</a>' : '') +
+                    '<button type="button" onclick="sendAdminPpmReminders(\'' + site.siteId + '\')" class="border_ui px-2.5 py-1 text-[10px] font-bold nav_active btn-invert cursor-pointer">PPM REMINDER</button>' +
+                  '</div>' +
+                '</div>' +
+                '<div class="border_ui p-2.5 bg-black/10 dark:bg-white/5 text-[11px] space-y-1">' +
+                  '<div class="flex justify-between"><span class="opacity-60">SITE ID:</span><span class="font-bold text-(--color-accent)">' + site.siteId + '</span></div>' +
+                  '<div class="flex justify-between"><span class="opacity-60">STATE / LOCATION:</span><span class="font-bold">' + site.state + '</span></div>' +
+                  '<div class="flex justify-between"><span class="opacity-60">ADDRESS:</span><span class="truncate max-w-[240px]" title="' + (site.address || '') + '">' + (site.address || 'N/A') + '</span></div>' +
+                '</div>' +
+                '<form onsubmit="handleAdminSaveFseProfile(event)" class="space-y-2.5">' +
+                  '<div><label class="block text-[10px] opacity-60 mb-1">FSE NAME</label><input type="text" id="admProfileFseName" value="' + (site.fse || '') + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
+                  '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">' +
+                    '<div><label class="block text-[10px] opacity-60 mb-1">FSE PHONE NUMBER</label><input type="text" id="admProfileFsePhone" value="' + (site.fsePhone || '') + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
+                    '<div><label class="block text-[10px] opacity-60 mb-1">FSE EMAIL</label><input type="email" id="admProfileFseEmail" value="' + (site.fseEmail || '') + '" placeholder="fse@coloplus.com" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
+                  '</div>' +
+                  '<button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">SAVE FSE PROFILE</button>' +
+                '</form>' +
               '</div>' +
-              '<div class="overflow-x-auto"><table class="w-full text-left border-collapse text-[11px]">' +
-                '<thead><tr class="border-b border_ui opacity-60"><th class="py-1.5 pr-3">SITE ID</th><th class="py-1.5 pr-3">TENANT ID</th><th class="py-1.5 pr-3">STATE</th><th class="py-1.5 pr-3">FSE NAME</th><th class="py-1.5 pr-3">PHONE</th><th class="py-1.5 pr-3">FSE EMAIL</th><th class="py-1.5 text-right">ACTION</th></tr></thead>' +
-                '<tbody>' + rows + '</tbody></table></div>' +
+
+              '<!-- Selected Site Security (CLO) Profile -->' +
+              '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3 flex flex-col justify-between">' +
+                '<div class="space-y-3">' +
+                  '<div class="flex flex-wrap items-center justify-between gap-2 border-b border_ui pb-2">' +
+                    '<div>' +
+                      '<div class="font-bold uppercase text-(--color-accent)">// ON-SITE SECURITY (CLO) — ' + site.siteId + '</div>' +
+                      '<div class="text-[10px] opacity-65">Site Access, Guard &amp; Gate Control Contact</div>' +
+                    '</div>' +
+                    (cleanSecPhone ? '<a href="tel:' + cleanSecPhone + '" class="border_ui px-2.5 py-1 text-[10px] font-bold btn-invert">CALL SECURITY</a>' : '') +
+                  '</div>' +
+                  '<form onsubmit="handleAdminSaveSecurityProfile(event)" class="space-y-2.5">' +
+                    '<div><label class="block text-[10px] opacity-60 mb-1">SECURITY OFFICER / CLO NAME</label><input type="text" id="admProfileSecName" value="' + (site.security || 'On-site Security') + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
+                    '<div><label class="block text-[10px] opacity-60 mb-1">SECURITY PHONE NUMBER</label><input type="text" id="admProfileSecPhone" value="' + (site.securityPhone || '') + '" placeholder="e.g. 0803..." class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
+                    '<button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">SAVE SECURITY PROFILE</button>' +
+                  '</form>' +
+                '</div>' +
+                '<div class="border_ui p-2.5 bg-black/10 dark:bg-white/5 text-[10px] opacity-75">' +
+                  '// Showing profile exclusively for <span class="font-bold">' + site.siteId + ' (' + site.state + ')</span>. Switch site in the top dropdown to view another site\'s FSE &amp; Security.' +
+                '</div>' +
+              '</div>' +
             '</div>' +
+
+            '<!-- Custom Email Composer (Resend) -->' +
             '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
-              '<div class="font-bold uppercase text-(--color-accent) border-b border_ui pb-2">// CUSTOM EMAIL COMPOSER (VIA RESEND)</div>' +
+              '<div class="font-bold uppercase text-(--color-accent) border-b border_ui pb-2">// SEND EMAIL FOR ' + site.siteId + ' (VIA RESEND)</div>' +
               '<form onsubmit="handleAdminSendCustomEmail(event)" class="space-y-2.5">' +
                 '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">' +
-                  '<div><label class="block text-[10px] opacity-60 mb-1">RECIPIENT GROUP</label><select id="admEmailTarget" onchange="document.getElementById(\'admCustomEmailWrap\').classList.toggle(\'hidden\', this.value !== \'CUSTOM\')" class="w-full border_ui bg-(--color-card-bg) px-2.5 py-1.5 outline-none">' +
+                  '<div><label class="block text-[10px] opacity-60 mb-1">RECIPIENT</label><select id="admEmailTarget" onchange="document.getElementById(\'admCustomEmailWrap\').classList.toggle(\'hidden\', this.value !== \'CUSTOM\')" class="w-full border_ui bg-(--color-card-bg) px-2.5 py-1.5 outline-none">' +
+                    '<option value="SITE_FSE">THIS SITE FSE (' + (site.fseEmail || 'No email set yet') + ')</option>' +
                     '<option value="FINANCE">FINANCE TEAM</option>' +
-                    '<option value="ALL_FSES">ALL ACTIVE FSEs</option>' +
                     '<option value="ADMIN">ADMIN ALERT EMAIL</option>' +
                     '<option value="CUSTOM">SPECIFIC EMAIL ADDRESS</option>' +
                   '</select></div>' +
                   '<div id="admCustomEmailWrap" class="hidden"><label class="block text-[10px] opacity-60 mb-1">RECIPIENT EMAIL</label><input type="email" id="admCustomEmailTo" placeholder="recipient@coloplus.com" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
                 '</div>' +
-                '<div><label class="block text-[10px] opacity-60 mb-1">SUBJECT</label><input type="text" id="admEmailSubject" required placeholder="e.g. Monthly Diesel Budget / Urgent Site PPM Dispatch" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
-                '<div><label class="block text-[10px] opacity-60 mb-1">MESSAGE</label><textarea id="admEmailBody" rows="4" required placeholder="Type your custom message to Finance or Field Engineers..." class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></textarea></div>' +
+                '<div><label class="block text-[10px] opacity-60 mb-1">SUBJECT</label><input type="text" id="admEmailSubject" required placeholder="e.g. ' + site.siteId + ' — PPM Dispatch / Diesel Update" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
+                '<div><label class="block text-[10px] opacity-60 mb-1">MESSAGE</label><textarea id="admEmailBody" rows="4" required placeholder="Type your message to the site FSE or Finance team..." class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></textarea></div>' +
                 '<button type="submit" class="border_ui px-5 py-2 font-bold nav_active btn-invert cursor-pointer">SEND EMAIL VIA RESEND &gt;&gt;</button>' +
               '</form>' +
             '</div>' +
           '</div>';
       }
+    }
+
+    function reviewSubmittedPpm(siteId, subId, decision) {
+      if (!isAdminUnlocked || !adminSession) return;
+      const site = masterSites.find(s => s.siteId === siteId);
+      if (!site || !site.submittedPpms) return;
+      const sub = site.submittedPpms.find(p => String(p.id) === String(subId));
+      if (!sub) return;
+
+      let note = '';
+      if (decision === 'OVERRIDDEN') {
+        const input = prompt('Enter Admin Override note/reason for ' + site.siteId + ' PPM (' + sub.submittedAt + '):', sub.adminNote || 'Overridden by Admin after verification');
+        if (input === null) return;
+        note = input.trim() || 'Overridden by Admin';
+      } else {
+        const input = prompt('Optional approval note for accepting ' + site.siteId + ' PPM (leave blank for standard approval):', sub.adminNote || '');
+        if (input === null) return;
+        note = input.trim();
+      }
+
+      const nowIso = new Date().toISOString();
+      sub.reviewStatus = decision;
+      sub.adminNote = note;
+      sub.reviewedBy = adminSession.adminName || 'NOC Administrator';
+      sub.reviewedAt = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+      if (decision === 'ACCEPTED' || decision === 'OVERRIDDEN') {
+        site.lastPpmDate = sub.submittedDate || nowIso.slice(0, 10);
+        site.ppmManuallySet = true;
+        synchronizeSite(site);
+        syncPpmDatesToCalendar();
+        sbUpsertSite(site);
+      }
+
+      saveState();
+      if (sb) {
+        try {
+          Promise.resolve(
+            sb.from('submitted_ppms')
+              .update({
+                review_status: decision,
+                admin_note: note,
+                reviewed_by: sub.reviewedBy,
+                reviewed_at: nowIso
+              })
+              .eq('submission_id', sub.id)
+          ).catch(() => {});
+        } catch (err) {}
+      }
+
+      renderCalendar();
+      renderTasks();
+      updateAdminPortalUiState();
+      if (fseSession && fseSession.siteId === site.siteId) renderFseRepairsModule(site);
+      showToast('PPM ' + decision + ' for ' + site.siteId + ' — Next PPM: ' + (site.nextPpmDate || 'N/A'));
+    }
+
+    function adminOverrideLogPpm(siteId) {
+      if (!isAdminUnlocked || !adminSession) return;
+      const site = masterSites.find(s => s.siteId === siteId);
+      if (!site) return;
+
+      const reason = prompt('Log Admin Override PPM for ' + site.siteId + ' — enter verification note:', 'Admin Override PPM verified directly');
+      if (reason === null) return;
+
+      const now = new Date();
+      const submittedDate = now.toISOString().slice(0, 10);
+      const submittedAt = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' +
+                          now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      const ticks = site.maintenanceTicks || [];
+
+      const sub = {
+        id: 'PPM-ADM-' + Date.now(),
+        submittedDate: submittedDate,
+        submittedAt: submittedAt,
+        submittedBy: adminSession.adminName + ' (Admin Override)',
+        completedCount: ticks.length,
+        totalCount: ticks.length,
+        reviewStatus: 'OVERRIDDEN',
+        adminNote: reason.trim() || 'Admin Override PPM',
+        reviewedBy: adminSession.adminName,
+        reviewedAt: submittedDate,
+        items: ticks.map(t => ({ task: t.task, done: true, photoDataUrl: t.photoDataUrl || null, mediaType: t.mediaType || null }))
+      };
+
+      if (!site.submittedPpms) site.submittedPpms = [];
+      site.submittedPpms.unshift(sub);
+      site.lastPpmDate = submittedDate;
+      site.ppmManuallySet = true;
+      synchronizeSite(site);
+      syncPpmDatesToCalendar();
+      saveState();
+      sbUpsertSite(site);
+
+      if (sb) {
+        try {
+          Promise.resolve(sb.from('submitted_ppms').insert({
+            site_id: site.siteId,
+            submission_id: sub.id,
+            submitted_by: sub.submittedBy,
+            submitted_date: sub.submittedDate,
+            completed_count: sub.completedCount,
+            total_count: sub.totalCount,
+            items: sub.items,
+            review_status: 'OVERRIDDEN',
+            admin_note: sub.adminNote,
+            reviewed_by: sub.reviewedBy,
+            reviewed_at: now.toISOString()
+          })).catch(() => {});
+        } catch (err) {}
+      }
+
+      renderCalendar();
+      renderTasks();
+      updateAdminPortalUiState();
+      showToast('Admin Override PPM recorded for ' + site.siteId);
+    }
+
+    function handleAdminSaveFseProfile(e) {
+      e.preventDefault();
+      if (!isAdminUnlocked || !adminSession) return;
+      const site = masterSites.find(s => s.siteId === adminSession.siteId);
+      if (!site) return;
+
+      site.fse = document.getElementById('admProfileFseName').value.trim() || site.fse;
+      site.fsePhone = document.getElementById('admProfileFsePhone').value.trim();
+      site.fseEmail = document.getElementById('admProfileFseEmail').value.trim();
+      saveState();
+      sbUpsertSite(site);
+      renderSites();
+      updateAdminPortalUiState();
+      if (fseSession && fseSession.siteId === site.siteId) {
+        fseSession.fseName = site.fse;
+        fseSession.fsePhone = site.fsePhone;
+        fseSession.fseEmail = site.fseEmail;
+        localStorage.setItem('coloplus_fse_session', JSON.stringify(fseSession));
+        updateFseUiState();
+      }
+      showToast('Saved FSE profile for ' + site.siteId);
+    }
+
+    function handleAdminSaveSecurityProfile(e) {
+      e.preventDefault();
+      if (!isAdminUnlocked || !adminSession) return;
+      const site = masterSites.find(s => s.siteId === adminSession.siteId);
+      if (!site) return;
+
+      site.security = document.getElementById('admProfileSecName').value.trim() || 'On-site Security';
+      site.securityPhone = document.getElementById('admProfileSecPhone').value.trim();
+      saveState();
+      sbUpsertSite(site);
+      updateAdminPortalUiState();
+      showToast('Saved Security (CLO) profile for ' + site.siteId);
     }
 
     function updateAdminTicketStatus(ticketId, newStatus) {
@@ -6246,11 +6746,15 @@
         t.dateResolved = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
       }
       saveState();
+      if (sb) {
+        try {
+          Promise.resolve(sb.from('machinery_repairs').update({ status: newStatus }).eq('ticket_id', ticketId)).catch(() => {});
+        } catch (err) {}
+      }
       renderRepairs();
       renderAdminTicketAlerts();
       if (adminSession) {
-        const s = masterSites.find(x => x.siteId === adminSession.siteId);
-        if (s) renderAdminModuleContent(s);
+        updateAdminPortalUiState();
       }
       if (fseSession) {
         const fs = masterSites.find(x => x.siteId === fseSession.siteId);
@@ -6259,26 +6763,23 @@
       showToast('Ticket ' + ticketId + ' updated to ' + newStatus);
     }
 
-    function adminEditFseEmail(siteId) {
-      if (!isAdminUnlocked) return;
-      const site = masterSites.find(s => s.siteId === siteId);
-      if (!site) return;
-      const val = prompt('Set FSE Email for ' + site.siteId + ' (' + (site.fse || 'FSE') + '):', site.fseEmail || '');
-      if (val === null) return;
-      site.fseEmail = val.trim();
-      saveState();
-      sbUpsertSite(site);
-      renderAdminModuleContent(site);
-      showToast('Updated FSE email for ' + site.siteId);
-    }
-
     async function handleAdminSendCustomEmail(e) {
       e.preventDefault();
       if (!isAdminUnlocked || !sb) return;
-      const target = document.getElementById('admEmailTarget').value;
-      const customEmail = document.getElementById('admCustomEmailTo') ? document.getElementById('admCustomEmailTo').value.trim() : '';
+      const site = adminSession ? masterSites.find(s => s.siteId === adminSession.siteId) : null;
+      let target = document.getElementById('admEmailTarget').value;
+      let customEmail = document.getElementById('admCustomEmailTo') ? document.getElementById('admCustomEmailTo').value.trim() : '';
       const subject = document.getElementById('admEmailSubject').value.trim();
       const message = document.getElementById('admEmailBody').value.trim();
+
+      if (target === 'SITE_FSE') {
+        if (!site || !site.fseEmail) {
+          showToast('Please save an FSE Email for ' + (site ? site.siteId : 'this site') + ' first.');
+          return;
+        }
+        target = 'CUSTOM';
+        customEmail = site.fseEmail;
+      }
 
       try {
         const { error } = await sb.functions.invoke('send-alert-email', {
@@ -6289,7 +6790,7 @@
         } else {
           document.getElementById('admEmailSubject').value = '';
           document.getElementById('admEmailBody').value = '';
-          showToast('Custom email sent via Resend!');
+          showToast('Email sent via Resend to ' + (customEmail || target));
         }
       } catch (err) {
         showToast('Failed to send custom email');
@@ -6368,23 +6869,6 @@
       showToast('Admin synced PPM cycle! Next due on ' + site.nextPpmDate);
     }
 
-    function handleAdminFlagMachinery(e) {
-      e.preventDefault();
-      if (!isAdminUnlocked || !adminSession) return;
-      const site = masterSites.find(s => s.siteId === adminSession.siteId);
-      if (!site) return;
-      if (!site.constantRepairAssets) site.constantRepairAssets = [];
-      site.constantRepairAssets.unshift({
-        name: document.getElementById('adminFlagName').value.trim(),
-        issue: document.getElementById('adminFlagIssue').value.trim(),
-        count: 1,
-        severity: 'High'
-      });
-      saveState();
-      renderAdminModuleContent(site);
-      showToast('Flagged constant-repair machinery');
-    }
-
     function handleAdminSaveBub(e) {
       e.preventDefault();
       if (!isAdminUnlocked || !adminSession) return;
@@ -6392,10 +6876,14 @@
       if (!site) return;
       site.batteryAutonomyHours = parseFloat(document.getElementById('admBubHrs').value) || 0;
       site.batterySoc = parseInt(document.getElementById('admBubSoc').value, 10) || 0;
+      if (document.getElementById('admBubVoltage')) site.batteryVoltage = document.getElementById('admBubVoltage').value.trim();
+      if (document.getElementById('admBubHealth')) site.batteryStatus = document.getElementById('admBubHealth').value;
       saveState();
+      sbUpsertSite(site);
       renderPowerMatrix();
-      renderAdminModuleContent(site);
-      showToast('Admin updated battery telemetry');
+      updateAdminPortalUiState();
+      if (fseSession && fseSession.siteId === site.siteId) renderFseBubModule(site);
+      showToast('Admin updated battery telemetry for ' + site.siteId);
     }
 
     function handleAdminSaveLight(e) {
@@ -6405,10 +6893,13 @@
       if (!site) return;
       site.gridHoursPerDay = parseFloat(document.getElementById('admLightHrs').value) || 0;
       site.gridStatus = document.getElementById('admGridStatus').value.trim();
+      if (document.getElementById('admTokenStatus')) site.nepaTokenStatus = document.getElementById('admTokenStatus').value;
       saveState();
+      sbUpsertSite(site);
       renderPowerMatrix();
-      renderAdminModuleContent(site);
-      showToast('Admin updated site light hours');
+      updateAdminPortalUiState();
+      if (fseSession && fseSession.siteId === site.siteId) renderFseBubModule(site);
+      showToast('Admin updated site light & grid telemetry for ' + site.siteId);
     }
 
     function handleAdminUpdateFuel(e) {
@@ -6417,6 +6908,8 @@
       const site = masterSites.find(s => s.siteId === adminSession.siteId);
       if (!site) return;
       const newVal = parseFloat(document.getElementById('admFuelLevel').value) || 0;
+      const cpdInput = document.getElementById('admFuelCpd');
+      if (cpdInput) site.cpd = parseFloat(cpdInput.value) || site.cpd;
       site.baselineDL = newVal;
       site.fuelBaselineAt = new Date().toISOString();
       site.currentDL = newVal;
@@ -6425,8 +6918,9 @@
       sbUpsertSite(site);
       updateKpis();
       renderSites();
-      renderAdminModuleContent(site);
-      showToast('Admin updated fuel level');
+      updateAdminPortalUiState();
+      if (fseSession && fseSession.siteId === site.siteId) renderFseFuelModule(site);
+      showToast('Admin updated fuel level (' + newVal + 'L) & daily usage (' + site.cpd + ' L/d)');
     }
 
     function handleAdminLogDelivery(e) {
@@ -6657,49 +7151,53 @@
         return;
       }
 
+      const newGenSize = document.getElementById('newGenSize') ? (parseFloat(document.getElementById('newGenSize').value) || 15) : 15;
+      const initialDL = parseFloat(document.getElementById('newCurrentDL').value);
+      const safeInitialDL = isNaN(initialDL) ? 0 : initialDL;
+
       const newSite = {
         siteId: siteId,
         tenantId: document.getElementById('newTenantId').value.trim(),
-        currentDL: parseFloat(document.getElementById('newCurrentDL').value) || 500,
+        currentDL: safeInitialDL,
         cpd: parseFloat(document.getElementById('newCPD').value) || 40,
         tankCap: parseFloat(document.getElementById('newTankCap').value) || 1000,
+        genSize: newGenSize,
+        loadKw: newGenSize,
         state: document.getElementById('newState').value.trim(),
         address: document.getElementById('newAddress').value.trim(),
         fse: document.getElementById('newFse').value.trim(),
         fsePhone: document.getElementById('newFsePhone').value.trim(),
-        security: 'Site Security',
+        fseEmail: '',
+        security: 'On-site Security',
         securityPhone: '',
         supplier: 'ColoPlus Central Ops',
         isFocus: true,
         lastSuppliedDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
         gridStatus: 'ONLINE (NEPA AVAILABLE)',
         gridHoursPerDay: 12.0,
+        nepaTokenStatus: 'LOADED',
         batteryStatus: 'HEALTHY',
         batterySoc: 90,
         batteryVoltage: '53.0 V',
         batteryAutonomyHours: 8.0,
-        maintenanceTicks: [
-          { id: 't1', text: 'Generator start, excitation & alternator test', done: true, category: 'GENERATOR', reportRef: 'Commissioning' },
-          { id: 't2', text: 'BUB Battery bank voltage check & terminal torquing', done: true, category: 'BATTERY', reportRef: 'Commissioning' },
-          { id: 't3', text: 'Fuel line & filter clog inspection', done: true, category: 'FUEL', reportRef: 'Commissioning' },
-          { id: 't4', text: 'Utility NEPA grid phase balance & ATS cutover test', done: true, category: 'GRID', reportRef: 'Commissioning' },
-          { id: 't5', text: 'PPM 250H periodic service schedule register', done: false, category: 'PPM', reportRef: 'Commissioning' }
-        ],
-        refuelHistory: [
+        ppmCycleDays: 30,
+        submittedPpms: [],
+        maintenanceTicks: [],
+        refuelHistory: safeInitialDL > 0 ? [
           {
             refuelId: 'RF-INITIAL-' + Date.now(),
             date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-            litersAdded: parseFloat(document.getElementById('newCurrentDL').value) || 500,
+            time: new Date().toTimeString().slice(0, 5),
+            qty: safeInitialDL,
+            litersAdded: safeInitialDL,
             startDL: 0,
-            endDL: parseFloat(document.getElementById('newCurrentDL').value) || 500,
+            endDL: safeInitialDL,
             waybill: 'WB-INIT-' + Math.floor(1000 + Math.random() * 9000),
             supplier: 'ColoPlus Central Ops',
             fse: document.getElementById('newFse').value.trim(),
-            pricePerLiter: 2100,
-            totalCostNgn: (parseFloat(document.getElementById('newCurrentDL').value) || 500) * 2100,
-            notes: 'Initial tank fill upon site registration'
+            loggedBy: adminSession ? adminSession.adminName : 'Admin'
           }
-        ]
+        ] : []
       };
 
       newSite.baselineDL = newSite.currentDL;
@@ -6708,6 +7206,7 @@
       masterSites.unshift(newSite);
       saveState();
       sbUpsertSite(newSite);
+      syncPpmDatesToCalendar();
       populateFseLoginDropdown();
       populateAdminLoginDropdown();
       closeAddSiteModal();
@@ -6716,8 +7215,14 @@
       renderSites();
       renderPowerMatrix();
       renderAnalytics();
-      if (isAdminUnlocked && adminSession) updateAdminPortalUiState();
-      showToast('Added and synchronized new site ' + siteId);
+      renderCalendar();
+      renderTasks();
+      if (isAdminUnlocked && adminSession) {
+        adminSession.siteId = newSite.siteId;
+        localStorage.setItem('coloplus_admin_session', JSON.stringify(adminSession));
+        updateAdminPortalUiState();
+      }
+      showToast('Added and switched to new site ' + siteId + ' (' + newGenSize + ' kVA)');
     }
 
     // ==================== ADD REPAIR MODAL ====================
