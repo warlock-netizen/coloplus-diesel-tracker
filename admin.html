@@ -69,9 +69,10 @@
         <nav id="adminSidebarNav" class="hidden space-y-1.5">
           <div class="opacity-50 text-[10px] uppercase tracking-wider mb-1">// ADMIN MENU</div>
           <button id="adminNavIssues" onclick="openAdminModule('issues')" class="w-full flex items-center justify-between py-2 px-2.5 text-left border_ui cursor-pointer btn-invert text-[11px] font-bold nav_active">
-            <span>00. CURRENT ISSUES</span>
+            <span>00. OVERVIEW</span>
             <span class="opacity-60">&gt;</span>
           </button>
+          <div class="opacity-45 text-[9px] uppercase tracking-wider pt-2">// SITE MODULES</div>
           <button id="adminNavRepairs" onclick="openAdminModule('repairs')" class="w-full flex items-center justify-between py-2 px-2.5 text-left border_ui cursor-pointer btn-invert text-[11px] font-bold opacity-80">
             <span>01. REPAIRS &amp; PPM</span>
             <span class="opacity-60">&gt;</span>
@@ -107,7 +108,7 @@
 
       <div class="pt-4 border-t border_ui mt-4">
         <a href="./index.html" class="block w-full border_ui py-2 px-2.5 text-center font-bold btn-invert text-[11px]">
-          &lt;&lt; PUBLIC HOME: ISSUES
+          &lt;&lt; BACK TO HOME
         </a>
       </div>
     </aside>
@@ -154,7 +155,7 @@
           <div class="pt-2 flex items-center justify-between gap-3 flex-wrap">
             <div class="flex items-center gap-2">
               <a href="./index.html" class="border_ui px-4 py-2 min-h-[44px] flex items-center btn-invert cursor-pointer">
-                &lt;&lt; CURRENT ISSUES
+                &lt;&lt; BACK TO HOME
               </a>
               <button type="button" onclick="handleAdminPasswordReset()" class="border_ui px-3 py-2 min-h-[44px] btn-invert cursor-pointer text-[11px] opacity-80">
                 FORGOT PASSWORD?
@@ -170,53 +171,29 @@
       <!-- ADMIN WORKSPACE VIEW (DEDICATED CLEAN BODY — MENU IS IN LEFT SIDEBAR) -->
       <div id="adminWorkspaceView" class="hidden flex flex-col gap-2.5">
 
-        <!-- Admin Active Site + Exclusive Action Bar -->
-        <div class="border_ui border-amber-500/50 p-4 bg-amber-500/10 flex flex-col gap-3 text-xs">
-          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <div>
-              <div class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-                <span class="text-[10px] uppercase tracking-widest text-amber-400 font-bold">// ADMIN AUTHORIZED SESSION (FULL SITE EDIT ACCESS)</span>
-              </div>
-              <div id="adminActiveSiteHeader" class="font-bold text-base mt-0.5">SITE: --</div>
-              <div id="adminActiveSiteSub" class="opacity-75 text-[11px]">State · Tenant · Admin</div>
+        <!-- Admin Active Site Header (Clean — Site Switcher includes + ADD NEW SITE) -->
+        <div id="adminSiteHeaderBar" class="border_ui border-amber-500/50 p-4 bg-amber-500/10 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+              <span class="text-[10px] uppercase tracking-widest text-amber-400 font-bold">// ADMIN AUTHORIZED SESSION</span>
             </div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <select id="adminQuickSiteSwitch" onchange="switchAdminSite(this.value)" class="border_ui bg-(--color-card-bg) px-2.5 py-1.5 text-[11px] outline-none cursor-pointer"></select>
-              <button onclick="logoutAdminPortal()" class="border_ui border-rose-500/50 px-3 py-1.5 hover:bg-rose-600 hover:text-white cursor-pointer font-bold text-[11px]">
-                LOCK &amp; LOGOUT
-              </button>
-            </div>
+            <div id="adminActiveSiteHeader" class="font-bold text-base mt-0.5">SITE: --</div>
+            <div id="adminActiveSiteSub" class="opacity-75 text-[11px]">State · Tenant · Admin</div>
           </div>
-
-          <div class="border-t border_ui pt-3 flex flex-wrap items-center gap-2">
-            <span class="text-[10px] uppercase opacity-70 mr-1 font-bold">// ADMIN ACTIONS:</span>
+          <div class="flex items-center gap-2 flex-wrap">
+            <select id="adminQuickSiteSwitch" onchange="switchAdminSite(this.value)" class="border_ui bg-(--color-card-bg) px-2.5 py-1.5 text-[11px] outline-none cursor-pointer"></select>
             <button onclick="openEditSiteModal(adminSession.siteId)" class="border_ui border-amber-400 bg-amber-500 text-black px-3 py-1.5 font-bold hover:bg-amber-400 cursor-pointer text-[11px]">
-              EDIT THIS SITE
+              EDIT SITE
             </button>
-            <button onclick="openAddSiteModal()" class="border_ui px-3 py-1.5 btn-invert cursor-pointer font-bold text-[11px]">
-              + ADD NEW SITE
-            </button>
-            <button onclick="openAddRepairModal()" class="border_ui px-3 py-1.5 btn-invert cursor-pointer font-bold text-[11px]">
-              + LOG REPAIR RCA
-            </button>
-            <button onclick="exportToCsv()" class="border_ui px-3 py-1.5 btn-invert cursor-pointer font-bold text-[11px]">
-              EXPORT CSV
-            </button>
-            <button onclick="clearAllLiveFuelToZero()" class="border_ui border-amber-500/60 text-amber-400 px-3 py-1.5 hover:bg-amber-500 hover:text-black cursor-pointer font-bold text-[11px]">
-              ZERO ALL FUEL (LIVE DB)
-            </button>
-            <button onclick="deleteAdminSite(adminSession.siteId)" class="border_ui border-rose-500/50 text-rose-400 px-3 py-1.5 hover:bg-rose-600 hover:text-white cursor-pointer font-bold text-[11px]">
-              DEACTIVATE SITE
+            <button onclick="logoutAdminPortal()" class="border_ui border-rose-500/50 px-3 py-1.5 hover:bg-rose-600 hover:text-white cursor-pointer font-bold text-[11px]">
+              LOGOUT
             </button>
           </div>
         </div>
 
-        <!-- Incoming Site Repair & 7-Day Fuel Issues Alert Banner -->
-        <div id="adminTicketAlertBanner" class="hidden border_ui border-rose-500/60 bg-rose-500/10 p-4 space-y-2.5 text-xs"></div>
-
-        <!-- Selected Site Snapshot Strip (Industrial Animated Tank + Gen/Usage, Issues, Last/Next PPM & Status) -->
-        <div id="adminSiteSnapshotStrip" class="grid grid-cols-1 lg:grid-cols-12 gap-2 text-xs"></div>
+        <!-- Selected Site Snapshot Strip (Hidden on standalone 00. OVERVIEW page) -->
+        <div id="adminSiteSnapshotStrip" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-2 text-xs"></div>
 
         <!-- Active Admin Module Container (Issues / Repairs & PPM / BUB / Fuel / Telemetry / FSE & Email) -->
         <div id="adminModuleContainer" class="space-y-2.5 text-xs"></div>
@@ -344,7 +321,7 @@
 
   <!-- ADMIN MOBILE BOTTOM NAV -->
   <nav id="adminMobileBottomNav" class="hidden md:hidden fixed bottom-0 inset-x-0 z-40 border-t border_ui bg-(--color-card-bg)/95 backdrop-blur-md grid grid-cols-6 gap-1 p-1 text-[8px] font-mono">
-    <button id="mobAdminIssuesBtn" onclick="openAdminModule('issues')" class="border_ui min-h-[44px] flex flex-col items-center justify-center font-bold uppercase nav_active btn-invert">ISSUES</button>
+    <button id="mobAdminIssuesBtn" onclick="openAdminModule('issues')" class="border_ui min-h-[44px] flex flex-col items-center justify-center font-bold uppercase nav_active btn-invert">OVRVIEW</button>
     <button id="mobAdminRepairsBtn" onclick="openAdminModule('repairs')" class="border_ui min-h-[44px] flex flex-col items-center justify-center font-bold uppercase opacity-80 btn-invert">PPM</button>
     <button id="mobAdminFuelBtn" onclick="openAdminModule('fuel')" class="border_ui min-h-[44px] flex flex-col items-center justify-center font-bold uppercase opacity-80 btn-invert">FUEL</button>
     <button id="mobAdminBubBtn" onclick="openAdminModule('bub')" class="border_ui min-h-[44px] flex flex-col items-center justify-center font-bold uppercase opacity-80 btn-invert">BUB</button>

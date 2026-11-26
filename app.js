@@ -1226,6 +1226,16 @@
       if (savedAdmin) adminSession = JSON.parse(savedAdmin);
     } catch (e) { adminSession = null; }
 
+    // Local Current Date Helper (YYYY-MM-DD, synchronized daily with real current date)
+    function getLocalTodayIso() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + day;
+    }
+    let lastKnownTodayIso = getLocalTodayIso();
+
     // Helper: Parse audit/supply date string into ISO baseline timestamp
     function parseBaselineTimestamp(s) {
       if (s.fuelBaselineAt && !isNaN(Date.parse(s.fuelBaselineAt))) {
@@ -1233,17 +1243,15 @@
       }
       if (s.lastSupplyDate) {
         const cleaned = String(s.lastSupplyDate).trim();
-        // Handle DD-MM-YYYY (e.g. 29-10-2026)
         const dmy = cleaned.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
         if (dmy) {
           const iso = dmy[3] + '-' + dmy[2].padStart(2, '0') + '-' + dmy[1].padStart(2, '0') + 'T00:00:00Z';
           if (!isNaN(Date.parse(iso))) return Date.parse(iso);
         }
-        // Handle DD-Mon-YYYY or ISO
         const parsed = Date.parse(cleaned);
         if (!isNaN(parsed)) return parsed;
       }
-      return Date.parse('2026-11-02T00:00:00Z');
+      return Date.now();
     }
 
     // Strictly enforce valid generator ratings (15 kVA or 20 kVA ONLY)
@@ -1365,22 +1373,19 @@
         };
       });
 
-      // PPM Cycle Period & Next PPM Due Date (computed from each site's hoursToPpm DG RH cycle)
+      // PPM Cycle Period & Next PPM Due Date (anchored daily to real current date)
+      const todayIso = getLocalTodayIso();
       if (s.gridHoursPerDay === undefined) s.gridHoursPerDay = (s.gridStatus || '').includes('ONLINE') ? 12 : 4;
       const genHrsPerDay = Math.max(4, 24 - Number(s.gridHoursPerDay || 12));
       if (!s.ppmCycleDays) s.ppmCycleDays = Math.round(250 / genHrsPerDay);
       if (s.ppmManuallySet && s.lastPpmDate) {
-        const lastD = new Date(s.lastPpmDate + 'T00:00:00');
-        const nextD = new Date(lastD.getTime() + Number(s.ppmCycleDays) * 24 * 60 * 60 * 1000);
-        s.nextPpmDate = nextD.toISOString().slice(0, 10);
+        s.nextPpmDate = addDaysIso(s.lastPpmDate, Number(s.ppmCycleDays));
       } else {
         const hrsLeft = (s.hoursToPpm !== undefined && s.hoursToPpm !== null) ? Number(s.hoursToPpm) : 250;
         const daysToPpm = Math.max(1, Math.round(hrsLeft / genHrsPerDay));
-        const nextD = new Date(now.getTime() + daysToPpm * 24 * 60 * 60 * 1000);
-        s.nextPpmDate = nextD.toISOString().slice(0, 10);
+        s.nextPpmDate = addDaysIso(todayIso, daysToPpm);
         if (!s.lastPpmDate) {
-          const prevD = new Date(nextD.getTime() - Number(s.ppmCycleDays) * 24 * 60 * 60 * 1000);
-          s.lastPpmDate = prevD.toISOString().slice(0, 10);
+          s.lastPpmDate = addDaysIso(s.nextPpmDate, -Number(s.ppmCycleDays));
         }
       }
 
@@ -1978,7 +1983,23 @@
 
     function tickClock() {
       const now = new Date();
-      document.getElementById('liveClock').innerText = now.toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+      const clockEl = document.getElementById('liveClock');
+      if (clockEl) {
+        clockEl.innerText = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' · ' +
+                            now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      }
+      // Daily automatic rollover at midnight: re-sync Diesel & PPM dates daily
+      const curToday = getLocalTodayIso();
+      if (curToday !== lastKnownTodayIso) {
+        lastKnownTodayIso = curToday;
+        calendarViewDate = new Date();
+        masterSites.forEach(s => synchronizeSite(s));
+        syncPpmDatesToCalendar();
+        renderCalendar();
+        renderTasks();
+        if (PORTAL_MODE === 'fse' && fseSession) updateFseUiState();
+        if (PORTAL_MODE === 'admin' && isAdminUnlocked && adminSession) updateAdminPortalUiState();
+      }
     }
 
     let isSidebarCollapsed = localStorage.getItem('coloplus_sidebar_collapsed') === 'true';
@@ -2280,18 +2301,18 @@
     }
 
     function syncPpmDatesToCalendar() {
-      // 1. Zero-Clash Personalizer: guarantee every site has its own unique, non-clashing PPM date
+      // 1. Zero-Clash Personalizer: guarantee every site has its own unique, non-clashing PPM date aligned daily with today
+      const todayIso = getLocalTodayIso();
       const usedDates = new Set();
       const ordered = [...masterSites].sort((a, b) => {
-        // Manually pinned Admin dates keep priority first, then earliest due date, then Site ID
         if (!!a.ppmManuallySet !== !!b.ppmManuallySet) return a.ppmManuallySet ? -1 : 1;
         const cmp = (a.nextPpmDate || '').localeCompare(b.nextPpmDate || '');
         return cmp !== 0 ? cmp : a.siteId.localeCompare(b.siteId);
       });
 
       ordered.forEach(s => {
-        if (!s.nextPpmDate) {
-          s.nextPpmDate = addDaysIso(new Date().toISOString().slice(0, 10), 1);
+        if (!s.nextPpmDate || (!s.ppmManuallySet && s.nextPpmDate < todayIso)) {
+          s.nextPpmDate = addDaysIso(todayIso, 1);
         }
         let candidate = s.nextPpmDate;
         let guard = 0;
@@ -4975,8 +4996,13 @@
       if (quick) quick.value = site.siteId;
       const pathEl = document.getElementById('headerPath');
       if (PORTAL_MODE === 'admin' && pathEl) {
-        pathEl.innerText = '// ADMIN PORTAL — ' + site.siteId;
+        pathEl.innerText = adminActiveModule === 'issues' ? '// ADMIN PORTAL — OVERVIEW' : ('// ADMIN PORTAL — ' + site.siteId);
       }
+      const siteHdrBar = document.getElementById('adminSiteHeaderBar');
+      const snapBar = document.getElementById('adminSiteSnapshotStrip');
+      const isOverview = adminActiveModule === 'issues';
+      if (siteHdrBar) siteHdrBar.classList.toggle('hidden', isOverview);
+      if (snapBar) snapBar.classList.toggle('hidden', isOverview || adminActiveModule === 'calendar');
 
       // Render Selected-Site Snapshot Strip (Compact Animated Tank + Gen/Usage, Issues/Tickets, Last/Next PPM & Prev PPM Status)
       const snapEl = document.getElementById('adminSiteSnapshotStrip');
@@ -5144,9 +5170,19 @@
 
       const modContainer = document.getElementById('adminModuleContainer');
       const calWrap = document.getElementById('adminCalendarWrap');
+      const siteHdrBar = document.getElementById('adminSiteHeaderBar');
+      const snapBar = document.getElementById('adminSiteSnapshotStrip');
+      const isOverview = mod === 'issues';
+      if (siteHdrBar) siteHdrBar.classList.toggle('hidden', isOverview);
+      if (snapBar) snapBar.classList.toggle('hidden', isOverview || mod === 'calendar');
       if (calWrap && modContainer) {
         calWrap.classList.toggle('hidden', mod !== 'calendar');
         modContainer.classList.toggle('hidden', mod === 'calendar');
+      }
+
+      const pathEl = document.getElementById('headerPath');
+      if (PORTAL_MODE === 'admin' && pathEl) {
+        pathEl.innerText = isOverview ? '// ADMIN PORTAL — OVERVIEW' : ('// ADMIN PORTAL — ' + (adminSession ? adminSession.siteId : ''));
       }
 
       if (mod === 'calendar') {
@@ -5166,90 +5202,101 @@
       if (!container) return;
 
       if (adminActiveModule === 'issues') {
+        // STANDALONE ADMIN OVERVIEW: Strictly Separated — Tickets, Complaints & Fuel Issues ONLY
         masterSites.forEach(s => synchronizeSite(s));
-        const openIssues = masterRepairs.filter(r => (r.status || '').toUpperCase() !== 'RESOLVED');
+        const openAll = masterRepairs.filter(r => (r.status || '').toUpperCase() !== 'RESOLVED');
+        const openComplaints = openAll.filter(r => (r.recordKind || '').toUpperCase() === 'COMPLAINT' || (r.category || '').toUpperCase().includes('COMPLAINT'));
+        const openTickets = openAll.filter(r => !openComplaints.includes(r));
         const fuelAlerts = masterSites.filter(s => s.is7DayAlarm || s.daysRemaining <= 7.0).sort((a, b) => a.daysRemaining - b.daysRemaining);
-        const pendingPpms = [];
-        masterSites.forEach(s => {
-          (s.submittedPpms || []).forEach(sub => {
-            if ((sub.reviewStatus || 'PENDING').toUpperCase() === 'PENDING') {
-              pendingPpms.push({ site: s, sub });
-            }
-          });
-        });
+        const todayDisplay = new Date().toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
 
         container.innerHTML =
-          '<div class="grid grid-cols-1 lg:grid-cols-2 gap-2.5">' +
+          '<div class="border_ui border-amber-500/40 p-4 bg-(--color-card-bg)/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">' +
+            '<div>' +
+              '<div class="text-[10px] uppercase tracking-widest text-amber-400 font-bold">// ADMIN COMMAND OVERVIEW — ' + todayDisplay + '</div>' +
+              '<h2 class="hero-outline-title text-4xl uppercase mt-0.5">OVERVIEW</h2>' +
+            '</div>' +
+            '<div class="grid grid-cols-3 gap-2 text-center">' +
+              '<div class="border_ui border-rose-500/50 bg-rose-500/10 px-3 py-1.5"><div class="text-[9px] text-rose-400 font-bold">TICKETS</div><div class="font-bold text-lg text-rose-400">' + openTickets.length + '</div></div>' +
+              '<div class="border_ui border-amber-500/50 bg-amber-500/10 px-3 py-1.5"><div class="text-[9px] text-amber-400 font-bold">COMPLAINTS</div><div class="font-bold text-lg text-amber-400">' + openComplaints.length + '</div></div>' +
+              '<div class="border_ui border-amber-500/50 bg-amber-500/10 px-3 py-1.5"><div class="text-[9px] text-amber-400 font-bold">FUEL ISSUES</div><div class="font-bold text-lg text-amber-400">' + fuelAlerts.length + '</div></div>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="grid grid-cols-1 lg:grid-cols-3 gap-2.5">' +
+            '<!-- 1. TICKETS -->' +
             '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-2.5">' +
               '<div class="flex items-center justify-between border-b border_ui pb-2">' +
-                '<span class="font-bold uppercase text-rose-400">// LIVE OPEN TICKETS &amp; COMPLAINTS (' + openIssues.length + ')</span>' +
-                '<button type="button" onclick="openAddRepairModal()" class="border_ui px-2 py-1 text-[10px] font-bold btn-invert cursor-pointer">+ LOG TICKET</button>' +
+                '<span class="font-bold uppercase text-rose-400">// REPAIR TICKETS (' + openTickets.length + ')</span>' +
               '</div>' +
-              (openIssues.length === 0
-                ? '<div class="border_ui border-emerald-500/40 bg-emerald-500/10 p-3 text-[11px] font-bold text-emerald-400 text-center">ALL CLEAR — NO OPEN TICKETS OR COMPLAINTS.</div>'
-                : openIssues.map(t => {
-                    const isComp = (t.recordKind || '').toUpperCase() === 'COMPLAINT' || (t.category || '').toUpperCase().includes('COMPLAINT');
-                    return '<div class="border_ui ' + (isComp ? 'border-amber-500/50' : 'border-rose-500/40') + ' p-2.5 bg-black/10 dark:bg-white/5 space-y-1.5">' +
-                      '<div class="flex flex-wrap items-center justify-between gap-2">' +
-                        '<div class="flex items-center gap-1.5 flex-wrap">' +
-                          '<span class="border_ui px-1.5 py-0.5 text-[9px] font-bold ' + (isComp ? 'text-amber-400 border-amber-500/50' : 'text-rose-400 border-rose-500/50') + '">' + (isComp ? 'COMPLAINT' : 'TICKET') + '</span>' +
-                          '<span class="font-bold">' + t.siteId + ' · ' + t.ticketId + '</span>' +
-                        '</div>' +
+              (openTickets.length === 0
+                ? '<div class="border_ui border-emerald-500/40 bg-emerald-500/10 p-3 text-[11px] font-bold text-emerald-400 text-center">NO OPEN REPAIR TICKETS</div>'
+                : openTickets.map(t =>
+                    '<div class="border_ui border-rose-500/40 p-2.5 bg-black/10 dark:bg-white/5 space-y-1.5">' +
+                      '<div class="flex items-center justify-between gap-1.5">' +
+                        '<span class="font-bold text-xs">' + t.siteId + ' · ' + t.ticketId + '</span>' +
                         '<div class="flex items-center gap-1">' +
-                          '<button type="button" onclick="switchAdminSite(\'' + t.siteId + '\'); openAdminModule(\'repairs\');" class="border_ui px-2 py-0.5 text-[9px] font-bold btn-invert cursor-pointer">INSPECT</button>' +
-                          '<button type="button" onclick="updateAdminTicketStatus(\'' + t.ticketId + '\', \'RESOLVED\')" class="border_ui border-emerald-500/50 px-2 py-0.5 text-[9px] font-bold text-emerald-400 hover:bg-emerald-500 hover:text-black cursor-pointer">RESOLVE</button>' +
+                          '<button type="button" onclick="switchAdminSite(\'' + t.siteId + '\'); openAdminModule(\'repairs\');" class="border_ui px-1.5 py-0.5 text-[9px] font-bold btn-invert cursor-pointer">OPEN</button>' +
+                          '<button type="button" onclick="updateAdminTicketStatus(\'' + t.ticketId + '\', \'RESOLVED\')" class="border_ui border-emerald-500/50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-400 hover:bg-emerald-500 hover:text-black cursor-pointer">DONE</button>' +
                         '</div>' +
                       '</div>' +
                       '<div class="text-[11px] opacity-90">' + t.issue + '</div>' +
                       '<div class="flex items-center justify-between gap-2 text-[10px] opacity-60">' +
-                        '<span>' + (t.category || t.type || 'GENERAL') + ' · By: ' + (t.technician || 'FSE') + '</span>' +
-                        (t.attachmentUrl ? '<a href="' + t.attachmentUrl + '" target="_blank" class="underline text-amber-400 font-bold opacity-100">VIEW ATTACHMENT</a>' : '') +
+                        '<span>' + (t.loggedDate || t.dateLogged || todayDisplay) + ' · ' + (t.technician || 'FSE') + '</span>' +
+                        (t.attachmentUrl ? '<a href="' + t.attachmentUrl + '" target="_blank" class="underline text-amber-400 font-bold opacity-100">FILE</a>' : '') +
                       '</div>' +
-                    '</div>';
-                  }).join('')) +
+                    '</div>'
+                  ).join('')) +
             '</div>' +
-            '<div class="space-y-2.5">' +
-              '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-2.5">' +
-                '<div class="flex items-center justify-between border-b border_ui pb-2">' +
-                  '<span class="font-bold uppercase text-amber-400">// PENDING FSE PPMs TO ACCEPT / OVERRIDE (' + pendingPpms.length + ')</span>' +
-                '</div>' +
-                (pendingPpms.length === 0
-                  ? '<div class="opacity-65 text-[11px] py-2 text-center border_ui">No pending FSE PPM reports awaiting review.</div>'
-                  : pendingPpms.map(({ site: ps, sub }) =>
-                      '<div class="border_ui border-amber-500/40 p-2.5 bg-black/10 dark:bg-white/5 flex flex-wrap items-center justify-between gap-2">' +
-                        '<div>' +
-                          '<div class="font-bold text-(--color-accent)">' + ps.siteId + ' (' + ps.state + ')</div>' +
-                          '<div class="text-[10px] opacity-75">' + sub.submittedAt + ' by ' + sub.submittedBy + ' · ' + sub.completedCount + '/' + sub.totalCount + ' Checked</div>' +
+
+            '<!-- 2. COMPLAINTS -->' +
+            '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-2.5">' +
+              '<div class="flex items-center justify-between border-b border_ui pb-2">' +
+                '<span class="font-bold uppercase text-amber-400">// SITE COMPLAINTS (' + openComplaints.length + ')</span>' +
+              '</div>' +
+              (openComplaints.length === 0
+                ? '<div class="border_ui border-emerald-500/40 bg-emerald-500/10 p-3 text-[11px] font-bold text-emerald-400 text-center">NO OPEN COMPLAINTS</div>'
+                : openComplaints.map(c =>
+                    '<div class="border_ui border-amber-500/40 p-2.5 bg-black/10 dark:bg-white/5 space-y-1.5">' +
+                      '<div class="flex items-center justify-between gap-1.5">' +
+                        '<span class="font-bold text-xs">' + c.siteId + ' · ' + c.ticketId + '</span>' +
+                        '<div class="flex items-center gap-1">' +
+                          '<button type="button" onclick="switchAdminSite(\'' + c.siteId + '\'); openAdminModule(\'repairs\');" class="border_ui px-1.5 py-0.5 text-[9px] font-bold btn-invert cursor-pointer">OPEN</button>' +
+                          '<button type="button" onclick="updateAdminTicketStatus(\'' + c.ticketId + '\', \'RESOLVED\')" class="border_ui border-emerald-500/50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-400 hover:bg-emerald-500 hover:text-black cursor-pointer">DONE</button>' +
                         '</div>' +
-                        '<div class="flex items-center gap-1.5">' +
-                          '<button type="button" onclick="reviewSubmittedPpm(\'' + ps.siteId + '\', \'' + sub.id + '\', \'ACCEPTED\')" class="border_ui border-emerald-500/60 px-2 py-1 text-[9px] font-bold text-emerald-400 hover:bg-emerald-500 hover:text-black cursor-pointer">ACCEPT</button>' +
-                          '<button type="button" onclick="reviewSubmittedPpm(\'' + ps.siteId + '\', \'' + sub.id + '\', \'OVERRIDDEN\')" class="border_ui border-amber-500/60 px-2 py-1 text-[9px] font-bold text-amber-400 hover:bg-amber-500 hover:text-black cursor-pointer">OVERRIDE</button>' +
-                          '<button type="button" onclick="switchAdminSite(\'' + ps.siteId + '\'); openAdminModule(\'repairs\');" class="border_ui px-2 py-1 text-[9px] font-bold btn-invert cursor-pointer">OPEN</button>' +
+                      '</div>' +
+                      '<div class="text-[11px] opacity-90">' + c.issue + '</div>' +
+                      '<div class="flex items-center justify-between gap-2 text-[10px] opacity-60">' +
+                        '<span>' + (c.loggedDate || c.dateLogged || todayDisplay) + ' · ' + (c.technician || 'FSE') + '</span>' +
+                        (c.attachmentUrl ? '<a href="' + c.attachmentUrl + '" target="_blank" class="underline text-amber-400 font-bold opacity-100">FILE</a>' : '') +
+                      '</div>' +
+                    '</div>'
+                  ).join('')) +
+            '</div>' +
+
+            '<!-- 3. FUEL ISSUES (<= 7 DAYS / 0 L) -->' +
+            '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-2.5">' +
+              '<div class="flex items-center justify-between border-b border_ui pb-2">' +
+                '<span class="font-bold uppercase text-amber-400">// FUEL ISSUES (' + fuelAlerts.length + ')</span>' +
+                '<span class="text-[9px] opacity-65">&lt;= 7 DAYS / 0 L</span>' +
+              '</div>' +
+              (fuelAlerts.length === 0
+                ? '<div class="border_ui border-emerald-500/40 bg-emerald-500/10 p-3 text-[11px] font-bold text-emerald-400 text-center">ALL SITES &gt; 7 DAYS FUEL</div>'
+                : '<div class="space-y-1.5 max-h-[420px] overflow-y-auto no-scrollbar">' +
+                    fuelAlerts.map(s =>
+                      '<div class="border_ui ' + (s.currentDL <= 0 || s.daysRemaining <= 3 ? 'border-rose-500/50' : 'border-amber-500/40') + ' p-2.5 bg-black/10 dark:bg-white/5 flex items-center justify-between gap-2">' +
+                        '<div class="min-w-0">' +
+                          '<div class="font-bold text-xs">' + s.siteId + ' <span class="opacity-65 font-normal">(' + s.state + ')</span></div>' +
+                          '<div class="text-[10px] opacity-85">' + s.currentDL + ' L · ' + s.cpd + ' L/d · <span class="text-rose-400 font-bold">' + (s.autonomyBreakdown || (s.daysRemaining + 'd')) + '</span></div>' +
+                          '<div class="text-[9px] opacity-60">Dry: ' + s.predictedDryDate + '</div>' +
+                        '</div>' +
+                        '<div class="flex flex-col gap-1 shrink-0">' +
+                          '<button type="button" onclick="switchAdminSite(\'' + s.siteId + '\'); openAdminModule(\'fuel\');" class="border_ui px-2 py-0.5 text-[9px] font-bold btn-invert cursor-pointer">FUEL</button>' +
+                          '<button type="button" onclick="send7DayFuelAlarm(\'' + s.siteId + '\', true)" class="border_ui border-amber-400 px-2 py-0.5 text-[9px] font-bold text-amber-400 hover:bg-amber-500 hover:text-black cursor-pointer">ALARM</button>' +
                         '</div>' +
                       '</div>'
-                    ).join('')) +
-              '</div>' +
-              '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-2.5">' +
-                '<div class="flex items-center justify-between border-b border_ui pb-2">' +
-                  '<span class="font-bold uppercase text-amber-400">// 7-DAY FUEL DEPLETION ALERTS (' + fuelAlerts.length + ')</span>' +
-                '</div>' +
-                (fuelAlerts.length === 0
-                  ? '<div class="border_ui border-emerald-500/40 bg-emerald-500/10 p-3 text-[11px] font-bold text-emerald-400">ALL SITES ABOVE 7 DAYS FUEL AUTONOMY.</div>'
-                  : '<div class="space-y-1.5 max-h-[280px] overflow-y-auto no-scrollbar">' +
-                      fuelAlerts.map(s =>
-                        '<div class="border_ui p-2.5 bg-black/10 dark:bg-white/5 flex items-center justify-between gap-2">' +
-                          '<div class="min-w-0">' +
-                            '<div class="font-bold">' + s.siteId + ' <span class="opacity-65 font-normal">(' + s.state + ' · ' + normalizeGenKva(s.genSize || s.loadKw) + ' kVA)</span></div>' +
-                            '<div class="text-[10px] opacity-85">' + s.currentDL + ' L · ' + s.cpd + ' L/d · <span class="text-rose-400 font-bold">' + (s.autonomyBreakdown || (s.daysRemaining + 'd')) + '</span></div>' +
-                          '</div>' +
-                          '<div class="flex items-center gap-1 shrink-0">' +
-                            '<button type="button" onclick="switchAdminSite(\'' + s.siteId + '\'); openAdminModule(\'fuel\');" class="border_ui px-2 py-1 text-[9px] font-bold btn-invert cursor-pointer">FUEL</button>' +
-                            '<button type="button" onclick="send7DayFuelAlarm(\'' + s.siteId + '\', true)" class="border_ui border-amber-400 px-2 py-1 text-[9px] font-bold text-amber-400 hover:bg-amber-500 hover:text-black cursor-pointer">ALARM</button>' +
-                          '</div>' +
-                        '</div>'
-                      ).join('') +
-                    '</div>') +
-              '</div>' +
+                    ).join('') +
+                  '</div>') +
             '</div>' +
           '</div>';
       } else if (adminActiveModule === 'repairs') {
@@ -5526,8 +5573,10 @@
             }).join('') +
             dayTicks.map(d => {
               const xx = xForDay(d);
+              const dtObj = new Date(Date.now() + d * 86400000);
+              const dtLabel = dtObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
               return '<line x1="' + xx.toFixed(1) + '" y1="' + padT + '" x2="' + xx.toFixed(1) + '" y2="' + (padT + plotH) + '" stroke="currentColor" stroke-opacity="0.08" stroke-width="1"/>' +
-                     '<text x="' + xx.toFixed(1) + '" y="' + (svgH - 6) + '" text-anchor="middle" fill="currentColor" fill-opacity="0.6" font-size="9">Day ' + d + '</text>';
+                     '<text x="' + xx.toFixed(1) + '" y="' + (svgH - 6) + '" text-anchor="middle" fill="currentColor" fill-opacity="0.65" font-size="9">' + dtLabel + '</text>';
             }).join('') +
             '<!-- 7-Day Refuel Buffer Horizontal Threshold Line -->' +
             '<line x1="' + padL + '" y1="' + y7DayThreshold.toFixed(1) + '" x2="' + (padL + plotW) + '" y2="' + y7DayThreshold.toFixed(1) + '" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="5 3"/>' +
