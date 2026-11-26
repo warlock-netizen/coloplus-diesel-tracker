@@ -143,14 +143,29 @@
       left: 68%;
     }
 
-    /* Monochrome-blended BUB Battery & Utility Grid Animations */
-    @keyframes battScan {
-      0% { transform: translateY(100%); opacity: 0; }
-      30% { opacity: 0.55; }
-      70% { opacity: 0.55; }
-      100% { transform: translateY(-100%); opacity: 0; }
+    /* Sleek Parallax Industrial Tank & Distinct Horizontal BUB Battery Animations */
+    @keyframes tankWaveFront {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-100px); }
     }
-    @keyframes battCellPulse {
+    @keyframes tankWaveBack {
+      0% { transform: translateX(-100px); }
+      100% { transform: translateX(0); }
+    }
+    @keyframes fuelBubble {
+      0% { transform: translateY(0) scale(0.7); opacity: 0; }
+      30% { opacity: 0.75; }
+      100% { transform: translateY(-48px) scale(1.1); opacity: 0; }
+    }
+    @keyframes voltageSweep {
+      0% { stroke-dashoffset: 120; }
+      100% { stroke-dashoffset: 0; }
+    }
+    @keyframes boltGlow {
+      0%, 100% { opacity: 0.65; transform: scale(0.95); }
+      50% { opacity: 1; transform: scale(1.08); }
+    }
+    @keyframes ledBreath {
       0%, 100% { opacity: 0.72; }
       50% { opacity: 1; }
     }
@@ -162,11 +177,26 @@
       0%, 100% { opacity: 0.35; transform: scale(0.92); }
       50% { opacity: 1; transform: scale(1.1); }
     }
-    .batt-scan-line {
-      animation: battScan 2.6s linear infinite;
+    .tank-wave-front {
+      animation: tankWaveFront 2.8s linear infinite;
     }
-    .batt-cell-active {
-      animation: battCellPulse 2.2s ease-in-out infinite;
+    .tank-wave-back {
+      animation: tankWaveBack 4.2s linear infinite;
+    }
+    .fuel-bubble-a { animation: fuelBubble 2.8s ease-in infinite; }
+    .fuel-bubble-b { animation: fuelBubble 3.6s ease-in infinite 1.1s; }
+    .fuel-bubble-c { animation: fuelBubble 3.2s ease-in infinite 2.0s; }
+    .batt-voltage-wave {
+      stroke-dasharray: 28 92;
+      animation: voltageSweep 1.9s linear infinite;
+    }
+    .batt-bolt-pulse {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: boltGlow 1.6s ease-in-out infinite;
+    }
+    .batt-led-cell {
+      animation: ledBreath 2.1s ease-in-out infinite;
     }
     .grid-flow-line {
       stroke-dasharray: 4 4;
@@ -647,8 +677,8 @@
               </div>
 
               <div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">
-                <div class="flex items-center justify-between border-b border_ui pb-2">
-                  <span class="font-bold uppercase tracking-wider">// SITE PPM CHECKLIST &amp; PHOTO/VIDEO PROOF (MAX 20MB)</span>
+                <div class="flex flex-wrap items-center justify-between gap-2 border-b border_ui pb-2">
+                  <span class="font-bold uppercase tracking-wider">// SITE PPM CHECKLIST &amp; MANDATORY PHOTO PROOF (<span class="text-rose-500">*</span> ALL 12 REQUIRED)</span>
                   <button onclick="openTicksModal(fseSession.siteId)" class="border_ui px-2 py-1 btn-invert cursor-pointer text-[10px] font-bold">OPEN FULL CHECKLIST</button>
                 </div>
                 <!-- Read-Only PPM Schedule (Timing Managed by Admin) -->
@@ -656,12 +686,17 @@
                   <div class="text-[10px] uppercase opacity-60 font-bold">// PPM SCHEDULE (SET BY ADMIN)</div>
                   <div id="fseNextPpmDisplay" class="text-[11px] text-(--color-accent) font-bold"></div>
                 </div>
+                <!-- Mandatory Photo Progress Tracker -->
+                <div id="fsePpmPhotoProgress" class="border_ui border-rose-500/40 bg-rose-500/10 p-2 text-[10px] font-bold text-rose-300">
+                  // PHOTO PROOF (* MANDATORY): 0 / 12 ATTACHED — SNAP A PICTURE OF EVERY ITEM TO ENABLE SUBMIT
+                </div>
                 <div id="fseSitePpmList" class="space-y-1.5 max-h-[380px] overflow-y-auto no-scrollbar">
                   <!-- Populated dynamically -->
                 </div>
-                <div class="pt-2 border-t border_ui flex items-center justify-between gap-2">
+                <div id="fsePpmSubmitError" class="hidden border_ui border-rose-500/60 bg-rose-500/10 p-2.5 text-[10px] text-rose-400 font-bold"></div>
+                <div class="pt-2 border-t border_ui flex flex-wrap items-center justify-between gap-2">
                   <span id="fsePpmLastSubmittedText" class="text-[10px] opacity-60"></span>
-                  <button type="button" onclick="submitFsePpmReport()" class="border_ui px-4 py-2 min-h-[44px] sm:min-h-0 font-bold nav_active btn-invert cursor-pointer text-[11px]">
+                  <button type="button" id="fseSubmitPpmBtn" onclick="submitFsePpmReport()" class="border_ui px-4 py-2 min-h-[44px] sm:min-h-0 font-bold nav_active btn-invert cursor-pointer text-[11px]">
                     SUBMIT PPM REPORT &gt;&gt;
                   </button>
                 </div>
@@ -772,6 +807,9 @@
               </button>
               <button onclick="exportToCsv()" class="border_ui px-3 py-1.5 btn-invert cursor-pointer font-bold text-[11px]">
                 EXPORT CSV
+              </button>
+              <button onclick="clearAllLiveFuelToZero()" class="border_ui border-amber-500/60 text-amber-400 px-3 py-1.5 hover:bg-amber-500 hover:text-black cursor-pointer font-bold text-[11px]">
+                ZERO ALL FUEL (LIVE DB)
               </button>
               <button onclick="deleteAdminSite(adminSession.siteId)" class="border_ui border-rose-500/50 text-rose-400 px-3 py-1.5 hover:bg-rose-600 hover:text-white cursor-pointer font-bold text-[11px]">
                 DEACTIVATE SITE
@@ -1505,16 +1543,11 @@
             </select>
           </div>
           <div>
-            <label class="opacity-60 text-[10px] block mb-1">GENERATOR TYPE (kVA)</label>
-            <select id="editGenSize" onchange="document.getElementById('editGenSizeCustomWrap').classList.toggle('hidden', this.value !== 'custom')" class="w-full border_ui bg-(--color-card-bg) px-2 py-1 outline-none">
+            <label class="opacity-60 text-[10px] block mb-1">GENERATOR TYPE (15 / 20 kVA ONLY)</label>
+            <select id="editGenSize" class="w-full border_ui bg-(--color-card-bg) px-2 py-1 outline-none">
               <option value="15">15 kVA</option>
               <option value="20">20 kVA</option>
-              <option value="30">30 kVA</option>
-              <option value="custom">Custom kVA...</option>
             </select>
-            <div id="editGenSizeCustomWrap" class="hidden mt-1.5">
-              <input type="number" step="0.5" min="1" id="editGenSizeCustom" placeholder="Enter kVA" class="w-full border_ui bg-transparent px-2 py-1 outline-none">
-            </div>
           </div>
         </div>
 
@@ -1607,7 +1640,6 @@
             <select id="newGenSize" class="w-full border_ui bg-(--color-card-bg) px-2 py-1.5 outline-none">
               <option value="15">15 kVA</option>
               <option value="20">20 kVA</option>
-              <option value="30">30 kVA</option>
             </select>
           </div>
         </div>
@@ -1755,21 +1787,21 @@
         "cpd12h": 14.15,
         "cph": 1.18,
         "dailyCostNgn": 59430,
-        "lastSupplyQty": 300,
-        "lastSupplyDate": "29-10-2026",
+        "lastSupplyQty": 0,
+        "lastSupplyDate": "",
         "supplier": "Auwal",
         "daysRemaining": 0,
         "hoursRemaining": 0,
-        "predictedDryDate": "05-Nov-2026 12:00",
-        "refuelDate": "03-Nov-2026",
-        "status": "WARNING",
+        "predictedDryDate": "EMPTY NOW (0 L)",
+        "refuelDate": "IMMEDIATE REFUEL (0 L)",
+        "status": "CRITICAL",
         "fse": "ETIM",
         "fsePhone": "08086603364",
         "security": "Eyibio Effiong (CLO)",
         "securityPhone": "07065529932 (Henshaw Ntiense Sup)",
         "powerSource": "In-house",
         "gridStatus": "ONLINE (NEPA AVAILABLE)",
-        "loadKw": 5.4,
+        "loadKw": 15,
         "hoursToPpm": 35,
         "isFocus": true,
         "batteryStatus": "HEALTHY",
@@ -1819,35 +1851,14 @@
                 "reportRef": "PPM Scheduled"
             }
         ],
-        "refuelHistory": [
-            {
-                "refuelId": "RF-2026-CR0761 (Airtel)-01",
-                "date": "18/10/2026",
-                "litersAdded": 500,
-                "startDL": 100,
-                "endDL": 600,
-                "waybill": "WB-WK42-CR0761 (Airtel)-01",
-                "supplier": "Auwal",
-                "fse": "ETIM",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Monthly allocation delivery"
-            },
-            {
-                "refuelId": "RF-2026-CR0761 (Airtel)-02",
-                "date": "28/10/2026",
-                "litersAdded": 500,
-                "startDL": 20,
-                "endDL": 220,
-                "waybill": "WB-WK43-CR0761 (Airtel)-02",
-                "supplier": "Auwal",
-                "fse": "ETIM",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Replenishment delivery batch"
-            }
-        ],
-        "baselineDL": 0
+        "refuelHistory": [],
+        "baselineDL": 0,
+        "genSize": 15,
+        "lastSupplyTime": "",
+        "previousSupplyDate": "",
+        "previousSupplyTime": "",
+        "previousSupplyQty": "",
+        "submittedPpms": []
     },
     {
         "siteId": "CP/CP/DE/002",
@@ -1861,21 +1872,21 @@
         "cpd12h": 27.95,
         "cph": 2.33,
         "dailyCostNgn": 117390,
-        "lastSupplyQty": 500,
-        "lastSupplyDate": "29-10-2026",
+        "lastSupplyQty": 0,
+        "lastSupplyDate": "",
         "supplier": "Auwal",
         "daysRemaining": 0,
         "hoursRemaining": 0,
-        "predictedDryDate": "10-Nov-2026 18:00",
-        "refuelDate": "07-Nov-2026",
-        "status": "HEALTHY",
+        "predictedDryDate": "EMPTY NOW (0 L)",
+        "refuelDate": "IMMEDIATE REFUEL (0 L)",
+        "status": "CRITICAL",
         "fse": "Lawani",
         "fsePhone": "09160185834",
         "security": "Peter Odinma (CLO)",
         "securityPhone": "09024024245 / Europol",
         "powerSource": "In-house",
         "gridStatus": "ONLINE (NEPA AVAILABLE)",
-        "loadKw": 8.3,
+        "loadKw": 20,
         "hoursToPpm": 95,
         "isFocus": true,
         "batteryStatus": "HEALTHY",
@@ -1923,35 +1934,14 @@
                 "reportRef": "PPM Scheduled"
             }
         ],
-        "refuelHistory": [
-            {
-                "refuelId": "RF-2026-DL1010 (Airtel)-01",
-                "date": "18/10/2026",
-                "litersAdded": 500,
-                "startDL": 100,
-                "endDL": 600,
-                "waybill": "WB-WK42-DL1010 (Airtel)-01",
-                "supplier": "Auwal",
-                "fse": "Lawani",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Monthly allocation delivery"
-            },
-            {
-                "refuelId": "RF-2026-DL1010 (Airtel)-02",
-                "date": "28/10/2026",
-                "litersAdded": 500,
-                "startDL": 285,
-                "endDL": 485,
-                "waybill": "WB-WK43-DL1010 (Airtel)-02",
-                "supplier": "Auwal",
-                "fse": "Lawani",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Replenishment delivery batch"
-            }
-        ],
-        "baselineDL": 0
+        "refuelHistory": [],
+        "baselineDL": 0,
+        "genSize": 20,
+        "lastSupplyTime": "",
+        "previousSupplyDate": "",
+        "previousSupplyTime": "",
+        "previousSupplyQty": "",
+        "submittedPpms": []
     },
     {
         "siteId": "CP/CP/DE/004",
@@ -1965,21 +1955,21 @@
         "cpd12h": 24,
         "cph": 2,
         "dailyCostNgn": 100800,
-        "lastSupplyQty": 1000,
-        "lastSupplyDate": "30-10-2026",
+        "lastSupplyQty": 0,
+        "lastSupplyDate": "",
         "supplier": "Jamruq",
         "daysRemaining": 0,
         "hoursRemaining": 0,
-        "predictedDryDate": "22-Nov-2026 16:00",
-        "refuelDate": "19-Nov-2026",
-        "status": "HEALTHY",
+        "predictedDryDate": "EMPTY NOW (0 L)",
+        "refuelDate": "IMMEDIATE REFUEL (0 L)",
+        "status": "CRITICAL",
         "fse": "Assigned Regional FSE",
         "fsePhone": "Operations Dispatch",
         "security": "Chuks Ogwaszi Godwin (CLO)",
         "securityPhone": "Europol Security Desk",
         "powerSource": "In-house",
         "gridStatus": "ONLINE (NEPA AVAILABLE)",
-        "loadKw": 6.1,
+        "loadKw": 15,
         "hoursToPpm": 120,
         "isFocus": true,
         "batteryStatus": "HEALTHY",
@@ -2027,35 +2017,14 @@
                 "reportRef": "PPM Scheduled"
             }
         ],
-        "refuelHistory": [
-            {
-                "refuelId": "RF-2026-DL0637 (Airtel)-01",
-                "date": "18/10/2026",
-                "litersAdded": 500,
-                "startDL": 634,
-                "endDL": 1134,
-                "waybill": "WB-WK42-DL0637 (Airtel)-01",
-                "supplier": "Jamruq",
-                "fse": "Assigned Regional FSE",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Monthly allocation delivery"
-            },
-            {
-                "refuelId": "RF-2026-DL0637 (Airtel)-02",
-                "date": "28/10/2026",
-                "litersAdded": 500,
-                "startDL": 834,
-                "endDL": 1034,
-                "waybill": "WB-WK43-DL0637 (Airtel)-02",
-                "supplier": "Jamruq",
-                "fse": "Assigned Regional FSE",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Replenishment delivery batch"
-            }
-        ],
-        "baselineDL": 0
+        "refuelHistory": [],
+        "baselineDL": 0,
+        "genSize": 15,
+        "lastSupplyTime": "",
+        "previousSupplyDate": "",
+        "previousSupplyTime": "",
+        "previousSupplyQty": "",
+        "submittedPpms": []
     },
     {
         "siteId": "CP/CP/ED/001",
@@ -2069,21 +2038,21 @@
         "cpd12h": 24,
         "cph": 2,
         "dailyCostNgn": 100800,
-        "lastSupplyQty": 500,
-        "lastSupplyDate": "31-10-2026",
+        "lastSupplyQty": 0,
+        "lastSupplyDate": "",
         "supplier": "Auwal",
         "daysRemaining": 0,
         "hoursRemaining": 0,
-        "predictedDryDate": "09-Nov-2026 22:00",
-        "refuelDate": "08-Nov-2026",
-        "status": "HEALTHY",
+        "predictedDryDate": "EMPTY NOW (0 L)",
+        "refuelDate": "IMMEDIATE REFUEL (0 L)",
+        "status": "CRITICAL",
         "fse": "Steven Egbuwaohia",
         "fsePhone": "08066918855",
         "security": "Chief Isa Iyamah (CLO)",
         "securityPhone": "08061170814 / 08079434213 (Musa Dasshe Sup)",
         "powerSource": "In-house",
         "gridStatus": "ONLINE (NEPA AVAILABLE)",
-        "loadKw": 6.2,
+        "loadKw": 15,
         "hoursToPpm": 110,
         "isFocus": true,
         "batteryStatus": "HEALTHY",
@@ -2131,35 +2100,14 @@
                 "reportRef": "PPM Scheduled"
             }
         ],
-        "refuelHistory": [
-            {
-                "refuelId": "RF-2026-ED1179 (Airtel)-01",
-                "date": "18/10/2026",
-                "litersAdded": 500,
-                "startDL": 110,
-                "endDL": 610,
-                "waybill": "WB-WK42-ED1179 (Airtel)-01",
-                "supplier": "Auwal",
-                "fse": "Steven Egbuwaohia",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Monthly allocation delivery"
-            },
-            {
-                "refuelId": "RF-2026-ED1179 (Airtel)-02",
-                "date": "28/10/2026",
-                "litersAdded": 500,
-                "startDL": 310,
-                "endDL": 510,
-                "waybill": "WB-WK43-ED1179 (Airtel)-02",
-                "supplier": "Auwal",
-                "fse": "Steven Egbuwaohia",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Replenishment delivery batch"
-            }
-        ],
-        "baselineDL": 0
+        "refuelHistory": [],
+        "baselineDL": 0,
+        "genSize": 15,
+        "lastSupplyTime": "",
+        "previousSupplyDate": "",
+        "previousSupplyTime": "",
+        "previousSupplyQty": "",
+        "submittedPpms": []
     },
     {
         "siteId": "CP/NA/EN/276",
@@ -2173,21 +2121,21 @@
         "cpd12h": 17.5,
         "cph": 1.46,
         "dailyCostNgn": 73500,
-        "lastSupplyQty": 1000,
-        "lastSupplyDate": "28-10-2026",
+        "lastSupplyQty": 0,
+        "lastSupplyDate": "",
         "supplier": "Expedient",
         "daysRemaining": 0,
         "hoursRemaining": 0,
-        "predictedDryDate": "17-Nov-2026 18:00",
-        "refuelDate": "20-Nov-2026",
-        "status": "HEALTHY",
+        "predictedDryDate": "EMPTY NOW (0 L)",
+        "refuelDate": "IMMEDIATE REFUEL (0 L)",
+        "status": "CRITICAL",
         "fse": "Ejiofor",
         "fsePhone": "07038842986",
         "security": "Ezrah Peter (CLO)",
         "securityPhone": "08168854062 / Europol",
         "powerSource": "In-house",
         "gridStatus": "ONLINE (NEPA AVAILABLE)",
-        "loadKw": 4.5,
+        "loadKw": 15,
         "hoursToPpm": 175,
         "isFocus": true,
         "batteryStatus": "HEALTHY",
@@ -2235,35 +2183,14 @@
                 "reportRef": "PPM Scheduled"
             }
         ],
-        "refuelHistory": [
-            {
-                "refuelId": "RF-2026-EN0694 (Airtel)-01",
-                "date": "18/10/2026",
-                "litersAdded": 500,
-                "startDL": 428,
-                "endDL": 928,
-                "waybill": "WB-WK42-EN0694 (Airtel)-01",
-                "supplier": "Expedient",
-                "fse": "Ejiofor",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Monthly allocation delivery"
-            },
-            {
-                "refuelId": "RF-2026-EN0694 (Airtel)-02",
-                "date": "28/10/2026",
-                "litersAdded": 500,
-                "startDL": 628,
-                "endDL": 828,
-                "waybill": "WB-WK43-EN0694 (Airtel)-02",
-                "supplier": "Expedient",
-                "fse": "Ejiofor",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Replenishment delivery batch"
-            }
-        ],
-        "baselineDL": 0
+        "refuelHistory": [],
+        "baselineDL": 0,
+        "genSize": 15,
+        "lastSupplyTime": "",
+        "previousSupplyDate": "",
+        "previousSupplyTime": "",
+        "previousSupplyQty": "",
+        "submittedPpms": []
     },
     {
         "siteId": "CP/CP/EK/002",
@@ -2277,13 +2204,13 @@
         "cpd12h": 33.5,
         "cph": 2.79,
         "dailyCostNgn": 140700,
-        "lastSupplyQty": 400,
-        "lastSupplyDate": "28,29,31-10-26",
+        "lastSupplyQty": 0,
+        "lastSupplyDate": "",
         "supplier": "Auwal",
         "daysRemaining": 0,
         "hoursRemaining": 0,
-        "predictedDryDate": "02-Nov-2026 16:00",
-        "refuelDate": "IMMEDIATE / CRITICAL",
+        "predictedDryDate": "EMPTY NOW (0 L)",
+        "refuelDate": "IMMEDIATE REFUEL (0 L)",
         "status": "CRITICAL",
         "fse": "Opeyemi",
         "fsePhone": "09159947144",
@@ -2291,7 +2218,7 @@
         "securityPhone": "07068541204 / Omale Gabriel Sup",
         "powerSource": "In-house",
         "gridStatus": "ONLINE (NEPA AVAILABLE)",
-        "loadKw": 6.5,
+        "loadKw": 15,
         "hoursToPpm": 18,
         "isFocus": true,
         "batteryStatus": "HEALTHY",
@@ -2341,35 +2268,14 @@
                 "reportRef": "PPM Scheduled"
             }
         ],
-        "refuelHistory": [
-            {
-                "refuelId": "RF-2026-EK0474 (Airtel)-01",
-                "date": "18/10/2026",
-                "litersAdded": 500,
-                "startDL": 100,
-                "endDL": 600,
-                "waybill": "WB-WK42-EK0474 (Airtel)-01",
-                "supplier": "Auwal",
-                "fse": "Opeyemi",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Monthly allocation delivery"
-            },
-            {
-                "refuelId": "RF-2026-EK0474 (Airtel)-02",
-                "date": "28/10/2026",
-                "litersAdded": 500,
-                "startDL": -122,
-                "endDL": 78,
-                "waybill": "WB-WK43-EK0474 (Airtel)-02",
-                "supplier": "Auwal",
-                "fse": "Opeyemi",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Replenishment delivery batch"
-            }
-        ],
-        "baselineDL": 0
+        "refuelHistory": [],
+        "baselineDL": 0,
+        "genSize": 15,
+        "lastSupplyTime": "",
+        "previousSupplyDate": "",
+        "previousSupplyTime": "",
+        "previousSupplyQty": "",
+        "submittedPpms": []
     },
     {
         "siteId": "CP/SA/LA/002",
@@ -2383,21 +2289,21 @@
         "cpd12h": 51.43,
         "cph": 4.29,
         "dailyCostNgn": 216006,
-        "lastSupplyQty": 1000,
-        "lastSupplyDate": "26-10-2026",
+        "lastSupplyQty": 0,
+        "lastSupplyDate": "",
         "supplier": "Auwal",
         "daysRemaining": 0,
         "hoursRemaining": 0,
-        "predictedDryDate": "20-Nov-2026 12:00",
-        "refuelDate": "12-Nov-2026",
-        "status": "HEALTHY",
+        "predictedDryDate": "EMPTY NOW (0 L)",
+        "refuelDate": "IMMEDIATE REFUEL (0 L)",
+        "status": "CRITICAL",
         "fse": "Wale",
         "fsePhone": "8164974876 / 09018457381",
         "security": "Wale / Integrated Guard",
         "securityPhone": "08164974876",
         "powerSource": "In-house",
         "gridStatus": "ONLINE (NEPA AVAILABLE)",
-        "loadKw": 14,
+        "loadKw": 20,
         "hoursToPpm": 160,
         "isFocus": true,
         "batteryStatus": "HEALTHY",
@@ -2445,35 +2351,14 @@
                 "reportRef": "PPM Scheduled"
             }
         ],
-        "refuelHistory": [
-            {
-                "refuelId": "RF-2026-HP_LG_566 (airtel/smile)-01",
-                "date": "18/10/2026",
-                "litersAdded": 500,
-                "startDL": 800,
-                "endDL": 1300,
-                "waybill": "WB-WK42-HP_LG_566 (airtel/smile)-01",
-                "supplier": "Auwal",
-                "fse": "Wale",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Monthly allocation delivery"
-            },
-            {
-                "refuelId": "RF-2026-HP_LG_566 (airtel/smile)-02",
-                "date": "28/10/2026",
-                "litersAdded": 500,
-                "startDL": 1000,
-                "endDL": 1200,
-                "waybill": "WB-WK43-HP_LG_566 (airtel/smile)-02",
-                "supplier": "Auwal",
-                "fse": "Wale",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Replenishment delivery batch"
-            }
-        ],
-        "baselineDL": 0
+        "refuelHistory": [],
+        "baselineDL": 0,
+        "genSize": 20,
+        "lastSupplyTime": "",
+        "previousSupplyDate": "",
+        "previousSupplyTime": "",
+        "previousSupplyQty": "",
+        "submittedPpms": []
     },
     {
         "siteId": "CP/SF/LA/048",
@@ -2487,21 +2372,21 @@
         "cpd12h": 23,
         "cph": 1.92,
         "dailyCostNgn": 96600,
-        "lastSupplyQty": 1000,
-        "lastSupplyDate": "27-10-2026",
+        "lastSupplyQty": 0,
+        "lastSupplyDate": "",
         "supplier": "Expedient",
         "daysRemaining": 0,
         "hoursRemaining": 0,
-        "predictedDryDate": "22-Nov-2026 12:00",
-        "refuelDate": "16-Nov-2026",
-        "status": "HEALTHY",
+        "predictedDryDate": "EMPTY NOW (0 L)",
+        "refuelDate": "IMMEDIATE REFUEL (0 L)",
+        "status": "CRITICAL",
         "fse": "EVGOTA",
         "fsePhone": "07038555598",
         "security": "James Abayomi (CLO)",
         "securityPhone": "07037710348 (Moses Sup)",
         "powerSource": "Partner",
         "gridStatus": "ONLINE (NEPA AVAILABLE)",
-        "loadKw": 5.2,
+        "loadKw": 15,
         "hoursToPpm": 140,
         "isFocus": true,
         "batteryStatus": "HEALTHY",
@@ -2549,35 +2434,14 @@
                 "reportRef": "PPM Scheduled"
             }
         ],
-        "refuelHistory": [
-            {
-                "refuelId": "RF-2026-LG5140 (Airtel)-01",
-                "date": "18/10/2026",
-                "litersAdded": 500,
-                "startDL": 454,
-                "endDL": 954,
-                "waybill": "WB-WK42-LG5140 (Airtel)-01",
-                "supplier": "Expedient",
-                "fse": "EVGOTA",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Monthly allocation delivery"
-            },
-            {
-                "refuelId": "RF-2026-LG5140 (Airtel)-02",
-                "date": "28/10/2026",
-                "litersAdded": 500,
-                "startDL": 654,
-                "endDL": 854,
-                "waybill": "WB-WK43-LG5140 (Airtel)-02",
-                "supplier": "Expedient",
-                "fse": "EVGOTA",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Replenishment delivery batch"
-            }
-        ],
-        "baselineDL": 0
+        "refuelHistory": [],
+        "baselineDL": 0,
+        "genSize": 15,
+        "lastSupplyTime": "",
+        "previousSupplyDate": "",
+        "previousSupplyTime": "",
+        "previousSupplyQty": "",
+        "submittedPpms": []
     },
     {
         "siteId": "CP/CP/LA/025",
@@ -2591,21 +2455,21 @@
         "cpd12h": 10,
         "cph": 0.83,
         "dailyCostNgn": 42000,
-        "lastSupplyQty": 1000,
-        "lastSupplyDate": "05-Oct-2026",
+        "lastSupplyQty": 0,
+        "lastSupplyDate": "",
         "supplier": "Auwal",
         "daysRemaining": 0,
         "hoursRemaining": 0,
-        "predictedDryDate": "17-Nov-2026 10:00",
-        "refuelDate": "08-Nov-2026",
-        "status": "HEALTHY",
+        "predictedDryDate": "EMPTY NOW (0 L)",
+        "refuelDate": "IMMEDIATE REFUEL (0 L)",
+        "status": "CRITICAL",
         "fse": "idowu",
         "fsePhone": "08037796236",
         "security": "Mabaru Yusuf / Naziru (CLO)",
         "securityPhone": "07089243129 / 07045649379 (Omobolaji Sup)",
         "powerSource": "In-house",
         "gridStatus": "ONLINE (NEPA AVAILABLE)",
-        "loadKw": 3.5,
+        "loadKw": 15,
         "hoursToPpm": 210,
         "isFocus": true,
         "batteryStatus": "HEALTHY",
@@ -2653,35 +2517,14 @@
                 "reportRef": "PPM Scheduled"
             }
         ],
-        "refuelHistory": [
-            {
-                "refuelId": "RF-2026-OG1436 (Airtel)-01",
-                "date": "18/10/2026",
-                "litersAdded": 500,
-                "startDL": 100,
-                "endDL": 600,
-                "waybill": "WB-WK42-OG1436 (Airtel)-01",
-                "supplier": "Auwal",
-                "fse": "idowu",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Monthly allocation delivery"
-            },
-            {
-                "refuelId": "RF-2026-OG1436 (Airtel)-02",
-                "date": "28/10/2026",
-                "litersAdded": 500,
-                "startDL": 130,
-                "endDL": 330,
-                "waybill": "WB-WK43-OG1436 (Airtel)-02",
-                "supplier": "Auwal",
-                "fse": "idowu",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Replenishment delivery batch"
-            }
-        ],
-        "baselineDL": 0
+        "refuelHistory": [],
+        "baselineDL": 0,
+        "genSize": 15,
+        "lastSupplyTime": "",
+        "previousSupplyDate": "",
+        "previousSupplyTime": "",
+        "previousSupplyQty": "",
+        "submittedPpms": []
     },
     {
         "siteId": "CP/CP/OG/001",
@@ -2695,21 +2538,21 @@
         "cpd12h": 21,
         "cph": 1.75,
         "dailyCostNgn": 88200,
-        "lastSupplyQty": 1000,
-        "lastSupplyDate": "15-10-2026",
+        "lastSupplyQty": 0,
+        "lastSupplyDate": "",
         "supplier": "Auwal",
         "daysRemaining": 0,
         "hoursRemaining": 0,
-        "predictedDryDate": "07-Nov-2026 10:00",
-        "refuelDate": "03-Nov-2026",
-        "status": "WARNING",
+        "predictedDryDate": "EMPTY NOW (0 L)",
+        "refuelDate": "IMMEDIATE REFUEL (0 L)",
+        "status": "CRITICAL",
         "fse": "Thomas Omowunmi",
         "fsePhone": "07039791180",
         "security": "Echem Julius Ugochukwu (CLO)",
         "securityPhone": "07045649379 (Omobolaji Sup)",
         "powerSource": "In-house",
         "gridStatus": "ONLINE (NEPA AVAILABLE)",
-        "loadKw": 5.8,
+        "loadKw": 15,
         "hoursToPpm": 45,
         "isFocus": true,
         "batteryStatus": "HEALTHY",
@@ -2759,35 +2602,14 @@
                 "reportRef": "PPM Scheduled"
             }
         ],
-        "refuelHistory": [
-            {
-                "refuelId": "RF-2026-OG1820 (Airtel)-01",
-                "date": "18/10/2026",
-                "litersAdded": 500,
-                "startDL": 100,
-                "endDL": 600,
-                "waybill": "WB-WK42-OG1820 (Airtel)-01",
-                "supplier": "Auwal",
-                "fse": "Thomas Omowunmi",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Monthly allocation delivery"
-            },
-            {
-                "refuelId": "RF-2026-OG1820 (Airtel)-02",
-                "date": "28/10/2026",
-                "litersAdded": 500,
-                "startDL": 45,
-                "endDL": 245,
-                "waybill": "WB-WK43-OG1820 (Airtel)-02",
-                "supplier": "Auwal",
-                "fse": "Thomas Omowunmi",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Replenishment delivery batch"
-            }
-        ],
-        "baselineDL": 0
+        "refuelHistory": [],
+        "baselineDL": 0,
+        "genSize": 15,
+        "lastSupplyTime": "",
+        "previousSupplyDate": "",
+        "previousSupplyTime": "",
+        "previousSupplyQty": "",
+        "submittedPpms": []
     },
     {
         "siteId": "CP/NA/LA/021",
@@ -2801,21 +2623,21 @@
         "cpd12h": 25.68,
         "cph": 2.14,
         "dailyCostNgn": 107856,
-        "lastSupplyQty": 500,
-        "lastSupplyDate": "12-10-2026",
+        "lastSupplyQty": 0,
+        "lastSupplyDate": "",
         "supplier": "Auwal",
         "daysRemaining": 0,
         "hoursRemaining": 0,
-        "predictedDryDate": "12-Nov-2026 15:00",
-        "refuelDate": "11-Nov-2026",
-        "status": "HEALTHY",
+        "predictedDryDate": "EMPTY NOW (0 L)",
+        "refuelDate": "IMMEDIATE REFUEL (0 L)",
+        "status": "CRITICAL",
         "fse": "John",
         "fsePhone": "8104223513 (NO LIGHT CONNECTED)",
         "security": "Agbara Church / In-house Guard",
         "securityPhone": "08104223513 (FSE Desk)",
         "powerSource": "In-house",
         "gridStatus": "ONLINE (NEPA AVAILABLE)",
-        "loadKw": 5.7,
+        "loadKw": 15,
         "hoursToPpm": 135,
         "isFocus": true,
         "batteryStatus": "HEALTHY",
@@ -2863,35 +2685,14 @@
                 "reportRef": "PPM Scheduled"
             }
         ],
-        "refuelHistory": [
-            {
-                "refuelId": "RF-2026-OG1435 (Airtel)-01",
-                "date": "18/10/2026",
-                "litersAdded": 500,
-                "startDL": 240,
-                "endDL": 740,
-                "waybill": "WB-WK42-OG1435 (Airtel)-01",
-                "supplier": "Auwal",
-                "fse": "John",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Monthly allocation delivery"
-            },
-            {
-                "refuelId": "RF-2026-OG1435 (Airtel)-02",
-                "date": "28/10/2026",
-                "litersAdded": 500,
-                "startDL": 440,
-                "endDL": 640,
-                "waybill": "WB-WK43-OG1435 (Airtel)-02",
-                "supplier": "Auwal",
-                "fse": "John",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Replenishment delivery batch"
-            }
-        ],
-        "baselineDL": 0
+        "refuelHistory": [],
+        "baselineDL": 0,
+        "genSize": 15,
+        "lastSupplyTime": "",
+        "previousSupplyDate": "",
+        "previousSupplyTime": "",
+        "previousSupplyQty": "",
+        "submittedPpms": []
     },
     {
         "siteId": "CP/NA/FC/028",
@@ -2905,21 +2706,21 @@
         "cpd12h": 23.5,
         "cph": 1.96,
         "dailyCostNgn": 98700,
-        "lastSupplyQty": 500,
-        "lastSupplyDate": "19-10-2026",
+        "lastSupplyQty": 0,
+        "lastSupplyDate": "",
         "supplier": "Auwal",
         "daysRemaining": 0,
         "hoursRemaining": 0,
-        "predictedDryDate": "07-Nov-2026 14:00",
-        "refuelDate": "04-Nov-2026",
-        "status": "WARNING",
+        "predictedDryDate": "EMPTY NOW (0 L)",
+        "refuelDate": "IMMEDIATE REFUEL (0 L)",
+        "status": "CRITICAL",
         "fse": "Iliyasu",
         "fsePhone": "08138571564",
         "security": "Oliver Kojo / Kojo Security",
         "securityPhone": "08141661903",
         "powerSource": "In-house",
         "gridStatus": "ONLINE (NEPA AVAILABLE)",
-        "loadKw": 7,
+        "loadKw": 15,
         "hoursToPpm": 82,
         "isFocus": true,
         "batteryStatus": "HEALTHY",
@@ -2969,35 +2770,14 @@
                 "reportRef": "PPM Scheduled"
             }
         ],
-        "refuelHistory": [
-            {
-                "refuelId": "RF-2026-AB1845 (Airtel)-01",
-                "date": "18/10/2026",
-                "litersAdded": 500,
-                "startDL": 100,
-                "endDL": 600,
-                "waybill": "WB-WK42-AB1845 (Airtel)-01",
-                "supplier": "Auwal",
-                "fse": "Iliyasu",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Monthly allocation delivery"
-            },
-            {
-                "refuelId": "RF-2026-AB1845 (Airtel)-02",
-                "date": "28/10/2026",
-                "litersAdded": 500,
-                "startDL": 80,
-                "endDL": 280,
-                "waybill": "WB-WK43-AB1845 (Airtel)-02",
-                "supplier": "Auwal",
-                "fse": "Iliyasu",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Replenishment delivery batch"
-            }
-        ],
-        "baselineDL": 0
+        "refuelHistory": [],
+        "baselineDL": 0,
+        "genSize": 15,
+        "lastSupplyTime": "",
+        "previousSupplyDate": "",
+        "previousSupplyTime": "",
+        "previousSupplyQty": "",
+        "submittedPpms": []
     },
     {
         "siteId": "CP/CP/BR/001",
@@ -3011,21 +2791,21 @@
         "cpd12h": 24,
         "cph": 2,
         "dailyCostNgn": 100800,
-        "lastSupplyQty": 710,
-        "lastSupplyDate": "01-11-2026",
+        "lastSupplyQty": 0,
+        "lastSupplyDate": "",
         "supplier": "Auwal / Rospee",
         "daysRemaining": 0,
         "hoursRemaining": 0,
-        "predictedDryDate": "09-Nov-2026 18:00",
-        "refuelDate": "07-Nov-2026",
-        "status": "HEALTHY",
+        "predictedDryDate": "EMPTY NOW (0 L)",
+        "refuelDate": "IMMEDIATE REFUEL (0 L)",
+        "status": "CRITICAL",
         "fse": "Shugaba",
         "fsePhone": "08038931471",
         "security": "Army Base / University Security",
         "securityPhone": "Biu Military Base Security",
         "powerSource": "In-house",
         "gridStatus": "ONLINE (NEPA AVAILABLE)",
-        "loadKw": 6,
+        "loadKw": 15,
         "hoursToPpm": 25,
         "isFocus": true,
         "batteryStatus": "HEALTHY",
@@ -3073,35 +2853,14 @@
                 "reportRef": "PPM Scheduled"
             }
         ],
-        "refuelHistory": [
-            {
-                "refuelId": "RF-2026-BR2615 (MTN)-01",
-                "date": "18/10/2026",
-                "litersAdded": 500,
-                "startDL": 100,
-                "endDL": 600,
-                "waybill": "WB-WK42-BR2615 (MTN)-01",
-                "supplier": "Auwal / Rospee",
-                "fse": "Shugaba",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Monthly allocation delivery"
-            },
-            {
-                "refuelId": "RF-2026-BR2615 (MTN)-02",
-                "date": "28/10/2026",
-                "litersAdded": 500,
-                "startDL": 245,
-                "endDL": 445,
-                "waybill": "WB-WK43-BR2615 (MTN)-02",
-                "supplier": "Auwal / Rospee",
-                "fse": "Shugaba",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Replenishment delivery batch"
-            }
-        ],
-        "baselineDL": 0
+        "refuelHistory": [],
+        "baselineDL": 0,
+        "genSize": 15,
+        "lastSupplyTime": "",
+        "previousSupplyDate": "",
+        "previousSupplyTime": "",
+        "previousSupplyQty": "",
+        "submittedPpms": []
     },
     {
         "siteId": "CP/CP/KD/002",
@@ -3115,21 +2874,21 @@
         "cpd12h": 23.5,
         "cph": 1.96,
         "dailyCostNgn": 98700,
-        "lastSupplyQty": 1000,
-        "lastSupplyDate": "18-10-2026",
+        "lastSupplyQty": 0,
+        "lastSupplyDate": "",
         "supplier": "Auwal",
         "daysRemaining": 0,
         "hoursRemaining": 0,
-        "predictedDryDate": "09-Nov-2026 20:00",
-        "refuelDate": "07-Nov-2026",
-        "status": "HEALTHY",
+        "predictedDryDate": "EMPTY NOW (0 L)",
+        "refuelDate": "IMMEDIATE REFUEL (0 L)",
+        "status": "CRITICAL",
         "fse": "Nuhu Moses",
         "fsePhone": "08029222577",
         "security": "ABU Campus Security Guard",
         "securityPhone": "08146910917 / Campus Security",
         "powerSource": "In-house",
         "gridStatus": "ONLINE (NEPA AVAILABLE)",
-        "loadKw": 6.8,
+        "loadKw": 15,
         "hoursToPpm": 60,
         "isFocus": true,
         "batteryStatus": "HEALTHY",
@@ -3177,181 +2936,23 @@
                 "reportRef": "PPM Scheduled"
             }
         ],
-        "refuelHistory": [
-            {
-                "refuelId": "RF-2026-KD0737 (Airtel)-01",
-                "date": "18/10/2026",
-                "litersAdded": 500,
-                "startDL": 100,
-                "endDL": 600,
-                "waybill": "WB-WK42-KD0737 (Airtel)-01",
-                "supplier": "Auwal",
-                "fse": "Nuhu Moses",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Monthly allocation delivery"
-            },
-            {
-                "refuelId": "RF-2026-KD0737 (Airtel)-02",
-                "date": "28/10/2026",
-                "litersAdded": 500,
-                "startDL": 248,
-                "endDL": 448,
-                "waybill": "WB-WK43-KD0737 (Airtel)-02",
-                "supplier": "Auwal",
-                "fse": "Nuhu Moses",
-                "pricePerLiter": 2100,
-                "totalCostNgn": 1050000,
-                "notes": "Replenishment delivery batch"
-            }
-        ],
-        "baselineDL": 0
+        "refuelHistory": [],
+        "baselineDL": 0,
+        "genSize": 15,
+        "lastSupplyTime": "",
+        "previousSupplyDate": "",
+        "previousSupplyTime": "",
+        "previousSupplyQty": "",
+        "submittedPpms": []
     }
 ];
-    const MASTER_AUDIT_REPAIRS = [
-    {
-        "ticketId":  "REP-2026-1042",
-        "siteId":  "CP/CP/EK/002",
-        "tenantId":  "EK0474 (Airtel)",
-        "state":  "Ekiti",
-        "category":  "Generator Breakdown",
-        "fault":  "DG Shutdown - 15kVA cutover required",
-        "actionTaken":  "Fixed 15kVA generator and successfully completed cutover.",
-        "technician":  "Opeyemi",
-        "technicianPhone":  "09159947144",
-        "supervisor":  "Omale Gabriel Sup (07068541204)",
-        "cloGuard":  "Taiwo (07068541204)",
-        "loggedDate":  "29-Oct-2026",
-        "costNgn":  125000,
-        "status":  "Resolved",
-        "priority":  "High"
-    },
-    {
-        "ticketId":  "REP-2026-1043",
-        "siteId":  "CP/CP/EK/002",
-        "tenantId":  "EK0474 (Airtel)",
-        "state":  "Ekiti",
-        "category":  "Generator Excitation",
-        "fault":  "DG Shutdown - Alternator excitation failure \u0026 AVR burn",
-        "actionTaken":  "Technician on site replacing AVR and inspecting stator windings.",
-        "technician":  "Opeyemi",
-        "technicianPhone":  "09159947144",
-        "supervisor":  "Omale Gabriel Sup (07068541204)",
-        "cloGuard":  "Taiwo (07068541204)",
-        "loggedDate":  "31-Oct-2026",
-        "costNgn":  85000,
-        "status":  "Open",
-        "priority":  "Critical"
-    },
-    {
-        "ticketId":  "REP-2026-1038",
-        "siteId":  "CP/CP/BR/001",
-        "tenantId":  "BR2615 (MTN)",
-        "state":  "Borno",
-        "category":  "Diesel Depletion Intervention",
-        "fault":  "Site was down on diesel depletion (Off-Air incident)",
-        "actionTaken":  "Emergency 150L diesel batch supplied, air in fuel lines bled, DG reprimed.",
-        "technician":  "Shugaba",
-        "technicianPhone":  "08038931471",
-        "supervisor":  "Regional FSE Command",
-        "cloGuard":  "Biu Military Base Security",
-        "loggedDate":  "29-Oct-2026",
-        "costNgn":  315000,
-        "status":  "Resolved",
-        "priority":  "Critical"
-    },
-    {
-        "ticketId":  "REP-2026-1039",
-        "siteId":  "CP/SF/LA/048",
-        "tenantId":  "LG5140 (Airtel)",
-        "state":  "Lagos",
-        "category":  "Automatic Changeover",
-        "fault":  "DG shutdown due to contactor burning in changeover unit",
-        "actionTaken":  "Installed new 63A heavy-duty automatic changeover switch and tested synchronization.",
-        "technician":  "EVGOTA",
-        "technicianPhone":  "07038555598",
-        "supervisor":  "Moses Sup (07037710348)",
-        "cloGuard":  "James Abayomi (07037710348)",
-        "loggedDate":  "27-Oct-2026",
-        "costNgn":  145000,
-        "status":  "Resolved",
-        "priority":  "High"
-    },
-    {
-        "ticketId":  "REP-2026-1040",
-        "siteId":  "CP/CP/DE/002",
-        "tenantId":  "DL1010 (Airtel)",
-        "state":  "Delta",
-        "category":  "Active Telecom Hardware",
-        "fault":  "Frozen rectifier module \u0026 active equipment reboot lockup",
-        "actionTaken":  "Module reset, DC bus recalibrated, active telecom equipment rebooted.",
-        "technician":  "Lawani",
-        "technicianPhone":  "09160185834",
-        "supervisor":  "Europol Security Desk (09024024245)",
-        "cloGuard":  "Peter Odinma (09024024245)",
-        "loggedDate":  "29-Oct-2026",
-        "costNgn":  35000,
-        "status":  "Resolved",
-        "priority":  "Medium"
-    },
-    {
-        "ticketId":  "REP-2026-1041",
-        "siteId":  "CP/NA/LA/021",
-        "tenantId":  "OG1435 (Airtel)",
-        "state":  "Ogun",
-        "category":  "Fuel Filtration System",
-        "fault":  "Fuel filter contamination causing engine speed surging",
-        "actionTaken":  "Replaced primary and secondary fuel filters, drained water trap.",
-        "technician":  "John",
-        "technicianPhone":  "08104223513",
-        "supervisor":  "FSE Central Desk",
-        "cloGuard":  "Agbara In-house Guard (08104223513)",
-        "loggedDate":  "26-Oct-2026",
-        "costNgn":  48000,
-        "status":  "Resolved",
-        "priority":  "Medium"
-    },
-    {
-        "ticketId":  "REP-2026-1044",
-        "siteId":  "CP/CP/CR/001",
-        "tenantId":  "CR0761 (Airtel)",
-        "state":  "Cross River",
-        "category":  "PPM Maintenance",
-        "fault":  "250-hour scheduled PPM maintenance interval reached",
-        "actionTaken":  "Oil change (15W40), oil filter, air filter, and battery water top-up.",
-        "technician":  "ETIM",
-        "technicianPhone":  "08086603364",
-        "supervisor":  "Henshaw Ntiense Sup (07065529932)",
-        "cloGuard":  "Eyibio Effiong (07065529932)",
-        "loggedDate":  "01-Nov-2026",
-        "costNgn":  95000,
-        "status":  "In Progress",
-        "priority":  "Medium"
-    },
-    {
-        "ticketId":  "REP-2026-1045",
-        "siteId":  "CP/CP/OG/001",
-        "tenantId":  "OG1820 (Airtel)",
-        "state":  "Ogun",
-        "category":  "Battery Unit Backup (BUB)",
-        "fault":  "BUB failure causing delay in synchronization during grid cut",
-        "actionTaken":  "Technician en route to test internal cell impedance and replace bad battery block.",
-        "technician":  "Thomas Omowunmi",
-        "technicianPhone":  "07039791180",
-        "supervisor":  "Omobolaji Sup (07045649379)",
-        "cloGuard":  "Echem Julius Ugochukwu (07045649379)",
-        "loggedDate":  "02-Nov-2026",
-        "costNgn":  180000,
-        "status":  "Open",
-        "priority":  "High"
-    }
-]
+    const MASTER_AUDIT_REPAIRS = []
 ;
 
     // Load persisted state or default to master audit
     let masterSites = [];
     try {
-      const savedSites = localStorage.getItem('coloplus_sites_active14_v4');
+      const savedSites = localStorage.getItem('coloplus_sites_live_v5');
       if (savedSites) {
         masterSites = JSON.parse(savedSites);
       } else {
@@ -3363,7 +2964,7 @@
 
     let masterRepairs = [];
     try {
-      const savedRepairs = localStorage.getItem('coloplus_repairs_debabrata_v2');
+      const savedRepairs = localStorage.getItem('coloplus_repairs_live_v5');
       if (savedRepairs) {
         masterRepairs = JSON.parse(savedRepairs);
       } else {
@@ -3418,8 +3019,16 @@
       return Date.parse('2026-11-02T00:00:00Z');
     }
 
+    // Strictly enforce valid generator ratings (15 kVA or 20 kVA ONLY)
+    function normalizeGenKva(val) {
+      const n = Number(val);
+      return n === 20 ? 20 : 15;
+    }
+
     // Strict 100% Exact Mathematical Correlation & Real-Time Fuel Depletion Engine
     function synchronizeSite(s) {
+      s.genSize = normalizeGenKva(s.genSize !== undefined ? s.genSize : s.loadKw);
+      s.loadKw = s.genSize;
       s.tankCap = Math.max(100, parseFloat(s.tankCap) || 1000);
       s.cpd = Math.max(0.5, parseFloat(s.cpd) || 40);
       const cphExact = s.cpd / 24.0;
@@ -3557,8 +3166,8 @@
 
     // Save State
     function saveState() {
-      localStorage.setItem('coloplus_sites_active14_v4', JSON.stringify(masterSites));
-      localStorage.setItem('coloplus_repairs_debabrata_v2', JSON.stringify(masterRepairs));
+      localStorage.setItem('coloplus_sites_live_v5', JSON.stringify(masterSites));
+      localStorage.setItem('coloplus_repairs_live_v5', JSON.stringify(masterRepairs));
     }
 
     // Initialize System
@@ -3724,7 +3333,7 @@
         if (!sitesErr && sitesRows && sitesRows.length > 0) {
           sitesRows.forEach(row => {
             const local = masterSites.find(s => s.siteId === row.site_id);
-            const genKva = Number(row.load_kw || (local && (local.genSize || local.loadKw)) || 15);
+            const genKva = normalizeGenKva(row.load_kw !== null && row.load_kw !== undefined ? row.load_kw : (local ? (local.genSize || local.loadKw) : 15));
             const mapped = {
               siteId: row.site_id,
               tenantId: row.tenant_id,
@@ -4906,33 +4515,46 @@
       });
     }
 
-    // Monochrome-Blended Animated BUB (Backup Battery) Visual
+    // Distinct Horizontal Telecom Rack Battery Pack (BUB) — Electrical LED Cells + Voltage Waveform + Lightning Bolt
     function buildAnimatedBatteryHtml(site) {
       const soc = Math.max(0, Math.min(100, Number(site.batterySoc || 0)));
       const battHrs = Number(site.batteryAutonomyHours || 0);
       const status = (site.batteryStatus || 'HEALTHY').toUpperCase();
       const activeBars = Math.max(0, Math.min(5, Math.round(soc / 20)));
-      const barTone = soc > 70 ? '#22c55e' : (soc > 40 ? '#f59e0b' : '#ef4444');
+      const cellTone = soc > 70 ? '#22c55e' : (soc > 40 ? '#f59e0b' : '#ef4444');
       const badgeCls = soc > 70 ? 'text-emerald-400 border-emerald-500/40' : (soc > 40 ? 'text-amber-400 border-amber-500/40' : 'text-rose-400 border-rose-500/50');
 
-      let cellsHtml = '';
-      for (let i = 5; i >= 1; i--) {
-        const isLit = i <= activeBars;
-        cellsHtml += '<div class="w-full h-3.5 border_ui transition-all duration-500 ' + (isLit ? 'batt-cell-active' : 'opacity-20') + '" style="' +
-          (isLit ? ('background-color:' + barTone + '; opacity:0.85; animation-delay:' + ((5 - i) * 0.2) + 's;') : 'background-color:transparent;') +
-        '"></div>';
+      let horizCellsSvg = '';
+      for (let i = 0; i < 5; i++) {
+        const x = 14 + i * 19;
+        const isLit = i < activeBars;
+        horizCellsSvg += '<rect x="' + x + '" y="16" width="14" height="36" rx="1.5" ' +
+          'fill="' + (isLit ? cellTone : 'currentColor') + '" ' +
+          'fill-opacity="' + (isLit ? '0.85' : '0.09') + '" ' +
+          'stroke="currentColor" stroke-opacity="0.25" stroke-width="0.8" ' +
+          (isLit ? ('class="batt-led-cell" style="animation-delay:' + (i * 0.18) + 's;"') : '') + '/>';
       }
 
-      return '<div class="flex items-center gap-4 p-3 border_ui bg-black/10 dark:bg-white/5">' +
+      return '<div class="flex flex-col sm:flex-row items-center gap-4 p-3 border_ui bg-black/10 dark:bg-white/5">' +
         '<div class="flex flex-col items-center shrink-0">' +
-          '<div class="w-7 h-2 border_ui border-b-0 bg-(--color-primary) opacity-80"></div>' +
-          '<div class="w-16 p-1.5 border_ui bg-black/25 relative overflow-hidden flex flex-col gap-1">' +
-            '<div class="absolute inset-x-0 h-4 bg-gradient-to-b from-transparent via-white/25 to-transparent pointer-events-none batt-scan-line"></div>' +
-            cellsHtml +
-          '</div>' +
-          '<div class="text-[9px] font-bold mt-1 tracking-wider opacity-80">BUB · ' + soc + '%</div>' +
+          '<svg viewBox="0 0 132 76" class="w-36 h-20" aria-label="Horizontal BUB Backup Battery Pack">' +
+            '<!-- Outer Horizontal Battery Casing -->' +
+            '<rect x="6" y="8" width="110" height="52" rx="4" fill="currentColor" fill-opacity="0.04" stroke="currentColor" stroke-opacity="0.7" stroke-width="1.6"/>' +
+            '<!-- Positive (+) Terminal Nub on Right -->' +
+            '<rect x="116" y="22" width="10" height="24" rx="2" fill="currentColor" fill-opacity="0.75"/>' +
+            '<!-- Polarity Markers (- / +) -->' +
+            '<text x="11" y="72" fill="currentColor" fill-opacity="0.55" font-size="9" font-weight="bold">- NEG</text>' +
+            '<text x="106" y="72" fill="' + cellTone + '" font-size="9" font-weight="bold">+ POS</text>' +
+            '<!-- 5 Horizontal LED Charge Segments -->' +
+            horizCellsSvg +
+            '<!-- Live Electrical Voltage Pulse Waveform Sweeping Across Battery -->' +
+            '<path d="M12,34 L34,34 L42,20 L52,48 L60,26 L68,40 L76,34 L110,34" fill="none" stroke="#ffffff" stroke-opacity="0.9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="batt-voltage-wave"/>' +
+            '<!-- Pulsing Electric Bolt Emblem -->' +
+            '<polygon points="64,13 55,34 62,34 57,53 71,30 63,30" fill="#facc15" stroke="#0b0d10" stroke-width="0.9" class="batt-bolt-pulse"/>' +
+          '</svg>' +
+          '<div class="text-[9px] font-bold tracking-wider uppercase opacity-80">BUB PACK · ' + soc + '% · ' + (site.batteryVoltage || '52.8 V') + '</div>' +
         '</div>' +
-        '<div class="flex-1 min-w-0 space-y-1.5 text-[11px]">' +
+        '<div class="flex-1 w-full min-w-0 space-y-1.5 text-[11px]">' +
           '<div class="flex flex-wrap items-center justify-between gap-1 border-b border_ui pb-1">' +
             '<span class="font-bold uppercase tracking-wider">BUB = BACKUP BATTERY</span>' +
             '<span class="border_ui px-1.5 py-0.5 text-[9px] font-bold ' + badgeCls + '">' + status + '</span>' +
@@ -5077,60 +4699,103 @@
       });
     }
 
-    // Reusable Animated Diesel Tank + Generator Type + Daily Usage Widget
-    function buildAnimatedTankHtml(site) {
-      const genKva = Number(site.genSize || site.loadKw || 15);
+    // Industrial Cylindrical Sight-Glass Diesel Tank SVG (Parallax Dual-Wave + Glass Specular + Micro-Bubbles)
+    function buildTankSvg(site, uidSuffix, sizeClass) {
       const fillPct = Math.max(0, Math.min(100, Number(site.fillPct || 0)));
-      const visualHeight = fillPct > 0 ? Math.max(10, fillPct) : 0;
-      let fluidColor = '#10b981';
+      const clipId = 'tankClip_' + (site.siteId || 'site').replace(/[^a-zA-Z0-9]/g, '_') + '_' + uidSuffix;
+      const gradId = 'tankGrad_' + (site.siteId || 'site').replace(/[^a-zA-Z0-9]/g, '_') + '_' + uidSuffix;
+      let toneTop = '#34d399', toneBot = '#059669';
+      if (site.currentDL <= 0 || fillPct <= 0) {
+        toneTop = '#f87171'; toneBot = '#b91c1c';
+      } else if (site.daysRemaining <= 3.0) {
+        toneTop = '#f87171'; toneBot = '#dc2626';
+      } else if (site.daysRemaining <= 7.0) {
+        toneTop = '#fbbf24'; toneBot = '#d97706';
+      }
+
+      // Interior tank cavity: x=28..104 (w=76), y=24..148 (h=124)
+      const cavTop = 24;
+      const cavH = 124;
+      const liquidH = fillPct > 0 ? Math.max(10, (fillPct / 100) * cavH) : 0;
+      const liquidY = cavTop + cavH - liquidH;
+
+      return '<svg viewBox="0 0 132 164" class="' + (sizeClass || 'w-32 h-40') + '" role="img" aria-label="Diesel Tank ' + fillPct + '%">' +
+        '<defs>' +
+          '<clipPath id="' + clipId + '"><rect x="30" y="25" width="72" height="122" rx="10"/></clipPath>' +
+          '<linearGradient id="' + gradId + '" x1="0" y1="0" x2="0" y2="1">' +
+            '<stop offset="0%" stop-color="' + toneTop + '" stop-opacity="0.95"/>' +
+            '<stop offset="100%" stop-color="' + toneBot + '" stop-opacity="0.98"/>' +
+          '</linearGradient>' +
+        '</defs>' +
+        '<!-- Top Filler Cap & Valve Neck -->' +
+        '<rect x="53" y="6" width="26" height="8" rx="2" fill="currentColor" fill-opacity="0.75"/>' +
+        '<rect x="58" y="14" width="16" height="9" fill="currentColor" fill-opacity="0.35" stroke="currentColor" stroke-opacity="0.6" stroke-width="1"/>' +
+        '<!-- Tank Feet / Base Mount -->' +
+        '<rect x="34" y="150" width="14" height="6" rx="1" fill="currentColor" fill-opacity="0.5"/>' +
+        '<rect x="84" y="150" width="14" height="6" rx="1" fill="currentColor" fill-opacity="0.5"/>' +
+        '<!-- Calibrated External Gauge Ticks (Left) -->' +
+        '<g fill="currentColor" fill-opacity="0.55" font-size="8" font-family="monospace" text-anchor="end">' +
+          '<text x="24" y="30">100</text><line x1="25" y1="27" x2="29" y2="27" stroke="currentColor" stroke-opacity="0.5"/>' +
+          '<text x="24" y="60">75</text><line x1="25" y1="57" x2="29" y2="57" stroke="currentColor" stroke-opacity="0.5"/>' +
+          '<text x="24" y="90" fill="#f59e0b">50</text><line x1="25" y1="87" x2="29" y2="87" stroke="#f59e0b"/>' +
+          '<text x="24" y="120" fill="#ef4444">25</text><line x1="25" y1="117" x2="29" y2="117" stroke="#ef4444"/>' +
+          '<text x="24" y="149">0</text><line x1="25" y1="146" x2="29" y2="146" stroke="currentColor" stroke-opacity="0.5"/>' +
+        '</g>' +
+        '<!-- Outer Double-Walled Cylinder Shell -->' +
+        '<rect x="28" y="23" width="76" height="126" rx="12" fill="currentColor" fill-opacity="0.06" stroke="currentColor" stroke-opacity="0.7" stroke-width="1.6"/>' +
+        '<!-- Animated Clipped Diesel Fluid -->' +
+        '<g clip-path="url(#' + clipId + ')">' +
+          (liquidH > 0 ? (
+            '<!-- Back Parallax Wave -->' +
+            '<g class="tank-wave-back">' +
+              '<path d="M0,' + (liquidY + 2).toFixed(1) + ' Q25,' + (liquidY - 5).toFixed(1) + ' 50,' + (liquidY + 2).toFixed(1) + ' T100,' + (liquidY + 2).toFixed(1) + ' T150,' + (liquidY + 2).toFixed(1) + ' T200,' + (liquidY + 2).toFixed(1) + ' T250,' + (liquidY + 2).toFixed(1) + ' L250,160 L0,160 Z" fill="' + toneTop + '" fill-opacity="0.4"/>' +
+            '</g>' +
+            '<!-- Front Parallax Wave -->' +
+            '<g class="tank-wave-front">' +
+              '<path d="M0,' + liquidY.toFixed(1) + ' Q25,' + (liquidY + 6).toFixed(1) + ' 50,' + liquidY.toFixed(1) + ' T100,' + liquidY.toFixed(1) + ' T150,' + liquidY.toFixed(1) + ' T200,' + liquidY.toFixed(1) + ' T250,' + liquidY.toFixed(1) + ' L250,160 L0,160 Z" fill="url(#' + gradId + ')"/>' +
+            '</g>' +
+            '<!-- Rising Micro-Bubbles -->' +
+            '<circle cx="46" cy="' + Math.min(144, liquidY + liquidH - 4).toFixed(1) + '" r="2" fill="#ffffff" fill-opacity="0.7" class="fuel-bubble-a"/>' +
+            '<circle cx="68" cy="' + Math.min(144, liquidY + liquidH - 2).toFixed(1) + '" r="1.5" fill="#ffffff" fill-opacity="0.65" class="fuel-bubble-b"/>' +
+            '<circle cx="86" cy="' + Math.min(144, liquidY + liquidH - 6).toFixed(1) + '" r="1.8" fill="#ffffff" fill-opacity="0.6" class="fuel-bubble-c"/>'
+          ) : (
+            '<text x="66" y="84" text-anchor="middle" fill="#ef4444" font-size="9" font-weight="bold" font-family="monospace">EMPTY</text>' +
+            '<text x="66" y="96" text-anchor="middle" fill="currentColor" fill-opacity="0.55" font-size="8" font-family="monospace">0.0 L</text>'
+          )) +
+          '<!-- Cylinder Glass Specular Gloss Highlight -->' +
+          '<rect x="35" y="28" width="7" height="116" rx="3.5" fill="#ffffff" fill-opacity="0.14"/>' +
+          '<!-- Horizontal Structural Sight-Glass Ribs -->' +
+          '<line x1="30" y1="57" x2="102" y2="57" stroke="currentColor" stroke-opacity="0.16" stroke-dasharray="3 3"/>' +
+          '<line x1="30" y1="87" x2="102" y2="87" stroke="#f59e0b" stroke-opacity="0.3" stroke-dasharray="3 3"/>' +
+          '<line x1="30" y1="117" x2="102" y2="117" stroke="#ef4444" stroke-opacity="0.3" stroke-dasharray="3 3"/>' +
+        '</g>' +
+        '<!-- Live Percentage Pill -->' +
+        '<rect x="44" y="130" width="44" height="15" rx="3" fill="#0b0d10" fill-opacity="0.78" stroke="currentColor" stroke-opacity="0.35" stroke-width="0.8"/>' +
+        '<text x="66" y="140.5" text-anchor="middle" fill="#ffffff" font-size="9" font-weight="bold" font-family="monospace">' + fillPct + '%</text>' +
+      '</svg>';
+    }
+
+    // Reusable Animated Diesel Tank + Generator Type (15/20 kVA) + Daily Usage Widget
+    function buildAnimatedTankHtml(site) {
+      const genKva = normalizeGenKva(site.genSize || site.loadKw);
+      const fillPct = Math.max(0, Math.min(100, Number(site.fillPct || 0)));
       let badgeCls = 'text-emerald-400 border-emerald-500/40';
       let stateLabel = 'HEALTHY (> 7 DAYS)';
       if (site.currentDL <= 0 || fillPct <= 0) {
-        fluidColor = '#ef4444';
         badgeCls = 'text-rose-400 border-rose-500/50';
         stateLabel = 'EMPTY (0 L)';
       } else if (site.daysRemaining <= 3.0) {
-        fluidColor = '#ef4444';
         badgeCls = 'text-rose-400 border-rose-500/50';
         stateLabel = 'CRITICAL (<= 3 DAYS)';
       } else if (site.daysRemaining <= 7.0) {
-        fluidColor = '#f59e0b';
         badgeCls = 'text-amber-400 border-amber-500/50';
         stateLabel = '7-DAY ALARM ACTIVE';
       }
 
       return '<div class="grid grid-cols-1 sm:grid-cols-12 gap-3 p-3 border_ui bg-black/10 dark:bg-white/5 items-center">' +
-        '<div class="sm:col-span-5 flex items-center justify-center gap-2">' +
-          '<div class="h-36 flex flex-col justify-between text-[9px] opacity-60 select-none text-right pr-1 font-bold">' +
-            '<span>100%</span>' +
-            '<span>75%</span>' +
-            '<span class="text-amber-400">50%</span>' +
-            '<span class="text-rose-400">25%</span>' +
-            '<span>0%</span>' +
-          '</div>' +
-          '<div class="w-24 h-36 border_ui bg-black/30 relative overflow-hidden flex flex-col justify-end">' +
-            '<div class="absolute inset-0 flex flex-col justify-between pointer-events-none z-10 py-1 opacity-25">' +
-              '<div class="w-full border-b border_ui border-dashed"></div>' +
-              '<div class="w-full border-b border_ui border-dashed"></div>' +
-              '<div class="w-full border-b border-amber-500 border-dashed"></div>' +
-              '<div class="w-full border-b border-rose-500 border-dashed"></div>' +
-              '<div class="w-full border-b border_ui border-dashed"></div>' +
-            '</div>' +
-            '<div class="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">' +
-              '<span class="px-1.5 py-0.5 text-[11px] font-bold bg-black/60 text-white border_ui">' + fillPct + '%</span>' +
-            '</div>' +
-            '<div class="w-full relative transition-all duration-700 overflow-hidden" style="height: ' + visualHeight + '%; background-color: ' + fluidColor + ';">' +
-              (visualHeight > 0 ? (
-                '<div class="w-[200%] h-3.5 absolute -top-2 left-0 liquid-wave opacity-60">' +
-                  '<svg viewBox="0 0 1200 120" preserveAspectRatio="none" class="w-full h-full fill-white">' +
-                    '<path d="M0,0 C150,90 350,-40 500,45 C650,130 900,10 1200,50 L1200,120 L0,120 Z"></path>' +
-                  '</svg>' +
-                '</div>' +
-                '<div class="w-1.5 h-1.5 rounded-full bg-white/70 absolute bubble-1"></div>' +
-                '<div class="w-1 h-1 rounded-full bg-white/60 absolute bubble-2"></div>'
-              ) : '') +
-            '</div>' +
-          '</div>' +
+        '<div class="sm:col-span-5 flex flex-col items-center justify-center">' +
+          buildTankSvg(site, 'full', 'w-32 h-40') +
+          '<div class="text-[9px] font-bold opacity-70 uppercase tracking-wider mt-0.5">BURN RATE: -' + site.cph + ' L/HR</div>' +
         '</div>' +
         '<div class="sm:col-span-7 space-y-2 text-[11px]">' +
           '<div class="flex items-center justify-between gap-2 border-b border_ui pb-1.5">' +
@@ -5356,6 +5021,27 @@
       }
 
       const ticks = site.maintenanceTicks || [];
+      const attachedCount = ticks.filter(t => !!t.photoDataUrl).length;
+      const allPhotosReady = ticks.length > 0 && attachedCount === ticks.length;
+
+      const progEl = document.getElementById('fsePpmPhotoProgress');
+      if (progEl) {
+        if (allPhotosReady) {
+          progEl.className = 'border_ui border-emerald-500/50 bg-emerald-500/10 p-2 text-[10px] font-bold text-emerald-400';
+          progEl.innerText = '// PHOTO PROOF COMPLETE: ' + attachedCount + ' / ' + ticks.length + ' ATTACHED — READY TO SUBMIT PPM REPORT';
+        } else {
+          progEl.className = 'border_ui border-rose-500/40 bg-rose-500/10 p-2 text-[10px] font-bold text-rose-300';
+          progEl.innerText = '// PHOTO PROOF (* MANDATORY): ' + attachedCount + ' / ' + ticks.length + ' ATTACHED — SNAP A PICTURE OF ALL ' + ticks.length + ' ITEMS TO SUBMIT';
+        }
+      }
+      const subBtn = document.getElementById('fseSubmitPpmBtn');
+      if (subBtn) {
+        subBtn.className = 'border_ui px-4 py-2 min-h-[44px] sm:min-h-0 font-bold cursor-pointer text-[11px] ' +
+          (allPhotosReady ? 'nav_active btn-invert' : 'opacity-60 border-rose-500/50 text-rose-300');
+      }
+      const subErrEl = document.getElementById('fsePpmSubmitError');
+      if (subErrEl && allPhotosReady) subErrEl.classList.add('hidden');
+
       const ppmEl = document.getElementById('fseSitePpmList');
       if (ticks.length === 0) {
         ppmEl.innerHTML = '<div class="opacity-60 text-[11px] py-2">No PPM items found.</div>';
@@ -5364,22 +5050,23 @@
           let previewHtml = '';
           if (tk.photoDataUrl) {
             if (tk.mediaType === 'video') {
-              previewHtml = '<a href="' + tk.photoDataUrl + '" target="_blank" class="border_ui px-1.5 py-0.5 text-[9px] font-bold text-(--color-accent)" title="' + (tk.mediaName || 'Video') + '">VID (' + (tk.mediaSizeMb || '') + 'MB)</a>';
+              previewHtml = '<a href="' + tk.photoDataUrl + '" target="_blank" class="border_ui border-emerald-500/50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-400" title="' + (tk.mediaName || 'Video') + '">✓ VID (' + (tk.mediaSizeMb || '') + 'MB)</a>';
             } else {
-              previewHtml = '<a href="' + tk.photoDataUrl + '" target="_blank" title="View Photo"><img src="' + tk.photoDataUrl + '" class="w-7 h-7 object-cover border_ui" alt="PPM"></a>';
+              previewHtml = '<a href="' + tk.photoDataUrl + '" target="_blank" title="View Photo"><img src="' + tk.photoDataUrl + '" class="w-7 h-7 object-cover border_ui border-emerald-500/60" alt="PPM"></a>';
             }
           }
-          return '<div class="border_ui p-2 flex items-center justify-between gap-2">' +
-            '<div onclick="toggleSiteTickFromFse(' + idx + ')" class="cursor-pointer flex-1">' +
-              '<span class="text-[11px] font-bold ' + (tk.done ? 'line-through opacity-50' : '') + '">' + (tk.done ? '[✓] ' : '[ ] ') + tk.task + '</span>' +
-              '<span class="ml-2 text-[9px] opacity-50">' + (tk.category || 'PPM') + '</span>' +
+          const hasPhoto = !!tk.photoDataUrl;
+          return '<div class="border_ui ' + (hasPhoto ? 'border-emerald-500/40' : 'border-rose-500/40') + ' p-2 flex items-center justify-between gap-2">' +
+            '<div onclick="toggleSiteTickFromFse(' + idx + ')" class="cursor-pointer flex-1 min-w-0">' +
+              '<span class="text-[11px] font-bold ' + (tk.done && hasPhoto ? 'text-emerald-400' : '') + '">' + (tk.done ? '[✓] ' : '[ ] ') + tk.task + ' <span class="text-rose-500 font-bold" title="Mandatory Photo Required">*</span></span>' +
+              '<span class="ml-2 text-[9px] ' + (hasPhoto ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold') + '">' + (hasPhoto ? '✓ PHOTO OK' : 'PHOTO REQUIRED') + '</span>' +
             '</div>' +
             '<div class="flex items-center gap-1.5 shrink-0">' +
               previewHtml +
-              (tk.photoDataUrl ? '<button type="button" onclick="deletePpmMedia(' + idx + ')" class="border_ui px-1.5 py-1 text-[9px] font-bold hover:bg-rose-600 hover:text-white cursor-pointer" title="Delete Attachment">DEL</button>' : '') +
-              '<label class="border_ui px-2 py-1 text-[9px] cursor-pointer btn-invert font-bold">' +
-                (tk.photoDataUrl ? 'REPLACE' : '+ PIC / VID') +
-                '<input type="file" accept="image/*,video/*" class="hidden" onchange="attachPpmPhoto(' + idx + ', this)">' +
+              (hasPhoto ? '<button type="button" onclick="deletePpmMedia(' + idx + ')" class="border_ui px-1.5 py-1 text-[9px] font-bold hover:bg-rose-600 hover:text-white cursor-pointer" title="Delete Attachment">DEL</button>' : '') +
+              '<label class="border_ui px-2 py-1 text-[9px] cursor-pointer btn-invert font-bold ' + (hasPhoto ? '' : 'border-rose-500/60 text-rose-300') + '">' +
+                (hasPhoto ? 'REPLACE' : '+ SNAP PIC *') +
+                '<input type="file" accept="image/*,video/*" capture="environment" class="hidden" onchange="attachPpmPhoto(' + idx + ', this)">' +
               '</label>' +
             '</div>' +
           '</div>';
@@ -5522,7 +5209,22 @@
       if (!site) return;
 
       const ticks = site.maintenanceTicks || [];
-      const doneCount = ticks.filter(t => t.done).length;
+      const missingPhotos = ticks.filter(t => !t.photoDataUrl);
+      const errEl = document.getElementById('fsePpmSubmitError');
+
+      if (missingPhotos.length > 0) {
+        const missingNames = missingPhotos.map(t => t.task).join(', ');
+        if (errEl) {
+          errEl.innerText = 'CANNOT SUBMIT PPM: Mandatory picture proof (*) is required for EVERY checklist item. Missing (' + missingPhotos.length + '/' + ticks.length + '): ' + missingNames;
+          errEl.classList.remove('hidden');
+        }
+        showToast('Blocked: Snap/attach picture proof for all ' + ticks.length + ' items first (' + missingPhotos.length + ' missing)');
+        return;
+      }
+      if (errEl) errEl.classList.add('hidden');
+
+      ticks.forEach(t => { t.done = true; });
+      const doneCount = ticks.length;
       const now = new Date();
       const submittedDate = now.toISOString().slice(0, 10);
       const submittedAt = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' +
@@ -6613,33 +6315,16 @@
           prevPpmSub = latestPpm.submittedAt + ' (' + latestPpm.completedCount + '/' + latestPpm.totalCount + ')';
         }
 
-        const fillPct = Math.max(0, Math.min(100, Number(site.fillPct || 0)));
-        const visH = fillPct > 0 ? Math.max(12, fillPct) : 0;
-        const tankFluidColor = (site.currentDL <= 0 || fillPct <= 20) ? '#ef4444' : (fillPct <= 45 ? '#f59e0b' : '#10b981');
-
         snapEl.innerHTML =
           '<div class="lg:col-span-4 border_ui p-2.5 bg-(--color-card-bg)/50 flex items-center gap-3">' +
-            '<div class="w-14 h-20 border_ui bg-black/30 relative overflow-hidden flex flex-col justify-end shrink-0">' +
-              '<div class="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">' +
-                '<span class="px-1 text-[9px] font-bold bg-black/65 text-white border_ui">' + fillPct + '%</span>' +
-              '</div>' +
-              '<div class="w-full relative transition-all duration-700 overflow-hidden" style="height:' + visH + '%; background-color:' + tankFluidColor + ';">' +
-                (visH > 0 ? (
-                  '<div class="w-[200%] h-2.5 absolute -top-1.5 left-0 liquid-wave opacity-60">' +
-                    '<svg viewBox="0 0 1200 120" preserveAspectRatio="none" class="w-full h-full fill-white">' +
-                      '<path d="M0,0 C150,90 350,-40 500,45 C650,130 900,10 1200,50 L1200,120 L0,120 Z"></path>' +
-                    '</svg>' +
-                  '</div>' +
-                  '<div class="w-1 h-1 rounded-full bg-white/70 absolute bubble-1"></div>' +
-                  '<div class="w-1 h-1 rounded-full bg-white/60 absolute bubble-2"></div>'
-                ) : '') +
-              '</div>' +
+            '<div class="shrink-0">' +
+              buildTankSvg(site, 'snap', 'w-16 h-20') +
             '</div>' +
             '<div class="min-w-0 flex-1 space-y-0.5">' +
               '<div class="text-[9px] uppercase opacity-60">LIVE TANK · GEN &amp; DAILY USAGE</div>' +
-              '<div class="font-bold text-sm text-amber-400">' + genKva + ' kVA · ' + site.cpd + ' L/day</div>' +
+              '<div class="font-bold text-sm text-amber-400">' + normalizeGenKva(genKva) + ' kVA · ' + site.cpd + ' L/day</div>' +
               '<div class="text-[11px] font-bold">' + site.currentDL + ' L <span class="opacity-60 font-normal">/ ' + site.tankCap + ' L</span></div>' +
-              '<div class="text-[10px] opacity-65">' + site.daysRemaining + 'd autonomy · ' + site.cph + ' L/hr</div>' +
+              '<div class="text-[10px] opacity-65">' + (site.autonomyBreakdown || (site.daysRemaining + 'd')) + ' · ' + site.cph + ' L/hr</div>' +
             '</div>' +
           '</div>' +
           '<div class="lg:col-span-8 grid grid-cols-2 sm:grid-cols-4 gap-2">' +
@@ -7583,6 +7268,58 @@
       }
     }
 
+    async function clearAllLiveFuelToZero() {
+      if (!isAdminUnlocked) {
+        showToast('Access Denied: Admin only');
+        return;
+      }
+      if (!confirm('Zero all fuel levels & clear old seeded fuel supply records across all active sites (keeping daily usage CPD & normalizing Gen Type to 15/20 kVA)?')) return;
+
+      const nowIso = new Date().toISOString();
+      masterSites.forEach(s => {
+        s.genSize = normalizeGenKva(s.genSize || s.loadKw);
+        s.loadKw = s.genSize;
+        s.currentDL = 0;
+        s.baselineDL = 0;
+        s.fuelBaselineAt = nowIso;
+        s.lastSupplyQty = 0;
+        s.lastSupplyDate = '';
+        s.lastSupplyTime = '';
+        s.previousSupplyDate = '';
+        s.previousSupplyTime = '';
+        s.previousSupplyQty = '';
+        s.refuelHistory = [];
+        synchronizeSite(s);
+      });
+      saveState();
+
+      if (sb) {
+        try {
+          await sb.from('sites').update({
+            current_dl: 0,
+            last_supply_qty: 0,
+            last_supply_date: null,
+            last_supply_time: null,
+            previous_supply_date: null,
+            previous_supply_time: null,
+            previous_supply_qty: null,
+            updated_at: nowIso
+          }).eq('is_active', true);
+          for (const s of masterSites) {
+            await sb.from('sites').update({ load_kw: s.genSize }).eq('site_id', s.siteId);
+          }
+        } catch (err) {
+          console.warn('Live DB fuel zero sync:', err);
+        }
+      }
+
+      updateKpis();
+      renderSites();
+      updateAdminPortalUiState();
+      if (fseSession) updateFseUiState();
+      showToast('All sites zeroed to 0 L (live DB updated) & Gen Types locked to 15/20 kVA');
+    }
+
     async function deleteAdminSite(siteId) {
       if (!isAdminUnlocked) {
         showToast('Access Denied: Only Admin can deactivate sites');
@@ -7786,20 +7523,9 @@
       document.getElementById('editTankCap').value = site.tankCap;
       document.getElementById('editGridStatus').value = site.gridStatus || 'ONLINE (NEPA AVAILABLE)';
       document.getElementById('editBatteryStatus').value = site.batteryStatus || 'HEALTHY';
-      const genVal = Number(site.genSize || site.loadKw || 15);
+      const genVal = normalizeGenKva(site.genSize || site.loadKw);
       const genSel = document.getElementById('editGenSize');
-      const genWrap = document.getElementById('editGenSizeCustomWrap');
-      const genCustom = document.getElementById('editGenSizeCustom');
-      if (genSel) {
-        if ([15, 20, 30].includes(genVal)) {
-          genSel.value = String(genVal);
-          if (genWrap) genWrap.classList.add('hidden');
-        } else {
-          genSel.value = 'custom';
-          if (genWrap) genWrap.classList.remove('hidden');
-          if (genCustom) genCustom.value = genVal;
-        }
-      }
+      if (genSel) genSel.value = String(genVal);
       document.getElementById('editFse').value = site.fse;
       document.getElementById('editFsePhone').value = site.fsePhone;
       document.getElementById('editSecurity').value = site.security;
@@ -7851,8 +7577,7 @@
       site.gridStatus = document.getElementById('editGridStatus').value;
       site.batteryStatus = document.getElementById('editBatteryStatus').value;
       const genSelVal = document.getElementById('editGenSize') ? document.getElementById('editGenSize').value : '15';
-      const genCustomVal = document.getElementById('editGenSizeCustom') ? parseFloat(document.getElementById('editGenSizeCustom').value) : 15;
-      site.genSize = genSelVal === 'custom' ? Math.max(1, genCustomVal || 15) : (parseFloat(genSelVal) || 15);
+      site.genSize = normalizeGenKva(genSelVal);
       site.loadKw = site.genSize;
       site.fse = document.getElementById('editFse').value.trim();
       site.fsePhone = document.getElementById('editFsePhone').value.trim();

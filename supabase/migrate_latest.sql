@@ -155,8 +155,15 @@ begin
 exception when undefined_function then null;
 end $$;
 
--- 6. Reset all active sites' current diesel level to 0 while preserving daily usage (cpd)
+-- 6. Clear all mock/seeded fuel figures to 0 L (preserving daily usage cpd) and lock Gen Type to 15 kVA or 20 kVA
 update public.sites
 set current_dl = 0,
+    last_supply_qty = 0,
+    last_supply_date = null,
+    last_supply_time = null,
+    previous_supply_date = null,
+    previous_supply_time = null,
+    previous_supply_qty = null,
+    load_kw = case when coalesce(load_kw, 0) = 20 or coalesce(load_kw, 0) >= 8 then 20 else 15 end,
     updated_at = now()
 where is_active = true;
