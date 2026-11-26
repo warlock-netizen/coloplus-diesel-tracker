@@ -345,15 +345,20 @@
 
         <!-- FSE MODULE 05: READ-ONLY 2-MONTH PPM SCHEDULE -->
         <div id="fseModuleCalendar" class="hidden space-y-2.5 text-xs">
-          <div class="border_ui p-4 bg-(--color-card-bg)/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <div class="text-[10px] uppercase tracking-widest opacity-50">// OPERATIONS SCHEDULE (VIEW-ONLY)</div>
-              <h2 class="hero-outline-title text-3xl uppercase mt-0.5">PPM CALENDAR &amp; TASKS</h2>
+          <div class="border_ui p-4 bg-(--color-card-bg)/40 flex flex-col gap-2.5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div class="text-[10px] uppercase tracking-widest opacity-50">// PERSONALIZED SITE PPM SCHEDULE (NO CLASHES WITH OTHER SITES)</div>
+                <h2 class="hero-outline-title text-3xl uppercase mt-0.5">MY SITE PPM CALENDAR</h2>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="changeCalendarMonth(-1)" class="border_ui px-3 py-1.5 btn-invert cursor-pointer font-bold">&lt; PREV</button>
+                <span id="calendarMonthLabel" class="border_ui px-4 py-1.5 font-bold uppercase min-w-[140px] text-center">--</span>
+                <button onclick="changeCalendarMonth(1)" class="border_ui px-3 py-1.5 btn-invert cursor-pointer font-bold">NEXT &gt;</button>
+              </div>
             </div>
-            <div class="flex items-center gap-2">
-              <button onclick="changeCalendarMonth(-1)" class="border_ui px-3 py-1.5 btn-invert cursor-pointer font-bold">&lt; PREV</button>
-              <span id="calendarMonthLabel" class="border_ui px-4 py-1.5 font-bold uppercase min-w-[140px] text-center">--</span>
-              <button onclick="changeCalendarMonth(1)" class="border_ui px-3 py-1.5 btn-invert cursor-pointer font-bold">NEXT &gt;</button>
+            <div id="calPersonalizedBanner" class="border_ui border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-[10px] font-bold text-emerald-400">
+              // PERSONALIZED TO YOUR SITE ONLY — ZERO CLASHES
             </div>
           </div>
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-2.5">

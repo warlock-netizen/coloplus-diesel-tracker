@@ -2125,10 +2125,13 @@
     let calendarViewDate = new Date();
     let selectedCalendarDate = null;
     let activeCalendarTaskTab = 'calendar'; // 'calendar' | 'team'
+    let calendarScopeMode = 'site'; // 'site' (personalized to active site) | 'all' (all sites, zero-clash)
     let masterTasks = [];
     try {
       const savedTasks = localStorage.getItem('coloplus_tasks_v1');
-      if (savedTasks) masterTasks = JSON.parse(savedTasks);
+      if (savedTasks) {
+        masterTasks = JSON.parse(savedTasks).filter(t => !['t1', 't2', 't3'].includes(t.id));
+      }
     } catch (e) { masterTasks = []; }
 
     let emailChannelSettings = { financeEmail: '', teamEmails: [] };
@@ -2208,53 +2211,138 @@
       }
     }
 
+    function addDaysIso(isoDateStr, days) {
+      const base = new Date(isoDateStr + 'T00:00:00Z');
+      if (isNaN(base.getTime())) return isoDateStr;
+      base.setUTCDate(base.getUTCDate() + days);
+      return base.toISOString().slice(0, 10);
+    }
+
+    function findNextFreePpmDate(startIso, excludeSiteId) {
+      const occupied = new Set();
+      masterSites.forEach(s => {
+        if (s.siteId !== excludeSiteId && s.nextPpmDate) {
+          occupied.add(s.nextPpmDate);
+        }
+      });
+      let candidate = startIso;
+      let guard = 0;
+      while (occupied.has(candidate) && guard < 180) {
+        candidate = addDaysIso(candidate, 1);
+        guard++;
+      }
+      return candidate;
+    }
+
+    function setCalendarScopeMode(mode) {
+      if (PORTAL_MODE === 'fse') {
+        calendarScopeMode = 'site';
+      } else {
+        calendarScopeMode = mode === 'all' ? 'all' : 'site';
+      }
+      renderCalendar();
+      renderTasks();
+    }
+
+    function getActiveCalendarSiteId() {
+      if (PORTAL_MODE === 'fse' && fseSession && fseSession.siteId) return fseSession.siteId;
+      if (PORTAL_MODE === 'admin' && adminSession && adminSession.siteId) return adminSession.siteId;
+      return null;
+    }
+
+    function getCalendarFilteredTasks() {
+      const activeSiteId = getActiveCalendarSiteId();
+      if (PORTAL_MODE === 'fse' && activeSiteId) {
+        return masterTasks.filter(t => t.site === activeSiteId);
+      }
+      if (calendarScopeMode === 'site' && activeSiteId) {
+        return masterTasks.filter(t => t.site === activeSiteId);
+      }
+      return masterTasks;
+    }
+
     function initCalendarAndTasks() {
       const siteSel = document.getElementById('newTaskSite');
       if (siteSel) {
         siteSel.innerHTML = '<option value="ALL SITES">ALL SITES</option>' +
           masterSites.map(s => '<option value="' + s.siteId + '">' + s.siteId + ' (' + s.state + ')</option>').join('');
+        const activeSid = getActiveCalendarSiteId();
+        if (activeSid) siteSel.value = activeSid;
       }
       const dateInput = document.getElementById('newTaskDate');
       if (dateInput) dateInput.value = new Date().toISOString().slice(0, 10);
       populateSavedTeamEmailDatalist();
       handleTaskSiteChange();
 
-      if (masterTasks.length === 0) {
-        const todayStr = new Date().toISOString().slice(0, 10);
-        masterTasks = [
-          { id: 't1', title: 'Inspect Gen Fuel Filters & Alternator', site: 'CP/CP/EK/002', date: todayStr, category: 'PPM', specificIssue: 'Scheduled PPM Service', assigneeEmail: '', emailSentAt: '', done: false },
-          { id: 't2', title: 'Verify Diesel Delivery & Dip Reading', site: 'CP/CP/AN/001', date: todayStr, category: 'FUEL', specificIssue: 'Diesel Low / Refill Needed', assigneeEmail: '', emailSentAt: '', done: false },
-          { id: 't3', title: 'Check BUB Battery Bank Voltage & Light Hours', site: 'CP/CP/LA/001', date: todayStr, category: 'BUB', specificIssue: 'Battery (BUB) / Rectifier Issue', assigneeEmail: '', emailSentAt: '', done: true }
-        ];
-        localStorage.setItem('coloplus_tasks_v1', JSON.stringify(masterTasks));
-      }
       syncPpmDatesToCalendar();
       renderCalendar();
       renderTasks();
     }
 
     function syncPpmDatesToCalendar() {
-      // Automatically put each site's next PPM cycle date on the Calendar
-      masterSites.forEach(s => {
-        if (!s.nextPpmDate) return;
-        const autoId = 'ppm_auto_' + s.siteId;
-        const existing = masterTasks.find(t => t.id === autoId);
-        const hrsTxt = (s.hoursToPpm !== undefined && s.hoursToPpm !== null) ? (s.hoursToPpm + 'h DG RH left') : (s.ppmCycleDays + 'd cycle');
-        const title = 'PPM Cycle Due — ' + hrsTxt + ' (' + s.state + ')';
-        if (existing) {
-          existing.date = s.nextPpmDate;
-          existing.title = title;
-        } else {
-          masterTasks.push({
-            id: autoId,
-            title: title,
-            site: s.siteId,
-            date: s.nextPpmDate,
-            category: 'PPM',
-            done: false
-          });
-        }
+      // 1. Zero-Clash Personalizer: guarantee every site has its own unique, non-clashing PPM date
+      const usedDates = new Set();
+      const ordered = [...masterSites].sort((a, b) => {
+        // Manually pinned Admin dates keep priority first, then earliest due date, then Site ID
+        if (!!a.ppmManuallySet !== !!b.ppmManuallySet) return a.ppmManuallySet ? -1 : 1;
+        const cmp = (a.nextPpmDate || '').localeCompare(b.nextPpmDate || '');
+        return cmp !== 0 ? cmp : a.siteId.localeCompare(b.siteId);
       });
+
+      ordered.forEach(s => {
+        if (!s.nextPpmDate) {
+          s.nextPpmDate = addDaysIso(new Date().toISOString().slice(0, 10), 1);
+        }
+        let candidate = s.nextPpmDate;
+        let guard = 0;
+        while (usedDates.has(candidate) && guard < 180) {
+          candidate = addDaysIso(candidate, 1);
+          guard++;
+        }
+        s.nextPpmDate = candidate;
+        usedDates.add(candidate);
+      });
+
+      // 2. Remove stale auto-PPM entries and rebuild personalized clash-free Cycle 1 & Cycle 2 entries
+      masterTasks = masterTasks.filter(t => !String(t.id).startsWith('ppm_auto_'));
+
+      const cycle2Used = new Set(usedDates);
+      ordered.forEach(s => {
+        const cycleDays = Math.max(1, Number(s.ppmCycleDays || 30));
+        const hrsTxt = (s.hoursToPpm !== undefined && s.hoursToPpm !== null)
+          ? (s.hoursToPpm + 'h DG RH · ' + cycleDays + 'd cycle')
+          : (cycleDays + 'd cycle');
+
+        // Primary upcoming PPM date (unique per site)
+        masterTasks.push({
+          id: 'ppm_auto_' + s.siteId,
+          title: 'Personalized PPM — ' + s.siteId + ' (' + hrsTxt + ')',
+          site: s.siteId,
+          date: s.nextPpmDate,
+          category: 'PPM',
+          specificIssue: 'Scheduled PPM Service',
+          done: false
+        });
+
+        // Next recurring cycle date inside the 2-month calendar (also guaranteed clash-free)
+        let nextCycleDate = addDaysIso(s.nextPpmDate, cycleDays);
+        let guard2 = 0;
+        while (cycle2Used.has(nextCycleDate) && guard2 < 180) {
+          nextCycleDate = addDaysIso(nextCycleDate, 1);
+          guard2++;
+        }
+        cycle2Used.add(nextCycleDate);
+        masterTasks.push({
+          id: 'ppm_auto_next_' + s.siteId,
+          title: 'Next PPM Cycle — ' + s.siteId + ' (' + cycleDays + 'd recurring)',
+          site: s.siteId,
+          date: nextCycleDate,
+          category: 'PPM',
+          specificIssue: 'Scheduled PPM Service',
+          done: false
+        });
+      });
+
       masterTasks.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
       localStorage.setItem('coloplus_tasks_v1', JSON.stringify(masterTasks));
     }
@@ -2266,7 +2354,8 @@
 
     function selectCalendarDate(dateStr) {
       selectedCalendarDate = dateStr;
-      document.getElementById('selectedDateLabel').innerText = dateStr ? dateStr : 'ALL DATES';
+      const lbl = document.getElementById('selectedDateLabel');
+      if (lbl) lbl.innerText = dateStr ? dateStr : 'ALL DATES';
       const dateInput = document.getElementById('newTaskDate');
       if (dateStr && dateInput) dateInput.value = dateStr;
       renderCalendar();
@@ -2277,29 +2366,38 @@
       const monthTitle = new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase();
       const firstDay = new Date(year, month, 1).getDay();
       const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const visibleTasks = getCalendarFilteredTasks();
 
       let cells = '';
       for (let i = 0; i < firstDay; i++) {
-        cells += '<div class="p-1.5 border_ui opacity-20 min-h-[54px]"></div>';
+        cells += '<div class="p-1.5 border_ui opacity-20 min-h-[58px]"></div>';
       }
       for (let d = 1; d <= daysInMonth; d++) {
         const mm = String(month + 1).padStart(2, '0');
         const dd = String(d).padStart(2, '0');
         const dateStr = year + '-' + mm + '-' + dd;
-        const dayTasks = masterTasks.filter(t => t.date === dateStr);
-        const pendingCount = dayTasks.filter(t => !t.done).length;
-        const hasPpm = dayTasks.some(t => t.category === 'PPM');
+        const dayTasks = visibleTasks.filter(t => t.date === dateStr);
+        const ppmTask = dayTasks.find(t => t.category === 'PPM');
+        const otherCount = dayTasks.filter(t => t.category !== 'PPM').length;
         const isSelected = selectedCalendarDate === dateStr;
         const isToday = todayStr === dateStr;
 
-        cells += '<button type="button" onclick="selectCalendarDate(\'' + dateStr + '\')" class="p-1.5 border_ui text-left min-h-[54px] flex flex-col justify-between cursor-pointer btn-invert ' +
-          (isSelected ? 'nav_active' : (isToday ? 'border-amber-400' : '')) + '">' +
+        let badgeHtml = '<div class="text-[8px] opacity-25">—</div>';
+        if (ppmTask) {
+          const shortSite = (ppmTask.site || '').split('/').slice(-2).join('/');
+          badgeHtml = '<div class="text-[8px] mt-1 font-bold text-amber-400 truncate" title="' + ppmTask.site + ' PPM">' +
+            (PORTAL_MODE === 'fse' || calendarScopeMode === 'site' ? 'PPM DUE' : (shortSite + ' PPM')) +
+            (otherCount > 0 ? ' +' + otherCount : '') +
+          '</div>';
+        } else if (dayTasks.length > 0) {
+          badgeHtml = '<div class="text-[8px] mt-1 font-bold text-(--color-accent)">' + dayTasks.length + ' TSK</div>';
+        }
+
+        cells += '<button type="button" onclick="selectCalendarDate(\'' + dateStr + '\')" class="p-1.5 border_ui text-left min-h-[58px] flex flex-col justify-between cursor-pointer btn-invert ' +
+          (isSelected ? 'nav_active' : (ppmTask ? 'border-amber-500/60 bg-amber-500/10' : (isToday ? 'border-emerald-400' : ''))) + '">' +
           '<div class="flex justify-between items-center w-full"><span class="font-bold text-[11px]">' + d + '</span>' +
           (isToday ? '<span class="text-[8px] uppercase opacity-75">NOW</span>' : '') + '</div>' +
-          (dayTasks.length > 0
-            ? '<div class="text-[8px] mt-1 font-bold ' + (hasPpm ? 'text-amber-400' : (pendingCount > 0 ? 'text-amber-400' : 'text-(--color-accent)')) + '">' +
-              dayTasks.length + (hasPpm ? ' PPM' : ' TSK') + '</div>'
-            : '<div class="text-[8px] opacity-25">—</div>') +
+          badgeHtml +
         '</button>';
       }
 
@@ -2316,6 +2414,28 @@
       const container = document.getElementById('calendarTwoMonthsContainer');
       const label = document.getElementById('calendarMonthLabel');
       if (!container || !label) return;
+
+      const activeSiteId = getActiveCalendarSiteId();
+      const siteScopeBtn = document.getElementById('calScopeSiteBtn');
+      const allScopeBtn = document.getElementById('calScopeAllBtn');
+      const bannerEl = document.getElementById('calPersonalizedBanner');
+
+      if (siteScopeBtn && allScopeBtn) {
+        siteScopeBtn.innerText = activeSiteId ? ('THIS SITE (' + activeSiteId + ')') : 'THIS SITE ONLY';
+        siteScopeBtn.className = 'border_ui px-3 py-1.5 text-[10px] font-bold cursor-pointer btn-invert ' + (calendarScopeMode === 'site' ? 'nav_active' : 'opacity-75');
+        allScopeBtn.className = 'border_ui px-3 py-1.5 text-[10px] font-bold cursor-pointer btn-invert ' + (calendarScopeMode === 'all' ? 'nav_active' : 'opacity-75');
+      }
+      if (bannerEl) {
+        if (PORTAL_MODE === 'fse' && activeSiteId) {
+          const s = masterSites.find(x => x.siteId === activeSiteId);
+          bannerEl.innerText = '// PERSONALIZED FOR ' + activeSiteId + ' ONLY (ZERO CLASHES) · NEXT PPM: ' + (s ? s.nextPpmDate : 'N/A');
+        } else if (calendarScopeMode === 'site' && activeSiteId) {
+          const s = masterSites.find(x => x.siteId === activeSiteId);
+          bannerEl.innerText = '// PERSONALIZED SITE VIEW: ' + activeSiteId + ' ONLY · NEXT UNIQUE PPM SLOT: ' + (s ? s.nextPpmDate : 'N/A');
+        } else {
+          bannerEl.innerText = '// ALL ' + masterSites.length + ' SITES (STAGGERED ZERO-CLASH SCHEDULE — 1 SITE PPM PER DAY MAX)';
+        }
+      }
 
       const d1 = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth(), 1);
       const d2 = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth() + 1, 1);
@@ -2337,8 +2457,9 @@
       if (addForm) addForm.classList.toggle('hidden', !isAdminUnlocked);
       if (notice) notice.classList.toggle('hidden', isAdminUnlocked);
 
-      const allDated = selectedCalendarDate ? masterTasks.filter(t => t.date === selectedCalendarDate) : masterTasks;
-      const teamTasksAll = masterTasks.filter(t => t.assigneeEmail && t.assigneeEmail.trim() !== '');
+      const scopedTasks = getCalendarFilteredTasks();
+      const allDated = selectedCalendarDate ? scopedTasks.filter(t => t.date === selectedCalendarDate) : scopedTasks;
+      const teamTasksAll = scopedTasks.filter(t => t.assigneeEmail && t.assigneeEmail.trim() !== '');
       const teamTasksDated = allDated.filter(t => t.assigneeEmail && t.assigneeEmail.trim() !== '');
       const calendarOnlyDated = allDated.filter(t => !t.assigneeEmail || t.assigneeEmail.trim() === '');
 
@@ -4801,7 +4922,16 @@
       if (!adminSession) adminSession = { siteId, adminName: 'NOC Administrator' };
       adminSession.siteId = siteId;
       localStorage.setItem('coloplus_admin_session', JSON.stringify(adminSession));
+      const newTaskSiteSel = document.getElementById('newTaskSite');
+      if (newTaskSiteSel) {
+        newTaskSiteSel.value = siteId;
+        handleTaskSiteChange();
+      }
       updateAdminPortalUiState();
+      if (adminActiveModule === 'calendar') {
+        renderCalendar();
+        renderTasks();
+      }
       showToast('Admin switched to site ' + siteId);
     }
 
@@ -6037,24 +6167,34 @@
       site.ppmCycleDays = selCycle === 'custom' ? Math.max(1, customVal || 30) : (parseInt(selCycle, 10) || 30);
       site.ppmManuallySet = true;
       synchronizeSite(site);
+
+      // Zero-Clash Protection: check if another site already owns this exact PPM date
+      const clashingSite = masterSites.find(other => other.siteId !== site.siteId && other.nextPpmDate === site.nextPpmDate);
+      if (clashingSite) {
+        const nextFree = findNextFreePpmDate(site.nextPpmDate, site.siteId);
+        if (confirm('PPM CLASH DETECTED: ' + clashingSite.siteId + ' (' + clashingSite.state + ') is already scheduled on ' + site.nextPpmDate + '.\n\nClick OK to automatically assign the next free non-clashing slot (' + nextFree + ') for ' + site.siteId + '.')) {
+          site.nextPpmDate = nextFree;
+        }
+      }
+
       saveState();
       sbUpsertSite(site);
       syncPpmDatesToCalendar();
       renderCalendar();
       renderTasks();
-      renderAdminModuleContent(site);
+      updateAdminPortalUiState();
       if (fseSession && fseSession.siteId === site.siteId) renderFseRepairsModule(site);
       if (sb) {
         try {
           Promise.resolve(sb.rpc('fse_add_task', {
             p_site_id: site.siteId,
-            p_title: 'Regular PPM Check (' + site.ppmCycleDays + 'd cycle)',
+            p_title: 'Personalized PPM Check (' + site.ppmCycleDays + 'd cycle)',
             p_due_date: site.nextPpmDate,
             p_category: 'PPM'
           })).catch(() => {});
         } catch (err) {}
       }
-      showToast('Admin synced PPM cycle! Next due on ' + site.nextPpmDate);
+      showToast('Personalized PPM synced for ' + site.siteId + ' — Unique date: ' + site.nextPpmDate);
     }
 
     function handleAdminSaveBub(e) {

@@ -223,15 +223,22 @@
 
         <!-- Admin Module 06: Calendar & Team Email Channel -->
         <div id="adminCalendarWrap" class="hidden flex flex-col gap-2.5 text-xs">
-          <div class="border_ui p-4 bg-(--color-card-bg)/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <div class="text-[10px] uppercase tracking-widest opacity-50">// OPERATIONS SCHEDULER &amp; TEAM EMAIL CHANNEL</div>
-              <h2 class="hero-outline-title text-4xl uppercase mt-0.5">CALENDAR &amp; TASKS</h2>
+          <div class="border_ui p-4 bg-(--color-card-bg)/40 flex flex-col gap-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div class="text-[10px] uppercase tracking-widest opacity-50">// PERSONALIZED ZERO-CLASH PPM SCHEDULER &amp; TEAM EMAIL CHANNEL</div>
+                <h2 class="hero-outline-title text-4xl uppercase mt-0.5">CALENDAR &amp; TASKS</h2>
+              </div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <button type="button" id="calScopeSiteBtn" onclick="setCalendarScopeMode('site')" class="border_ui px-3 py-1.5 text-[10px] font-bold cursor-pointer btn-invert nav_active">THIS SITE ONLY</button>
+                <button type="button" id="calScopeAllBtn" onclick="setCalendarScopeMode('all')" class="border_ui px-3 py-1.5 text-[10px] font-bold cursor-pointer btn-invert opacity-75">ALL SITES (ZERO-CLASH)</button>
+                <button onclick="changeCalendarMonth(-1)" class="border_ui px-3 py-1.5 btn-invert cursor-pointer font-bold">&lt; PREV</button>
+                <span id="calendarMonthLabel" class="border_ui px-4 py-1.5 font-bold uppercase min-w-[140px] text-center">--</span>
+                <button onclick="changeCalendarMonth(1)" class="border_ui px-3 py-1.5 btn-invert cursor-pointer font-bold">NEXT &gt;</button>
+              </div>
             </div>
-            <div class="flex items-center gap-2">
-              <button onclick="changeCalendarMonth(-1)" class="border_ui px-3 py-1.5 btn-invert cursor-pointer font-bold">&lt; PREV</button>
-              <span id="calendarMonthLabel" class="border_ui px-4 py-1.5 font-bold uppercase min-w-[140px] text-center">--</span>
-              <button onclick="changeCalendarMonth(1)" class="border_ui px-3 py-1.5 btn-invert cursor-pointer font-bold">NEXT &gt;</button>
+            <div id="calPersonalizedBanner" class="border_ui border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-[10px] font-bold text-amber-300">
+              // PERSONALIZED SITE SCHEDULE — EVERY SITE HAS ITS OWN NON-CLASHING PPM DATE
             </div>
           </div>
 
