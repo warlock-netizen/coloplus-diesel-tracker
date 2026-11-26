@@ -19,6 +19,22 @@ alter table public.calendar_tasks add column if not exists assignee_email text;
 alter table public.calendar_tasks add column if not exists specific_issue text;
 alter table public.calendar_tasks add column if not exists email_sent_at timestamptz;
 alter table public.machinery_repairs add column if not exists attachment_url text;
+alter table public.machinery_repairs add column if not exists resolved_at timestamptz;
+
+-- Allow both Title Case and Uppercase repair statuses
+alter table public.machinery_repairs drop constraint if exists machinery_repairs_status_check;
+alter table public.machinery_repairs
+  add constraint machinery_repairs_status_check
+  check (status in ('Open', 'In Progress', 'Resolved', 'OPEN', 'IN_PROGRESS', 'RESOLVED'));
+
+-- Allow Admin to update & delete FSE-logged diesel deliveries directly
+drop policy if exists "Admin update deliveries" on public.diesel_deliveries;
+create policy "Admin update deliveries" on public.diesel_deliveries
+  for update using (public.is_admin());
+
+drop policy if exists "Admin delete deliveries" on public.diesel_deliveries;
+create policy "Admin delete deliveries" on public.diesel_deliveries
+  for delete using (public.is_admin());
 
 -- 1B. Create app_settings table to persist Finance Team email & saved team emails across devices
 create table if not exists public.app_settings (
@@ -167,3 +183,35 @@ set current_dl = 0,
     load_kw = case when coalesce(load_kw, 0) = 20 or coalesce(load_kw, 0) >= 8 then 20 else 15 end,
     updated_at = now()
 where is_active = true;
+
+-- 7. Enable Supabase Realtime live push synchronization across Admin & FSE portals
+do $$
+begin
+  alter publication supabase_realtime add table public.sites;
+exception when duplicate_object then null;
+end $$;
+do $$
+begin
+  alter publication supabase_realtime add table public.diesel_deliveries;
+exception when duplicate_object then null;
+end $$;
+do $$
+begin
+  alter publication supabase_realtime add table public.machinery_repairs;
+exception when duplicate_object then null;
+end $$;
+do $$
+begin
+  alter publication supabase_realtime add table public.submitted_ppms;
+exception when duplicate_object then null;
+end $$;
+do $$
+begin
+  alter publication supabase_realtime add table public.calendar_tasks;
+exception when duplicate_object then null;
+end $$;
+do $$
+begin
+  alter publication supabase_realtime add table public.app_settings;
+exception when duplicate_object then null;
+end $$;

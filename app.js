@@ -1458,6 +1458,7 @@
 
       initSupabaseAuthListeners();
       syncFromSupabase();
+      initSupabaseRealtimeSync();
 
       tickClock();
       setInterval(tickClock, 1000);
@@ -1476,27 +1477,141 @@
       }, 60000);
     }
 
-    // ==================== SUPABASE LIVE SYNC LAYER ====================
+    // ==================== SUPABASE LIVE AUTO-SYNC & REALTIME LAYER ====================
     const NEXT_PUBLIC_SUPABASE_URL_1 = 'https://kfomqkklnqrosxjxdlsu.supabase.co';
     const NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY_1 = 'sb_publishable_ZmJLPn-Dwa0WAko12liobw_TnjmqK9_';
     const sb = (window.supabase && window.supabase.createClient)
       ? window.supabase.createClient(NEXT_PUBLIC_SUPABASE_URL_1, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY_1)
       : null;
 
-    function setSupabaseSyncStatus(isLive, detail) {
+    // Track live DB column schemas dynamically so edits NEVER fail silently due to unmigrated optional columns
+    const liveTableCols = { sites: null, diesel_deliveries: null, machinery_repairs: null, calendar_tasks: null };
+    const pendingSiteWrites = new Set();
+    let lastSyncInFlight = false;
+    let realtimeDebounceTimer = null;
+    let supabaseRealtimeChannel = null;
+
+    function normalizeDbRepairStatus(status) {
+      const up = String(status || 'OPEN').trim().toUpperCase();
+      if (up === 'RESOLVED') return 'Resolved';
+      if (up.includes('PROGRESS')) return 'In Progress';
+      return 'Open';
+    }
+
+    function formatIsoToDisplayDate(isoDate) {
+      if (!isoDate) return '';
+      const clean = String(isoDate).slice(0, 10);
+      const d = new Date(clean + 'T00:00:00');
+      if (isNaN(d.getTime())) return String(isoDate);
+      return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function toIsoDateOnly(val) {
+      if (!val) return getLocalTodayIso();
+      const str = String(val).trim();
+      if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.slice(0, 10);
+      const parsed = new Date(str);
+      if (!isNaN(parsed.getTime())) {
+        return parsed.getFullYear() + '-' + String(parsed.getMonth() + 1).padStart(2, '0') + '-' + String(parsed.getDate()).padStart(2, '0');
+      }
+      return getLocalTodayIso();
+    }
+
+    function setSupabaseSyncStatus(state, detail) {
       const dot = document.getElementById('supabaseSyncDot');
       const label = document.getElementById('supabaseSyncLabel');
       const badge = document.getElementById('supabaseSyncBadge');
       if (!dot || !label || !badge) return;
-      if (isLive) {
+      badge.style.cursor = 'pointer';
+      badge.onclick = () => forceManualSync();
+      if (state === true || state === 'live') {
+        const ts = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         dot.className = 'w-2 h-2 rounded-full bg-(--color-accent) inline-block';
-        label.innerText = 'LIVE SYNC';
-        badge.title = detail || 'Connected to Supabase live telemetry';
+        label.innerText = 'LIVE SYNC · ' + ts;
+        badge.title = (detail || 'Connected to Supabase live telemetry') + ' (Click to sync now)';
+      } else if (state === 'syncing') {
+        dot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-ping inline-block';
+        label.innerText = 'SYNCING...';
+        badge.title = detail || 'Synchronizing changes with Supabase...';
+      } else if (state === 'error') {
+        dot.className = 'w-2 h-2 rounded-full bg-rose-500 inline-block';
+        label.innerText = 'SYNC ERROR';
+        badge.title = (detail || 'Database write rejected') + ' (Click to retry)';
       } else {
         dot.className = 'w-2 h-2 rounded-full bg-amber-400 inline-block';
         label.innerText = 'LOCAL CACHE';
-        badge.title = detail || 'Using local cache (offline or RLS restricted)';
+        badge.title = (detail || 'Using local cache (offline or RLS restricted)') + ' (Click to retry)';
       }
+    }
+
+    async function forceManualSync() {
+      setSupabaseSyncStatus('syncing', 'Manual database sync triggered');
+      await syncFromSupabase();
+      showToast('Synchronized live data from Supabase');
+    }
+
+    function scheduleRealtimeSync() {
+      if (realtimeDebounceTimer) clearTimeout(realtimeDebounceTimer);
+      realtimeDebounceTimer = setTimeout(() => {
+        syncFromSupabase();
+      }, 650);
+    }
+
+    function initSupabaseRealtimeSync() {
+      if (!sb) return;
+      // 1. Live Supabase Realtime subscription across all operational tables
+      try {
+        if (typeof sb.channel === 'function') {
+          if (supabaseRealtimeChannel) {
+            try { sb.removeChannel(supabaseRealtimeChannel); } catch (_) {}
+          }
+          supabaseRealtimeChannel = sb
+            .channel('coloplus-live-db-sync')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'sites' }, () => scheduleRealtimeSync())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'diesel_deliveries' }, () => scheduleRealtimeSync())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'machinery_repairs' }, () => scheduleRealtimeSync())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'calendar_tasks' }, () => scheduleRealtimeSync())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'submitted_ppms' }, () => scheduleRealtimeSync())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'app_settings' }, () => scheduleRealtimeSync())
+            .subscribe();
+        }
+      } catch (e) {
+        console.warn('Supabase Realtime init skipped:', e);
+      }
+
+      // 2. Periodic autonomous DB sync every 15s (keeps Admin & FSE in sync even if Realtime publication is off)
+      setInterval(() => {
+        if (!document.hidden && pendingSiteWrites.size === 0) {
+          syncFromSupabase();
+        }
+      }, 15000);
+
+      // 3. Instant sync when returning to tab or switching focus
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && pendingSiteWrites.size === 0) syncFromSupabase();
+      });
+      window.addEventListener('focus', () => {
+        if (pendingSiteWrites.size === 0) syncFromSupabase();
+      });
+
+      // 4. Instant cross-tab sync within the same browser (FSE tab <-> Admin tab)
+      window.addEventListener('storage', (ev) => {
+        if (ev.key === 'coloplus_sites_live_v5' || ev.key === 'coloplus_repairs_live_v5') {
+          try {
+            const freshSites = localStorage.getItem('coloplus_sites_live_v5');
+            if (freshSites) masterSites = JSON.parse(freshSites);
+            const freshRepairs = localStorage.getItem('coloplus_repairs_live_v5');
+            if (freshRepairs) masterRepairs = JSON.parse(freshRepairs);
+            masterSites.forEach(s => synchronizeSite(s));
+            updateKpis();
+            renderSites();
+            renderRepairs();
+            if (PORTAL_MODE === 'home') renderHomeCurrentIssues();
+            if (fseSession) updateFseUiState();
+            if (isAdminUnlocked && adminSession) updateAdminPortalUiState();
+          } catch (_) {}
+        }
+      });
     }
 
     async function initSupabaseAuthListeners() {
@@ -1569,6 +1684,8 @@
         setSupabaseSyncStatus(false, 'Supabase client not initialized');
         return;
       }
+      if (lastSyncInFlight) return;
+      lastSyncInFlight = true;
       try {
         const { data: sitesRows, error: sitesErr } = await sb
           .from('sites')
@@ -1576,13 +1693,21 @@
           .eq('is_active', true);
 
         if (sitesErr) {
-          setSupabaseSyncStatus(false, sitesErr.message || 'Supabase query error');
+          setSupabaseSyncStatus('error', sitesErr.message || 'Supabase query error');
         } else {
-          setSupabaseSyncStatus(true, 'Synced ' + (sitesRows ? sitesRows.length : 0) + ' active sites');
+          if (sitesRows && sitesRows.length > 0) {
+            liveTableCols.sites = new Set(Object.keys(sitesRows[0]));
+          }
+          setSupabaseSyncStatus('live', 'Synced ' + (sitesRows ? sitesRows.length : 0) + ' active sites');
         }
 
         if (!sitesErr && sitesRows && sitesRows.length > 0) {
+          const activeIds = new Set();
           sitesRows.forEach(row => {
+            activeIds.add(row.site_id);
+            // Skip clobbering a site while an explicit user write for this site is in-flight
+            if (pendingSiteWrites.has(row.site_id)) return;
+
             const local = masterSites.find(s => s.siteId === row.site_id);
             const genKva = normalizeGenKva(row.load_kw !== null && row.load_kw !== undefined ? row.load_kw : (local ? (local.genSize || local.loadKw) : 15));
             const mapped = {
@@ -1592,12 +1717,12 @@
               address: row.address,
               fse: row.fse_name,
               fsePhone: row.fse_phone,
-              fseEmail: row.fse_email || (local ? local.fseEmail : '') || '',
+              fseEmail: (row.fse_email !== undefined && row.fse_email !== null && row.fse_email !== '') ? row.fse_email : ((local && local.fseEmail) || ''),
               security: row.security_name || 'On-site Security',
               securityPhone: row.security_phone || '',
               powerSource: row.power_source || 'In-house',
               gridStatus: row.grid_status || 'ONLINE (NEPA AVAILABLE)',
-              gridHoursPerDay: row.grid_hours_per_day !== null ? Number(row.grid_hours_per_day) : 12,
+              gridHoursPerDay: row.grid_hours_per_day !== null && row.grid_hours_per_day !== undefined ? Number(row.grid_hours_per_day) : 12,
               nepaTokenStatus: row.nepa_token_status || 'LOADED',
               genSize: genKva,
               loadKw: genKva,
@@ -1606,20 +1731,21 @@
               fuelBaselineAt: row.updated_at || new Date().toISOString(),
               currentDL: Number(row.current_dl || 0),
               cpd: Number(row.cpd || 40),
-              batterySoc: row.battery_soc !== null ? Number(row.battery_soc) : 85,
+              batterySoc: row.battery_soc !== null && row.battery_soc !== undefined ? Number(row.battery_soc) : 85,
               batteryVoltage: row.battery_voltage || '52.8 V',
-              batteryAutonomyHours: row.battery_autonomy_hours !== null ? Number(row.battery_autonomy_hours) : 8,
+              batteryAutonomyHours: row.battery_autonomy_hours !== null && row.battery_autonomy_hours !== undefined ? Number(row.battery_autonomy_hours) : 8,
               batteryStatus: row.battery_status || 'HEALTHY',
               lastSupplyQty: Number(row.last_supply_qty || 0),
-              lastSupplyDate: row.last_supply_date || '',
-              lastSupplyTime: row.last_supply_time || '',
-              previousSupplyDate: row.previous_supply_date || '',
-              previousSupplyTime: row.previous_supply_time || '',
+              lastSupplyDate: row.last_supply_date ? formatIsoToDisplayDate(row.last_supply_date) : '',
+              lastSupplyDateIso: row.last_supply_date ? String(row.last_supply_date).slice(0, 10) : '',
+              lastSupplyTime: row.last_supply_time ? String(row.last_supply_time).slice(0, 5) : '',
+              previousSupplyDate: row.previous_supply_date ? formatIsoToDisplayDate(row.previous_supply_date) : '',
+              previousSupplyTime: row.previous_supply_time ? String(row.previous_supply_time).slice(0, 5) : '',
               previousSupplyQty: row.previous_supply_qty ? row.previous_supply_qty + ' L' : '',
               supplier: row.supplier || '',
-              ppmCycleDays: Number(row.ppm_cycle_days || (local && local.ppmCycleDays) || 30),
-              lastPpmDate: row.last_ppm_date || (local && local.lastPpmDate) || '',
-              nextPpmDate: row.next_ppm_date || (local && local.nextPpmDate) || '',
+              ppmCycleDays: Number((row.ppm_cycle_days !== undefined && row.ppm_cycle_days !== null) ? row.ppm_cycle_days : ((local && local.ppmCycleDays) || 30)),
+              lastPpmDate: (row.last_ppm_date !== undefined && row.last_ppm_date !== null) ? String(row.last_ppm_date).slice(0, 10) : ((local && local.lastPpmDate) || ''),
+              nextPpmDate: (row.next_ppm_date !== undefined && row.next_ppm_date !== null) ? String(row.next_ppm_date).slice(0, 10) : ((local && local.nextPpmDate) || ''),
               ppmManuallySet: !!(row.last_ppm_date && row.ppm_cycle_days) || !!(local && local.ppmManuallySet),
               isFocus: true
             };
@@ -1630,113 +1756,155 @@
             }
             synchronizeSite(local || mapped);
           });
+          // Remove any deactivated DB sites that are no longer active (unless newly added locally & pending write)
+          masterSites = masterSites.filter(s => activeIds.has(s.siteId) || pendingSiteWrites.has(s.siteId));
         }
 
-        // Sync diesel deliveries ledger cross-device
+        // Sync diesel deliveries ledger cross-device (FIX: read qty_litres + real DB row id!)
         const { data: delRows, error: delErr } = await sb
           .from('diesel_deliveries')
           .select('*')
+          .order('received_date', { ascending: false })
           .order('created_at', { ascending: false })
-          .limit(200);
-        if (!delErr && delRows && delRows.length > 0) {
+          .limit(300);
+        if (!delErr && Array.isArray(delRows)) {
+          if (delRows.length > 0) liveTableCols.diesel_deliveries = new Set(Object.keys(delRows[0]));
           const bySite = {};
           delRows.forEach(d => {
             if (!bySite[d.site_id]) bySite[d.site_id] = [];
+            const qtyVal = Number(d.qty_litres !== undefined && d.qty_litres !== null ? d.qty_litres : (d.qty || 0));
+            const dateIso = d.received_date ? String(d.received_date).slice(0, 10) : '';
             bySite[d.site_id].push({
-              date: d.received_date,
-              time: d.received_time || '--:--',
-              qty: Number(d.qty || 0),
-              litersAdded: Number(d.qty || 0),
+              id: d.id,
+              dateIso: dateIso,
+              date: formatIsoToDisplayDate(dateIso) || d.received_date || 'N/A',
+              time: d.received_time ? String(d.received_time).slice(0, 5) : '--:--',
+              qty: qtyVal,
+              litersAdded: qtyVal,
               supplier: d.supplier || 'N/A',
-              loggedBy: d.logged_by || 'FSE'
+              loggedBy: d.logged_by || 'FSE',
+              createdAt: d.created_at || ''
             });
           });
-          Object.keys(bySite).forEach(sid => {
-            const st = masterSites.find(s => s.siteId === sid);
-            if (st) st.refuelHistory = bySite[sid];
+          masterSites.forEach(st => {
+            if (pendingSiteWrites.has(st.siteId)) return;
+            st.refuelHistory = bySite[st.siteId] || [];
           });
         }
 
-        // Sync machinery repair tickets cross-device
-        const { data: repRows, error: repErr } = await sb
+        // Sync machinery repair tickets cross-device (FIX: order by logged_at, read technician/priority/resolved_at!)
+        let repRows = null, repErr = null;
+        const repRes = await sb
           .from('machinery_repairs')
           .select('*')
-          .order('created_at', { ascending: false })
-          .limit(200);
-        if (!repErr && repRows && repRows.length > 0) {
+          .order('logged_at', { ascending: false })
+          .limit(300);
+        repRows = repRes.data;
+        repErr = repRes.error;
+        if (repErr && String(repErr.message || '').includes('logged_at')) {
+          const fallbackRes = await sb
+            .from('machinery_repairs')
+            .select('*')
+            .limit(300);
+          repRows = fallbackRes.data;
+          repErr = fallbackRes.error;
+        }
+        if (!repErr && Array.isArray(repRows)) {
+          if (repRows.length > 0) liveTableCols.machinery_repairs = new Set(Object.keys(repRows[0]));
+          const syncedIds = new Set();
           repRows.forEach(r => {
             const tid = r.ticket_id || ('SB-REP-' + r.id);
+            syncedIds.add(tid);
             const existing = masterRepairs.find(m => m.ticketId === tid);
+            const rawLogged = r.logged_at || r.created_at || '';
+            const loggedIso = rawLogged ? String(rawLogged).slice(0, 10) : getLocalTodayIso();
+            const loggedDisplay = rawLogged
+              ? (formatIsoToDisplayDate(loggedIso) + (rawLogged.includes('T') ? (' ' + String(rawLogged).slice(11, 16)) : ''))
+              : formatIsoToDisplayDate(loggedIso);
+            const resolvedIso = r.resolved_at ? String(r.resolved_at).slice(0, 10) : '';
+            const upStatus = String(r.status || 'Open').trim().toUpperCase().replace(/\s+/g, '_');
+            const normStatus = upStatus === 'RESOLVED' ? 'RESOLVED' : (upStatus.includes('PROGRESS') ? 'IN_PROGRESS' : 'OPEN');
             const mappedTicket = {
+              dbId: r.id,
               ticketId: tid,
               siteId: r.site_id,
               tenantId: (masterSites.find(s => s.siteId === r.site_id) || {}).tenantId || 'COLOPLUS',
+              recordKind: (r.machinery_name || '').toUpperCase().includes('COMPLAINT') ? 'COMPLAINT' : 'TICKET',
               type: r.machinery_name || 'Generator',
               category: r.machinery_name || 'Generator',
-              status: r.status || 'OPEN',
-              priority: r.severity || 'High',
+              status: normStatus,
+              priority: r.priority || r.severity || 'High',
               issue: r.issue || '',
-              technician: r.logged_by || 'FSE',
-              attachmentUrl: r.attachment_url || '',
-              dateLogged: (r.created_at || '').slice(0, 10),
-              loggedDate: (r.created_at || '').slice(0, 10),
-              adminReviewed: (r.status || '').toUpperCase() === 'RESOLVED'
+              technician: r.technician || r.logged_by || 'FSE',
+              attachmentUrl: r.attachment_url || (existing ? existing.attachmentUrl : '') || '',
+              loggedIso: loggedIso,
+              dateLogged: loggedDisplay,
+              loggedDate: loggedDisplay,
+              dateResolved: resolvedIso ? formatIsoToDisplayDate(resolvedIso) : ((existing && existing.dateResolved) || (normStatus === 'RESOLVED' ? loggedDisplay : null)),
+              adminReviewed: normStatus === 'RESOLVED' || !!(existing && existing.adminReviewed)
             };
             if (existing) Object.assign(existing, mappedTicket);
-            else masterRepairs.unshift(mappedTicket);
+            else masterRepairs.push(mappedTicket);
           });
+          // Sort chronologically newest first
+          masterRepairs.sort((a, b) => String(b.loggedIso || b.loggedDate || '').localeCompare(String(a.loggedIso || a.loggedDate || '')));
         }
 
-        // Sync submitted PPM reports cross-device (including Admin Accept/Override status)
-        const { data: ppmRows, error: ppmErr } = await sb
-          .from('submitted_ppms')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(200);
-        if (!ppmErr && ppmRows && ppmRows.length > 0) {
-          const ppmBySite = {};
-          ppmRows.forEach(p => {
-            if (!ppmBySite[p.site_id]) ppmBySite[p.site_id] = [];
-            ppmBySite[p.site_id].push({
-              id: String(p.id),
-              submittedDate: p.submitted_date || (p.created_at || '').slice(0, 10),
-              submittedAt: p.submitted_at || p.submitted_date || '',
-              submittedBy: p.submitted_by || 'FSE',
-              completedCount: Number(p.completed_count || 0),
-              totalCount: Number(p.total_count || 12),
-              items: Array.isArray(p.items) ? p.items : [],
-              reviewStatus: p.review_status || 'PENDING',
-              adminNote: p.admin_note || '',
-              reviewedBy: p.reviewed_by || '',
-              reviewedAt: p.reviewed_at ? new Date(p.reviewed_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : ''
+        // Sync submitted PPM reports cross-device (gracefully skips if submitted_ppms not yet migrated)
+        try {
+          const { data: ppmRows, error: ppmErr } = await sb
+            .from('submitted_ppms')
+            .select('*')
+            .order('submitted_date', { ascending: false })
+            .order('created_at', { ascending: false })
+            .limit(300);
+          if (!ppmErr && Array.isArray(ppmRows)) {
+            const ppmBySite = {};
+            ppmRows.forEach(p => {
+              if (!ppmBySite[p.site_id]) ppmBySite[p.site_id] = [];
+              ppmBySite[p.site_id].push({
+                id: String(p.id),
+                submittedDate: p.submitted_date || (p.created_at || '').slice(0, 10),
+                submittedAt: p.submitted_at || p.submitted_date || '',
+                submittedBy: p.submitted_by || 'FSE',
+                completedCount: Number(p.completed_count || 0),
+                totalCount: Number(p.total_count || 12),
+                items: Array.isArray(p.items) ? p.items : [],
+                reviewStatus: p.review_status || 'PENDING',
+                adminNote: p.admin_note || '',
+                reviewedBy: p.reviewed_by || '',
+                reviewedAt: p.reviewed_at ? new Date(p.reviewed_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : ''
+              });
             });
-          });
-          Object.keys(ppmBySite).forEach(sid => {
-            const st = masterSites.find(s => s.siteId === sid);
-            if (st) st.submittedPpms = ppmBySite[sid];
-          });
-        }
+            Object.keys(ppmBySite).forEach(sid => {
+              const st = masterSites.find(s => s.siteId === sid);
+              if (st) st.submittedPpms = ppmBySite[sid];
+            });
+          }
+        } catch (_) {}
 
-        // Sync saved Finance email & team email directory from app_settings
-        const { data: settingsRows, error: settingsErr } = await sb
-          .from('app_settings')
-          .select('*');
-        if (!settingsErr && settingsRows && settingsRows.length > 0) {
-          settingsRows.forEach(r => {
-            if (r.key === 'finance_email' && r.value) {
-              emailChannelSettings.financeEmail = r.value.trim();
-            } else if (r.key === 'team_emails' && r.value) {
-              try {
-                const parsed = JSON.parse(r.value);
-                if (Array.isArray(parsed)) {
-                  emailChannelSettings.teamEmails = [...new Set([...emailChannelSettings.teamEmails, ...parsed])];
-                }
-              } catch (_) {}
-            }
-          });
-          saveEmailChannelSettingsLocal();
-          populateSavedTeamEmailDatalist();
-        }
+        // Sync saved Finance email & team email directory from app_settings (gracefully skips if not yet migrated)
+        try {
+          const { data: settingsRows, error: settingsErr } = await sb
+            .from('app_settings')
+            .select('*');
+          if (!settingsErr && settingsRows && settingsRows.length > 0) {
+            settingsRows.forEach(r => {
+              if (r.key === 'finance_email' && r.value) {
+                emailChannelSettings.financeEmail = r.value.trim();
+              } else if (r.key === 'team_emails' && r.value) {
+                try {
+                  const parsed = JSON.parse(r.value);
+                  if (Array.isArray(parsed)) {
+                    emailChannelSettings.teamEmails = [...new Set([...emailChannelSettings.teamEmails, ...parsed])];
+                  }
+                } catch (_) {}
+              }
+            });
+            saveEmailChannelSettingsLocal();
+            populateSavedTeamEmailDatalist();
+          }
+        } catch (_) {}
 
         saveState();
         updateKpis();
@@ -1753,19 +1921,24 @@
           .select('*')
           .order('due_date', { ascending: true });
 
-        if (!tasksErr && tasksRows && tasksRows.length > 0) {
-          masterTasks = tasksRows.map(t => ({
-            id: t.id,
-            title: t.title,
-            site: t.site_id || 'ALL SITES',
-            date: t.due_date,
-            category: t.category,
-            specificIssue: t.specific_issue || '',
-            assigneeEmail: t.assignee_email || '',
-            emailSentAt: t.email_sent_at || '',
-            done: !!t.done
-          }));
-          localStorage.setItem('coloplus_tasks_v1', JSON.stringify(masterTasks));
+        if (!tasksErr && Array.isArray(tasksRows)) {
+          if (tasksRows.length > 0) liveTableCols.calendar_tasks = new Set(Object.keys(tasksRows[0]));
+          if (tasksRows.length > 0) {
+            const dbTasks = tasksRows.map(t => ({
+              id: t.id,
+              title: t.title,
+              site: t.site_id || 'ALL SITES',
+              date: t.due_date,
+              category: t.category,
+              specificIssue: t.specific_issue || '',
+              assigneeEmail: t.assignee_email || '',
+              emailSentAt: t.email_sent_at || '',
+              done: !!t.done
+            }));
+            const localUnsynced = masterTasks.filter(t => String(t.id).startsWith('t_'));
+            masterTasks = [...dbTasks, ...localUnsynced];
+            localStorage.setItem('coloplus_tasks_v1', JSON.stringify(masterTasks));
+          }
           syncPpmDatesToCalendar();
           renderCalendar();
           renderTasks();
@@ -1773,13 +1946,17 @@
       } catch (e) {
         console.warn('Supabase sync skipped (offline or RLS):', e.message || e);
         setSupabaseSyncStatus(false, e.message || 'Offline');
+      } finally {
+        lastSyncInFlight = false;
       }
     }
 
     async function sbInsertDelivery(siteId, tenantId, qty, dateIso, timeStr, supplier, loggedBy) {
-      if (!sb) return;
+      if (!sb) return { ok: false, error: 'Offline' };
+      pendingSiteWrites.add(siteId);
+      setSupabaseSyncStatus('syncing', 'Saving FSE diesel delivery to Supabase...');
       try {
-        await sb.rpc('fse_log_delivery', {
+        const { error } = await sb.rpc('fse_log_delivery', {
           p_site_id: siteId,
           p_tenant_id: tenantId || '',
           p_qty: qty,
@@ -1788,6 +1965,13 @@
           p_supplier: supplier,
           p_logged_by: loggedBy
         });
+        if (error) {
+          console.warn('Supabase delivery RPC error:', error.message);
+          setSupabaseSyncStatus('error', error.message);
+          showToast('DB Delivery Sync Error: ' + error.message);
+          return { ok: false, error: error.message };
+        }
+        setSupabaseSyncStatus('live', 'Delivery synced to Supabase');
         sb.functions.invoke('send-alert-email', {
           body: {
             type: 'DIESEL_DELIVERY',
@@ -1799,7 +1983,15 @@
             logged_by: loggedBy
           }
         }).catch(() => {});
-      } catch (e) { console.warn('Supabase delivery RPC:', e); }
+        return { ok: true };
+      } catch (e) {
+        console.warn('Supabase delivery RPC:', e);
+        setSupabaseSyncStatus('error', e.message || 'Network error');
+        return { ok: false, error: e.message || 'Network error' };
+      } finally {
+        pendingSiteWrites.delete(siteId);
+        setTimeout(() => syncFromSupabase(), 400);
+      }
     }
 
     async function sbUpdateFuelLevel(siteId, tenantId, currentDL, cpd) {
@@ -1831,64 +2023,127 @@
       } catch (e) { console.warn('Supabase BUB/light RPC:', e); }
     }
 
+    // Schema-Aware Auto-Retry Site Upsert — strips any unmigrated optional columns automatically so DB ALWAYS syncs!
     async function sbUpsertSite(site) {
-      if (!sb) return;
+      if (!sb || !site || !site.siteId) return { ok: false, error: 'Supabase unavailable' };
+      pendingSiteWrites.add(site.siteId);
+      setSupabaseSyncStatus('syncing', 'Saving ' + site.siteId + ' to Supabase...');
+      const nowIso = new Date().toISOString();
+      const fullPayload = {
+        site_id: site.siteId,
+        tenant_id: site.tenantId || 'COLOPLUS',
+        state: site.state || 'N/A',
+        address: site.address || 'N/A',
+        fse_name: site.fse || 'Assigned FSE',
+        fse_phone: site.fsePhone || '',
+        fse_email: site.fseEmail || '',
+        security_name: site.security || 'On-site Security',
+        security_phone: site.securityPhone || '',
+        power_source: site.powerSource || 'In-house',
+        grid_status: site.gridStatus || 'ONLINE (NEPA AVAILABLE)',
+        grid_hours_per_day: Number(site.gridHoursPerDay !== undefined ? site.gridHoursPerDay : 12),
+        nepa_token_status: site.nepaTokenStatus || 'LOADED',
+        load_kw: normalizeGenKva(site.genSize || site.loadKw || 15),
+        tank_cap: Number(site.tankCap || 1000),
+        current_dl: Number(site.currentDL || 0),
+        cpd: Number(site.cpd || 40),
+        battery_soc: Number(site.batterySoc !== undefined ? site.batterySoc : 85),
+        battery_voltage: site.batteryVoltage || '52.8 V',
+        battery_autonomy_hours: Number(site.batteryAutonomyHours !== undefined ? site.batteryAutonomyHours : 8),
+        battery_status: site.batteryStatus || 'HEALTHY',
+        last_supply_qty: Number(site.lastSupplyQty || 0),
+        last_supply_date: site.lastSupplyDateIso || (site.lastSupplyDate && /^\d{4}-\d{2}-\d{2}/.test(site.lastSupplyDate) ? site.lastSupplyDate.slice(0, 10) : null),
+        last_supply_time: site.lastSupplyTime && /^\d{2}:\d{2}/.test(site.lastSupplyTime) ? site.lastSupplyTime : null,
+        supplier: site.supplier || '',
+        ppm_cycle_days: Number(site.ppmCycleDays || 30),
+        last_ppm_date: site.lastPpmDate && /^\d{4}-\d{2}-\d{2}/.test(site.lastPpmDate) ? site.lastPpmDate.slice(0, 10) : null,
+        next_ppm_date: site.nextPpmDate && /^\d{4}-\d{2}-\d{2}/.test(site.nextPpmDate) ? site.nextPpmDate.slice(0, 10) : null,
+        is_active: true,
+        updated_at: nowIso
+      };
+
+      // Filter against known live table columns first (skipping generated column cph)
+      const payload = {};
+      Object.keys(fullPayload).forEach(k => {
+        if (k === 'cph') return;
+        if (!liveTableCols.sites || liveTableCols.sites.has(k)) {
+          payload[k] = fullPayload[k];
+        }
+      });
+
       try {
-        const { error } = await sb.from('sites').upsert({
-          site_id: site.siteId,
-          tenant_id: site.tenantId,
-          state: site.state,
-          address: site.address,
-          fse_name: site.fse,
-          fse_phone: site.fsePhone,
-          fse_email: site.fseEmail || '',
-          security_name: site.security,
-          security_phone: site.securityPhone,
-          power_source: site.powerSource,
-          grid_status: site.gridStatus,
-          grid_hours_per_day: site.gridHoursPerDay,
-          nepa_token_status: site.nepaTokenStatus,
-          load_kw: Number(site.genSize || site.loadKw || 15),
-          tank_cap: site.tankCap,
-          current_dl: site.currentDL,
-          cpd: site.cpd,
-          battery_soc: site.batterySoc,
-          battery_voltage: site.batteryVoltage,
-          battery_autonomy_hours: site.batteryAutonomyHours,
-          battery_status: site.batteryStatus,
-          supplier: site.supplier,
-          ppm_cycle_days: Number(site.ppmCycleDays || 30),
-          last_ppm_date: site.lastPpmDate || null,
-          next_ppm_date: site.nextPpmDate || null,
-          is_active: true
-        }, { onConflict: 'site_id' });
-        if (error) console.warn('Supabase site upsert error:', error.message);
-      } catch (e) { console.warn('Supabase site upsert:', e); }
+        for (let attempt = 0; attempt < 8; attempt++) {
+          const { error } = await sb.from('sites').upsert(payload, { onConflict: 'site_id' });
+          if (!error) {
+            site.fuelBaselineAt = nowIso;
+            setSupabaseSyncStatus('live', 'Saved ' + site.siteId + ' to Supabase');
+            return { ok: true };
+          }
+          // Auto-strip missing column if schema cache reports PGRST204
+          const missingColMatch = String(error.message || '').match(/Could not find the '([^']+)' column/i);
+          if (missingColMatch && missingColMatch[1] && Object.prototype.hasOwnProperty.call(payload, missingColMatch[1])) {
+            delete payload[missingColMatch[1]];
+            if (liveTableCols.sites) liveTableCols.sites.delete(missingColMatch[1]);
+            continue;
+          }
+          console.error('Supabase site upsert error:', error.message);
+          setSupabaseSyncStatus('error', error.message);
+          showToast('DB Sync Error (' + site.siteId + '): ' + error.message);
+          return { ok: false, error: error.message };
+        }
+        return { ok: false, error: 'Too many schema retries' };
+      } catch (e) {
+        console.error('Supabase site upsert exception:', e);
+        setSupabaseSyncStatus('error', e.message || 'Network error');
+        showToast('DB Sync Error: ' + (e.message || 'Network error'));
+        return { ok: false, error: e.message || 'Network error' };
+      } finally {
+        pendingSiteWrites.delete(site.siteId);
+      }
     }
 
     async function sbInsertTask(task) {
-      if (!sb) return;
+      if (!sb) return { ok: false };
       try {
-        await sb.rpc('fse_add_task', {
+        const { data, error } = await sb.rpc('fse_add_task', {
           p_site_id: task.site || 'ALL SITES',
           p_title: task.title,
           p_due_date: task.date,
           p_category: task.category
         });
-      } catch (e) { console.warn('Supabase task RPC:', e); }
+        if (!error && data) {
+          task.id = data;
+          localStorage.setItem('coloplus_tasks_v1', JSON.stringify(masterTasks));
+          return { ok: true, id: data };
+        }
+        return { ok: false, error: error && error.message };
+      } catch (e) {
+        console.warn('Supabase task RPC:', e);
+        return { ok: false };
+      }
     }
 
     async function sbInsertRepair(siteId, tenantId, name, issue, loggedBy) {
-      if (!sb) return;
+      if (!sb) return { ok: false };
       try {
-        await sb.rpc('fse_log_repair', {
+        const { error } = await sb.rpc('fse_log_repair', {
           p_site_id: siteId,
           p_tenant_id: tenantId || '',
           p_machinery: name,
           p_issue: issue,
           p_logged_by: loggedBy
         });
-      } catch (e) { console.warn('Supabase repair RPC:', e); }
+        if (error) {
+          console.warn('Supabase repair RPC error:', error.message);
+          showToast('DB Ticket Sync Error: ' + error.message);
+          return { ok: false, error: error.message };
+        }
+        setTimeout(() => syncFromSupabase(), 400);
+        return { ok: true };
+      } catch (e) {
+        console.warn('Supabase repair RPC:', e);
+        return { ok: false };
+      }
     }
 
     // ==================== HOURLY DIESEL SCANNER ====================
@@ -2672,21 +2927,28 @@
 
       if (sb) {
         try {
-          const { data: inserted } = await sb.from('calendar_tasks').insert({
-            site_id: site || 'ALL SITES',
+          const taskPayload = {
+            site_id: site === 'ALL SITES' ? null : (site || null),
             title: title,
             due_date: date,
             category: category,
-            specific_issue: specificIssue || null,
-            assignee_email: assigneeEmail || null,
             done: false
-          }).select('id').maybeSingle();
-          if (inserted && inserted.id) {
+          };
+          if (!liveTableCols.calendar_tasks || liveTableCols.calendar_tasks.has('specific_issue')) {
+            taskPayload.specific_issue = specificIssue || null;
+          }
+          if (!liveTableCols.calendar_tasks || liveTableCols.calendar_tasks.has('assignee_email')) {
+            taskPayload.assignee_email = assigneeEmail || null;
+          }
+          const { data: inserted, error: insErr } = await sb.from('calendar_tasks').insert(taskPayload).select('id').maybeSingle();
+          if (!insErr && inserted && inserted.id) {
             newTask.id = inserted.id;
             localStorage.setItem('coloplus_tasks_v1', JSON.stringify(masterTasks));
+          } else {
+            await sbInsertTask(newTask);
           }
         } catch (err) {
-          sbInsertTask(newTask);
+          await sbInsertTask(newTask);
         }
       }
 
@@ -3196,14 +3458,26 @@
       showToast((kind === 'COMPLAINT' ? 'Complaint ' : 'Ticket ') + ticketId + ' submitted — Admin notified');
     }
 
-    // Distinct Horizontal Telecom Rack Battery Pack (BUB) — Electrical LED Cells + Voltage Waveform + Lightning Bolt
+    // Distinct Horizontal Telecom Rack Battery Pack (BUB) — Electrical LED Cells + Voltage Waveform + RED FAULTY ALERT
     function buildAnimatedBatteryHtml(site) {
       const soc = Math.max(0, Math.min(100, Number(site.batterySoc || 0)));
       const battHrs = Number(site.batteryAutonomyHours || 0);
       const status = (site.batteryStatus || 'HEALTHY').toUpperCase();
-      const activeBars = Math.max(0, Math.min(5, Math.round(soc / 20)));
-      const cellTone = soc > 70 ? '#22c55e' : (soc > 40 ? '#f59e0b' : '#ef4444');
-      const badgeCls = soc > 70 ? 'text-emerald-400 border-emerald-500/40' : (soc > 40 ? 'text-amber-400 border-amber-500/40' : 'text-rose-400 border-rose-500/50');
+      const isFaulty = status.includes('FAULTY') || status.includes('CRITICAL') || status.includes('FAIL') || status.includes('BAD') || status.includes('REPLACE');
+      const isDegraded = !isFaulty && (status.includes('DEGRADED') || status.includes('WARNING') || status.includes('LOW'));
+
+      const activeBars = isFaulty ? 5 : Math.max(0, Math.min(5, Math.round(soc / 20)));
+      const cellTone = isFaulty ? '#ef4444' : (isDegraded ? '#f59e0b' : (soc > 70 ? '#22c55e' : (soc > 40 ? '#f59e0b' : '#ef4444')));
+      const casingStroke = isFaulty ? '#ef4444' : 'currentColor';
+      const casingOpacity = isFaulty ? '0.95' : '0.7';
+      const cardBorderCls = isFaulty ? 'border-rose-500 bg-rose-500/15' : (isDegraded ? 'border-amber-500/50 bg-amber-500/10' : 'bg-black/10 dark:bg-white/5');
+      const badgeCls = isFaulty
+        ? 'text-rose-400 border-rose-500 bg-rose-500/20'
+        : (isDegraded || soc <= 70
+          ? (soc <= 40 ? 'text-rose-400 border-rose-500/50' : 'text-amber-400 border-amber-500/40')
+          : 'text-emerald-400 border-emerald-500/40');
+      const autonomyTextCls = isFaulty ? 'text-rose-400' : (isDegraded ? 'text-amber-400' : 'text-(--color-accent)');
+      const boltFill = isFaulty ? '#ef4444' : '#facc15';
 
       let horizCellsSvg = '';
       for (let i = 0; i < 5; i++) {
@@ -3211,38 +3485,39 @@
         const isLit = i < activeBars;
         horizCellsSvg += '<rect x="' + x + '" y="16" width="14" height="36" rx="1.5" ' +
           'fill="' + (isLit ? cellTone : 'currentColor') + '" ' +
-          'fill-opacity="' + (isLit ? '0.85' : '0.09') + '" ' +
-          'stroke="currentColor" stroke-opacity="0.25" stroke-width="0.8" ' +
-          (isLit ? ('class="batt-led-cell" style="animation-delay:' + (i * 0.18) + 's;"') : '') + '/>';
+          'fill-opacity="' + (isLit ? (isFaulty ? '0.78' : '0.85') : '0.09') + '" ' +
+          'stroke="' + (isFaulty ? '#ef4444' : 'currentColor') + '" stroke-opacity="' + (isFaulty ? '0.75' : '0.25') + '" stroke-width="0.9" ' +
+          (isLit ? ('class="batt-led-cell" style="animation-delay:' + (i * 0.16) + 's;"') : '') + '/>';
       }
 
-      return '<div class="flex flex-col sm:flex-row items-center gap-4 p-3 border_ui bg-black/10 dark:bg-white/5">' +
+      return '<div class="flex flex-col sm:flex-row items-center gap-4 p-3 border_ui ' + cardBorderCls + '">' +
         '<div class="flex flex-col items-center shrink-0">' +
           '<svg viewBox="0 0 132 76" class="w-36 h-20" aria-label="Horizontal BUB Backup Battery Pack">' +
             '<!-- Outer Horizontal Battery Casing -->' +
-            '<rect x="6" y="8" width="110" height="52" rx="4" fill="currentColor" fill-opacity="0.04" stroke="currentColor" stroke-opacity="0.7" stroke-width="1.6"/>' +
+            '<rect x="6" y="8" width="110" height="52" rx="4" fill="' + (isFaulty ? '#ef4444' : 'currentColor') + '" fill-opacity="' + (isFaulty ? '0.12' : '0.04') + '" stroke="' + casingStroke + '" stroke-opacity="' + casingOpacity + '" stroke-width="' + (isFaulty ? '2.2' : '1.6') + '"/>' +
             '<!-- Positive (+) Terminal Nub on Right -->' +
-            '<rect x="116" y="22" width="10" height="24" rx="2" fill="currentColor" fill-opacity="0.75"/>' +
+            '<rect x="116" y="22" width="10" height="24" rx="2" fill="' + casingStroke + '" fill-opacity="' + (isFaulty ? '0.95' : '0.75') + '"/>' +
             '<!-- Polarity Markers (- / +) -->' +
-            '<text x="11" y="72" fill="currentColor" fill-opacity="0.55" font-size="9" font-weight="bold">- NEG</text>' +
+            '<text x="11" y="72" fill="' + (isFaulty ? '#ef4444' : 'currentColor') + '" fill-opacity="' + (isFaulty ? '0.95' : '0.55') + '" font-size="9" font-weight="bold">- NEG</text>' +
             '<text x="106" y="72" fill="' + cellTone + '" font-size="9" font-weight="bold">+ POS</text>' +
             '<!-- 5 Horizontal LED Charge Segments -->' +
             horizCellsSvg +
             '<!-- Live Electrical Voltage Pulse Waveform Sweeping Across Battery -->' +
-            '<path d="M12,34 L34,34 L42,20 L52,48 L60,26 L68,40 L76,34 L110,34" fill="none" stroke="#ffffff" stroke-opacity="0.9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="batt-voltage-wave"/>' +
-            '<!-- Pulsing Electric Bolt Emblem -->' +
-            '<polygon points="64,13 55,34 62,34 57,53 71,30 63,30" fill="#facc15" stroke="#0b0d10" stroke-width="0.9" class="batt-bolt-pulse"/>' +
+            '<path d="M12,34 L34,34 L42,20 L52,48 L60,26 L68,40 L76,34 L110,34" fill="none" stroke="' + (isFaulty ? '#fecaca' : '#ffffff') + '" stroke-opacity="0.92" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="batt-voltage-wave"/>' +
+            '<!-- Pulsing Electric Bolt / Fault Emblem -->' +
+            '<polygon points="64,13 55,34 62,34 57,53 71,30 63,30" fill="' + boltFill + '" stroke="#0b0d10" stroke-width="0.9" class="batt-bolt-pulse"/>' +
           '</svg>' +
-          '<div class="text-[9px] font-bold tracking-wider uppercase opacity-80">BUB PACK · ' + soc + '% · ' + (site.batteryVoltage || '52.8 V') + '</div>' +
+          '<div class="text-[9px] font-bold tracking-wider uppercase ' + (isFaulty ? 'text-rose-400' : 'opacity-80') + '">' + (isFaulty ? 'FAULTY BUB · ' : 'BUB PACK · ') + soc + '% · ' + (site.batteryVoltage || '52.8 V') + '</div>' +
         '</div>' +
         '<div class="flex-1 w-full min-w-0 space-y-1.5 text-[11px]">' +
-          '<div class="flex flex-wrap items-center justify-between gap-1 border-b border_ui pb-1">' +
-            '<span class="font-bold uppercase tracking-wider">BUB = BACKUP BATTERY</span>' +
+          '<div class="flex flex-wrap items-center justify-between gap-1 border-b ' + (isFaulty ? 'border-rose-500/50' : 'border_ui') + ' pb-1">' +
+            '<span class="font-bold uppercase tracking-wider ' + (isFaulty ? 'text-rose-400' : '') + '">BUB = BACKUP BATTERY</span>' +
             '<span class="border_ui px-1.5 py-0.5 text-[9px] font-bold ' + badgeCls + '">' + status + '</span>' +
           '</div>' +
-          '<div class="flex justify-between"><span class="opacity-65">State of Charge (SOC):</span><span class="font-bold">' + soc + '%</span></div>' +
-          '<div class="flex justify-between"><span class="opacity-65">Battery Autonomy:</span><span class="font-bold text-(--color-accent)">' + battHrs + ' hrs off-grid</span></div>' +
-          '<div class="flex justify-between"><span class="opacity-65">Bank Voltage:</span><span class="font-bold">' + (site.batteryVoltage || '52.8 V') + '</span></div>' +
+          (isFaulty ? '<div class="border_ui border-rose-500/70 bg-rose-500/20 px-2 py-1 text-[10px] font-bold text-rose-300 uppercase">ALERT: BACKUP BATTERY FAULTY — NEEDS REPLACEMENT / OVERHAUL</div>' : '') +
+          '<div class="flex justify-between"><span class="opacity-65">State of Charge (SOC):</span><span class="font-bold ' + (isFaulty ? 'text-rose-400' : '') + '">' + soc + '%</span></div>' +
+          '<div class="flex justify-between"><span class="opacity-65">Battery Autonomy:</span><span class="font-bold ' + autonomyTextCls + '">' + battHrs + ' hrs off-grid</span></div>' +
+          '<div class="flex justify-between"><span class="opacity-65">Bank Voltage:</span><span class="font-bold ' + (isFaulty ? 'text-rose-400' : '') + '">' + (site.batteryVoltage || '52.8 V') + '</span></div>' +
         '</div>' +
       '</div>';
     }
@@ -3573,6 +3848,7 @@
 
       site.lastSupplyQty = qty;
       site.lastSupplyDate = formattedDate;
+      site.lastSupplyDateIso = dateRaw;
       site.lastSupplyTime = timeRaw;
       site.supplier = supplier;
       const parsedDelTs = Date.parse(dateRaw + 'T' + (timeRaw || '00:00') + ':00');
@@ -3583,6 +3859,7 @@
 
       if (!site.refuelHistory) site.refuelHistory = [];
       site.refuelHistory.unshift({
+        dateIso: dateRaw,
         date: formattedDate,
         time: timeRaw,
         qty: qty,
@@ -3606,13 +3883,17 @@
       const battHrs = site.batteryAutonomyHours || 8;
       const lightHrs = site.gridHoursPerDay !== undefined ? site.gridHoursPerDay : 12;
       const totalOffload = (parseFloat(battHrs) + parseFloat(lightHrs)).toFixed(1);
-      const battColor = soc > 70 ? 'bg-emerald-500' : (soc > 40 ? 'bg-amber-500' : 'bg-rose-500');
+      const bStatus = (site.batteryStatus || 'HEALTHY').toUpperCase();
+      const isFaulty = bStatus.includes('FAULTY') || bStatus.includes('CRITICAL') || bStatus.includes('FAIL') || bStatus.includes('BAD') || bStatus.includes('REPLACE');
+      const isDegraded = !isFaulty && (bStatus.includes('DEGRADED') || bStatus.includes('WARNING'));
+      const bubValCls = isFaulty ? 'text-rose-500' : (isDegraded ? 'text-amber-400' : 'text-(--color-accent)');
+      const bubCardCls = isFaulty ? 'border-rose-500 bg-rose-500/15' : 'card_surface';
 
       const kpiRow = document.getElementById('fseBubKpiRow');
       if (kpiRow) {
         kpiRow.innerHTML =
-          '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">BATTERY LIFE (OFF-GRID)</div><div class="text-xl font-bold mt-1 text-(--color-accent)">' + battHrs + ' HRS</div><div class="text-[10px] opacity-60">' + (site.batteryStatus || 'HEALTHY') + '</div></div>' +
-          '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">BATTERY SOC / VOLTS</div><div class="text-xl font-bold mt-1">' + soc + '%</div><div class="text-[10px] opacity-60">' + (site.batteryVoltage || '52.8 V') + '</div></div>' +
+          '<div class="border_ui p-3 ' + bubCardCls + '"><div class="opacity-60 text-[10px] uppercase">BATTERY LIFE (OFF-GRID)</div><div class="text-xl font-bold mt-1 ' + bubValCls + '">' + battHrs + ' HRS</div><div class="text-[10px] font-bold ' + (isFaulty ? 'text-rose-400' : 'opacity-60') + '">' + bStatus + '</div></div>' +
+          '<div class="border_ui p-3 ' + bubCardCls + '"><div class="opacity-60 text-[10px] uppercase">BATTERY SOC / VOLTS</div><div class="text-xl font-bold mt-1 ' + (isFaulty ? 'text-rose-400' : '') + '">' + soc + '%</div><div class="text-[10px] opacity-60">' + (site.batteryVoltage || '52.8 V') + '</div></div>' +
           '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">HOURS OF LIGHT ON SITE</div><div class="text-xl font-bold mt-1 text-amber-400">' + lightHrs + ' HRS/D</div><div class="text-[10px] opacity-60">' + (site.gridStatus || 'PHCN ONLINE') + '</div></div>' +
           '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">TOTAL GEN OFFLOAD</div><div class="text-xl font-bold mt-1">' + totalOffload + ' HRS/D</div><div class="text-[10px] opacity-60">Light + BUB Backup</div></div>';
       }
@@ -3620,8 +3901,8 @@
       const cardsEl = document.getElementById('fseBubReadOnlyCards');
       if (cardsEl) {
         cardsEl.innerHTML =
-          '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-2.5">' +
-            '<div class="font-bold uppercase tracking-wider border-b border_ui pb-2">// BATTERY LIFE &amp; BUB STATUS (READ-ONLY)</div>' +
+          '<div class="border_ui ' + (isFaulty ? 'border-rose-500/80' : '') + ' p-4 bg-(--color-card-bg)/40 space-y-2.5">' +
+            '<div class="font-bold uppercase tracking-wider border-b border_ui pb-2 ' + (isFaulty ? 'text-rose-400' : '') + '">// BATTERY LIFE &amp; BUB STATUS (READ-ONLY)</div>' +
             buildAnimatedBatteryHtml(site) +
           '</div>' +
           '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-2.5">' +
@@ -3754,6 +4035,50 @@
             '</div>' +
           '</div>';
         }).join('');
+      }
+
+      // Render Historical Dated PPM & Repair Log for FSE
+      const fsePpmHistEl = document.getElementById('fseHistoricalPpmList');
+      if (fsePpmHistEl) {
+        const subs = (site.submittedPpms || []).slice().sort((a, b) => String(b.submittedDate || '').localeCompare(String(a.submittedDate || '')));
+        if (subs.length === 0) {
+          fsePpmHistEl.innerHTML = '<div class="border_ui p-3 text-[11px] opacity-65">Last Recorded PPM Date: <strong>' + (site.lastPpmDate || 'None') + '</strong> · No historical PPM submissions recorded yet for ' + site.siteId + '.</div>';
+        } else {
+          fsePpmHistEl.innerHTML = subs.map(sub => {
+            const st = (sub.reviewStatus || 'PENDING').toUpperCase();
+            const stCls = st === 'ACCEPTED' ? 'text-emerald-400 border-emerald-500/40' : (st === 'OVERRIDDEN' ? 'text-amber-400 border-amber-500/40' : 'text-rose-300 border-rose-500/40');
+            return '<div class="border_ui p-2.5 bg-black/10 dark:bg-white/5 space-y-1">' +
+              '<div class="flex flex-wrap items-center justify-between gap-2">' +
+                '<span class="font-bold text-(--color-accent)">PPM DATE: ' + (sub.submittedDate || sub.submittedAt) + '</span>' +
+                '<span class="border_ui px-1.5 py-0.5 text-[9px] font-bold ' + stCls + '">' + st + '</span>' +
+              '</div>' +
+              '<div class="text-[10px] opacity-75">Submitted: ' + sub.submittedAt + ' by ' + sub.submittedBy + ' · ' + sub.completedCount + '/' + sub.totalCount + ' items</div>' +
+              (sub.reviewedAt ? '<div class="text-[10px] text-amber-300">Admin Reviewed: ' + sub.reviewedAt + (sub.reviewedBy ? ' (' + sub.reviewedBy + ')' : '') + (sub.adminNote ? ' — ' + sub.adminNote : '') + '</div>' : '') +
+            '</div>';
+          }).join('');
+        }
+      }
+
+      const fseRepHistEl = document.getElementById('fseHistoricalRepairsList');
+      if (fseRepHistEl) {
+        const sortedTickets = siteTickets.slice().sort((a, b) => String(b.loggedIso || b.loggedDate || '').localeCompare(String(a.loggedIso || a.loggedDate || '')));
+        if (sortedTickets.length === 0) {
+          fseRepHistEl.innerHTML = '<div class="border_ui p-3 text-[11px] opacity-65">No historical repair records on file for ' + site.siteId + '.</div>';
+        } else {
+          fseRepHistEl.innerHTML = sortedTickets.map(t =>
+            '<div class="border_ui p-2.5 bg-black/10 dark:bg-white/5 space-y-1">' +
+              '<div class="flex flex-wrap items-center justify-between gap-2">' +
+                '<span class="font-bold text-xs">' + (t.loggedDate || t.dateLogged || 'N/A') + ' · ' + t.ticketId + '</span>' +
+                '<span class="border_ui px-1.5 py-0.5 text-[9px] font-bold ' + ((t.status || '').toUpperCase() === 'RESOLVED' ? 'text-emerald-400 border-emerald-500/40' : 'text-amber-400') + '">' + t.status + '</span>' +
+              '</div>' +
+              '<div class="text-[11px] opacity-85">' + (t.category || t.type || 'REPAIR') + ' — ' + t.issue + '</div>' +
+              '<div class="text-[10px] opacity-60 flex flex-wrap justify-between gap-2">' +
+                '<span>Logged: ' + (t.loggedDate || t.dateLogged || 'N/A') + (t.dateResolved ? ' · Resolved: ' + t.dateResolved : '') + ' · Tech: ' + (t.technician || 'FSE') + '</span>' +
+                (t.attachmentUrl ? '<a href="' + t.attachmentUrl + '" target="_blank" class="underline text-amber-400 font-bold opacity-100">FILE</a>' : '') +
+              '</div>' +
+            '</div>'
+          ).join('');
+        }
       }
     }
 
@@ -5306,13 +5631,14 @@
           '<div class="grid grid-cols-1 lg:grid-cols-2 gap-2.5">' +
             '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-2.5">' +
               '<div class="flex items-center justify-between border-b border_ui pb-2">' +
-                '<span class="font-bold uppercase">// SITE REPAIR TICKETS (' + siteTickets.length + ')</span>' +
-                '<button type="button" onclick="openAddRepairModal()" class="border_ui px-2 py-1 text-[10px] font-bold btn-invert cursor-pointer">+ LOG TICKET</button>' +
+                '<span class="font-bold uppercase">// SITE REPAIR HISTORY &amp; TICKETS (' + siteTickets.length + ')</span>' +
+                '<button type="button" onclick="openAddRepairModal()" class="border_ui px-2 py-1 text-[10px] font-bold btn-invert cursor-pointer">+ LOG REPAIR</button>' +
               '</div>' +
+              '<div class="space-y-2 max-h-[420px] overflow-y-auto no-scrollbar">' +
               (siteTickets.length === 0
-                ? '<div class="opacity-60 text-[11px] py-2">No repair tickets logged for ' + site.siteId + '.</div>'
-                : siteTickets.map(t =>
-                    '<div class="border_ui p-2.5 space-y-1.5">' +
+                ? '<div class="opacity-60 text-[11px] py-2">No historical or active repair tickets logged for ' + site.siteId + '.</div>'
+                : siteTickets.slice().sort((a, b) => String(b.loggedIso || b.loggedDate || '').localeCompare(String(a.loggedIso || a.loggedDate || ''))).map(t =>
+                    '<div class="border_ui ' + ((t.status || '').toUpperCase() === 'RESOLVED' ? 'border-emerald-500/35' : 'border-amber-500/40') + ' p-2.5 space-y-1.5">' +
                       '<div class="flex items-center justify-between gap-2">' +
                         '<span class="font-bold">' + t.ticketId + ' · ' + (t.category || t.type || 'REPAIR') + '</span>' +
                         '<select onchange="updateAdminTicketStatus(\'' + t.ticketId + '\', this.value)" class="border_ui bg-(--color-card-bg) px-1.5 py-0.5 text-[10px] font-bold outline-none cursor-pointer">' +
@@ -5322,25 +5648,26 @@
                         '</select>' +
                       '</div>' +
                       '<div class="text-[11px] opacity-85">' + t.issue + '</div>' +
-                      '<div class="flex items-center justify-between gap-2 text-[10px] opacity-60">' +
-                        '<span>Logged: ' + (t.loggedDate || t.dateLogged || 'N/A') + ' · Tech: ' + (t.technician || 'FSE') + '</span>' +
+                      '<div class="flex flex-wrap items-center justify-between gap-2 text-[10px] opacity-70 pt-1 border-t border_ui/50">' +
+                        '<span><strong>Logged:</strong> ' + (t.loggedDate || t.dateLogged || 'N/A') + (t.dateResolved ? (' · <strong class="text-emerald-400">Resolved:</strong> ' + t.dateResolved) : '') + ' · Tech: ' + (t.technician || 'FSE') + '</span>' +
                         (t.attachmentUrl ? '<a href="' + t.attachmentUrl + '" target="_blank" class="underline text-amber-400 font-bold opacity-100">VIEW ATTACHMENT</a>' : '') +
                       '</div>' +
                     '</div>'
                   ).join('')) +
+              '</div>' +
             '</div>' +
             '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-2.5">' +
               '<div class="flex flex-wrap items-center justify-between gap-2 border-b border_ui pb-2">' +
-                '<span class="font-bold uppercase">// SUBMITTED PPM REPORTS (ACCEPT / OVERRIDE)</span>' +
-                '<div class="flex items-center gap-2">' +
-                  '<span class="text-[10px] text-(--color-accent) font-bold">' + (site.submittedPpms || []).length + ' SUBMITTED</span>' +
-                  '<button type="button" onclick="adminOverrideLogPpm(\'' + site.siteId + '\')" class="border_ui border-amber-400 px-2 py-0.5 text-[10px] font-bold text-amber-400 hover:bg-amber-500 hover:text-black cursor-pointer">+ ADMIN OVERRIDE PPM</button>' +
+                '<span class="font-bold uppercase">// HISTORICAL PPM LOG (ACCEPT / OVERRIDE)</span>' +
+                '<div class="flex items-center gap-1.5 flex-wrap">' +
+                  '<input type="date" id="admOverridePpmDate" value="' + getLocalTodayIso() + '" title="Historical / Override PPM Date" class="border_ui bg-(--color-card-bg) px-1.5 py-0.5 text-[10px] outline-none">' +
+                  '<button type="button" onclick="adminOverrideLogPpm(\'' + site.siteId + '\')" class="border_ui border-amber-400 px-2 py-0.5 text-[10px] font-bold text-amber-400 hover:bg-amber-500 hover:text-black cursor-pointer">+ LOG / OVERRIDE PPM</button>' +
                 '</div>' +
               '</div>' +
-              '<div class="space-y-2.5 max-h-[380px] overflow-y-auto no-scrollbar">' +
+              '<div class="space-y-2.5 max-h-[420px] overflow-y-auto no-scrollbar">' +
                 ((site.submittedPpms || []).length === 0
-                  ? '<div class="opacity-70 text-[11px] py-3 border_ui p-3 text-center">No PPM report submitted yet by FSE for ' + site.siteId + '. Use <span class="font-bold text-amber-400">+ ADMIN OVERRIDE PPM</span> if needed.</div>'
-                  : (site.submittedPpms || []).map(sub => {
+                  ? '<div class="opacity-70 text-[11px] py-3 border_ui p-3 text-center">Last PPM Date on record: <strong>' + (site.lastPpmDate || 'None') + '</strong>.<br>No FSE PPM submissions logged yet for ' + site.siteId + '. Pick a date above and click <span class="font-bold text-amber-400">+ LOG / OVERRIDE PPM</span> to record historical PPM dates.</div>'
+                  : (site.submittedPpms || []).slice().sort((a, b) => String(b.submittedDate || '').localeCompare(String(a.submittedDate || ''))).map(sub => {
                       const revSt = (sub.reviewStatus || 'PENDING').toUpperCase();
                       const revBadgeCls = revSt === 'ACCEPTED'
                         ? 'border-emerald-500/50 text-emerald-400 bg-emerald-500/10'
@@ -5350,8 +5677,8 @@
                       return '<div class="border_ui p-3 bg-black/10 dark:bg-white/5 space-y-2">' +
                         '<div class="flex flex-wrap items-center justify-between gap-2 border-b border_ui pb-1.5">' +
                           '<div>' +
-                            '<div class="font-bold text-(--color-accent)">DATE: ' + sub.submittedAt + '</div>' +
-                            '<div class="text-[10px] opacity-65">Submitted by: ' + sub.submittedBy + ' · ' + sub.completedCount + '/' + sub.totalCount + ' Checked</div>' +
+                            '<div class="font-bold text-(--color-accent)">PPM DATE: ' + (sub.submittedDate || sub.submittedAt) + ' <span class="opacity-65 font-normal text-[10px]">(' + sub.submittedAt + ')</span></div>' +
+                            '<div class="text-[10px] opacity-65">By: ' + sub.submittedBy + ' · ' + sub.completedCount + '/' + sub.totalCount + ' Checked' + (sub.reviewedAt ? (' · Reviewed: ' + sub.reviewedAt) : '') + '</div>' +
                           '</div>' +
                           '<span class="border_ui px-2 py-0.5 text-[10px] font-bold ' + revBadgeCls + '">' + revSt + '</span>' +
                         '</div>' +
@@ -5380,13 +5707,16 @@
         const soc = site.batterySoc || 85;
         const lightHrs = site.gridHoursPerDay !== undefined ? site.gridHoursPerDay : 12;
         const totalOffload = (parseFloat(battHrs) + parseFloat(lightHrs)).toFixed(1);
+        const isFaultyBub = (site.batteryStatus || '').toUpperCase().includes('FAULTY') || (site.batteryStatus || '').toUpperCase().includes('CRITICAL');
         container.innerHTML =
-          '<div class="border_ui border-amber-500/40 bg-amber-500/10 p-2.5 text-[11px] text-amber-300">' +
-            '// ADMIN-ONLY CONTROL (' + site.siteId + '): BUB = Backup Battery · Light = Utility Power Grid. Changes sync live to FSE Portal (view-only).' +
+          '<div class="border_ui ' + (isFaultyBub ? 'border-rose-500 bg-rose-500/15 text-rose-300' : 'border-amber-500/40 bg-amber-500/10 text-amber-300') + ' p-2.5 text-[11px]">' +
+            (isFaultyBub
+              ? '// FAULTY BATTERY ALERT (' + site.siteId + '): Backup Battery (BUB) is marked FAULTY — highlighted RED across Admin & FSE portals.'
+              : '// ADMIN-ONLY CONTROL (' + site.siteId + '): BUB = Backup Battery · Light = Utility Power Grid. Changes auto-sync live to Supabase & FSE Portal.') +
           '</div>' +
           '<div class="grid grid-cols-1 lg:grid-cols-2 gap-2.5">' +
-            '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
-              '<div class="font-bold uppercase border-b border_ui pb-2">// BUB — BACKUP BATTERY (' + site.siteId + ')</div>' +
+            '<div class="border_ui ' + (isFaultyBub ? 'border-rose-500' : '') + ' p-4 bg-(--color-card-bg)/40 space-y-3">' +
+              '<div class="font-bold uppercase border-b border_ui pb-2 ' + (isFaultyBub ? 'text-rose-400' : '') + '">// BUB — BACKUP BATTERY (' + site.siteId + ')</div>' +
               buildAnimatedBatteryHtml(site) +
               '<form onsubmit="handleAdminSaveBub(event)" class="space-y-2.5 pt-1">' +
                 '<div class="grid grid-cols-2 gap-2">' +
@@ -5396,12 +5726,12 @@
                 '<div class="grid grid-cols-2 gap-2">' +
                   '<div><label class="block text-[10px] opacity-60 mb-1">BANK VOLTAGE</label><input type="text" id="admBubVoltage" value="' + (site.batteryVoltage || '52.8 V') + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
                   '<div><label class="block text-[10px] opacity-60 mb-1">BATTERY HEALTH</label><select id="admBubHealth" class="w-full border_ui bg-(--color-card-bg) px-2.5 py-1.5 outline-none">' +
-                    '<option value="HEALTHY" ' + ((site.batteryStatus || 'HEALTHY') === 'HEALTHY' ? 'selected' : '') + '>HEALTHY</option>' +
-                    '<option value="DEGRADED" ' + ((site.batteryStatus || '') === 'DEGRADED' ? 'selected' : '') + '>DEGRADED</option>' +
-                    '<option value="FAULTY / REPLACE" ' + ((site.batteryStatus || '').includes('FAULTY') ? 'selected' : '') + '>FAULTY / REPLACE</option>' +
+                    '<option value="HEALTHY" ' + ((site.batteryStatus || 'HEALTHY').toUpperCase() === 'HEALTHY' ? 'selected' : '') + '>HEALTHY</option>' +
+                    '<option value="DEGRADED" ' + ((site.batteryStatus || '').toUpperCase() === 'DEGRADED' ? 'selected' : '') + '>DEGRADED</option>' +
+                    '<option value="FAULTY / REPLACE" ' + (isFaultyBub ? 'selected' : '') + '>FAULTY / REPLACE (RED ALERT)</option>' +
                   '</select></div>' +
                 '</div>' +
-                '<button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">SAVE BATTERY TELEMETRY</button>' +
+                '<button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">SAVE &amp; SYNC BATTERY TELEMETRY</button>' +
               '</form>' +
             '</div>' +
             '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
@@ -5413,7 +5743,7 @@
                   '<div><label class="block text-[10px] opacity-60 mb-1">GRID STATUS</label><select id="admGridStatus" class="w-full border_ui bg-(--color-card-bg) px-2.5 py-1.5 outline-none">' +
                     '<option value="ONLINE (NEPA AVAILABLE)" ' + ((site.gridStatus || '').includes('ONLINE') ? 'selected' : '') + '>ONLINE (NEPA AVAILABLE)</option>' +
                     '<option value="INTERMITTENT GRID" ' + ((site.gridStatus || '').includes('INTERMITTENT') ? 'selected' : '') + '>INTERMITTENT GRID</option>' +
-                    '<option value="NO GRID / OUTAGE" ' + ((site.gridStatus || '').includes('OUTAGE') || (site.gridStatus || '').includes('NO GRID') ? 'selected' : '') + '>NO GRID / OUTAGE</option>' +
+                    '<option value="NO GRID / OUTAGE" ' + ((site.gridStatus || '').includes('OUTAGE') || (site.gridStatus || '').includes('NO GRID') || (site.gridStatus || '').includes('Non PHCN') ? 'selected' : '') + '>NO GRID / OUTAGE</option>' +
                   '</select></div>' +
                 '</div>' +
                 '<div><label class="block text-[10px] opacity-60 mb-1">PREPAID TOKEN STATUS</label><select id="admTokenStatus" class="w-full border_ui bg-(--color-card-bg) px-2.5 py-1.5 outline-none">' +
@@ -5421,7 +5751,7 @@
                   '<option value="LOW BALANCE" ' + ((site.nepaTokenStatus || '') === 'LOW BALANCE' ? 'selected' : '') + '>LOW BALANCE</option>' +
                   '<option value="EXPIRED / OUT" ' + ((site.nepaTokenStatus || '').includes('EXPIRED') ? 'selected' : '') + '>EXPIRED / OUT</option>' +
                 '</select></div>' +
-                '<button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">SAVE LIGHT &amp; GRID TELEMETRY</button>' +
+                '<button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">SAVE &amp; SYNC LIGHT &amp; GRID</button>' +
               '</form>' +
             '</div>' +
           '</div>';
@@ -5459,42 +5789,76 @@
                   '<div><label class="block text-[10px] opacity-60 mb-1">CURRENT FUEL LEVEL (LITRES)</label><input type="number" step="0.1" min="0" id="admFuelLevel" value="' + site.currentDL + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 font-bold outline-none"></div>' +
                   '<div><label class="block text-[10px] opacity-60 mb-1">DAILY USAGE (LITRES / DAY)</label><input type="number" step="0.5" min="0.5" id="admFuelCpd" value="' + site.cpd + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 font-bold outline-none"></div>' +
                 '</div>' +
-                '<div class="grid grid-cols-3 gap-2">' +
-                  '<div><label class="block text-[10px] opacity-60 mb-1">GEN TYPE (kVA)</label><select id="admFuelGenKva" class="w-full border_ui bg-(--color-card-bg) px-2 py-1.5 outline-none">' +
+                '<div class="grid grid-cols-2 gap-2">' +
+                  '<div><label class="block text-[10px] opacity-60 mb-1">GENERATOR TYPE (15 / 20 kVA)</label><select id="admFuelGenKva" class="w-full border_ui bg-(--color-card-bg) px-2 py-1.5 outline-none">' +
                     '<option value="15" ' + (normalizeGenKva(genKva) === 15 ? 'selected' : '') + '>15 kVA</option>' +
                     '<option value="20" ' + (normalizeGenKva(genKva) === 20 ? 'selected' : '') + '>20 kVA</option>' +
                   '</select></div>' +
-                  '<div><label class="block text-[10px] opacity-60 mb-1">TANK CAP (L)</label><input type="number" step="50" min="100" id="admFuelTankCap" value="' + site.tankCap + '" required class="w-full border_ui bg-transparent px-2 py-1.5 outline-none"></div>' +
-                  '<div><label class="block text-[10px] opacity-60 mb-1">SUPPLIER</label><input type="text" id="admFuelSupplier" value="' + (site.supplier || '') + '" placeholder="Vendor" class="w-full border_ui bg-transparent px-2 py-1.5 outline-none"></div>' +
+                  '<div><label class="block text-[10px] opacity-60 mb-1">TANK CAPACITY (LITRES)</label><input type="number" step="50" min="100" id="admFuelTankCap" value="' + site.tankCap + '" required class="w-full border_ui bg-transparent px-2 py-1.5 outline-none"></div>' +
                 '</div>' +
-                '<button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">SAVE FUEL, GEN &amp; TANK</button>' +
+                '<button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">SAVE &amp; AUTO-SYNC TO DATABASE</button>' +
               '</form>' +
             '</div>' +
-            '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
-              '<div class="font-bold uppercase border-b border_ui pb-2">// LOG DIESEL DELIVERY — ' + site.siteId + '</div>' +
-              '<form onsubmit="handleAdminLogDelivery(event)" class="space-y-2">' +
-                '<div class="grid grid-cols-3 gap-2">' +
-                  '<input type="number" id="admDelQty" required placeholder="Qty (L)" class="border_ui bg-transparent px-2 py-1.5 outline-none">' +
-                  '<input type="date" id="admDelDate" value="' + getLocalTodayIso() + '" required class="border_ui bg-(--color-card-bg) px-2 py-1.5 outline-none">' +
-                  '<input type="time" id="admDelTime" value="' + now.toTimeString().slice(0, 5) + '" required class="border_ui bg-(--color-card-bg) px-2 py-1.5 outline-none">' +
+            '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3 flex flex-col justify-between">' +
+              '<div class="space-y-2.5">' +
+                '<div class="flex flex-wrap items-center justify-between gap-2 border-b border_ui pb-2">' +
+                  '<span class="font-bold uppercase text-(--color-accent)">// FSE DIESEL DELIVERY DATES (' + site.siteId + ')</span>' +
+                  '<span class="border_ui px-2 py-0.5 text-[9px] font-bold opacity-80">LOGGED BY FSE ONLY</span>' +
                 '</div>' +
-                '<button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">+ RECORD DIESEL DELIVERY</button>' +
-              '</form>' +
-              '<div class="border_ui p-2.5 bg-black/10 dark:bg-white/5 text-[11px] space-y-1">' +
-                '<div class="flex justify-between"><span>Latest Received:</span><span class="font-bold text-(--color-accent)">' + (site.lastSupplyQty || 0) + ' L · ' + (site.lastSupplyDate || 'N/A') + ' @ ' + (site.lastSupplyTime || '--:--') + '</span></div>' +
-                '<div class="flex justify-between"><span>Previous Date Received:</span><span class="font-bold text-amber-400">' + prevDate + '</span></div>' +
+                '<div class="border_ui p-3 bg-black/10 dark:bg-white/5 text-[11px] space-y-1.5">' +
+                  '<div class="flex justify-between"><span>Latest Diesel Received (FSE):</span><span class="font-bold text-(--color-accent)">' + (site.lastSupplyQty || 0) + ' L · ' + (site.lastSupplyDate || 'Awaiting FSE Log') + (site.lastSupplyTime ? (' @ ' + site.lastSupplyTime) : '') + '</span></div>' +
+                  '<div class="flex justify-between"><span>Previous Date Received:</span><span class="font-bold text-amber-400">' + prevDate + '</span></div>' +
+                  '<div class="flex justify-between"><span>Supplier / Vendor:</span><span class="font-bold">' + (site.supplier || 'N/A') + '</span></div>' +
+                '</div>' +
+                '<div class="border_ui border-amber-500/35 bg-amber-500/10 p-2.5 text-[10px] opacity-90">' +
+                  '// FSE logs incoming diesel arrival dates from the FSE Portal. Entries automatically appear below where Admin can inspect and click <strong>EDIT</strong>.' +
+                '</div>' +
+              '</div>' +
+              '<div class="pt-2 border-t border_ui flex items-center justify-between gap-2">' +
+                '<span class="text-[10px] opacity-60">Old seeded fuel in DB?</span>' +
+                '<button type="button" onclick="clearAllLiveFuelToZero()" class="border_ui border-rose-500/50 text-rose-400 px-2.5 py-1 text-[10px] font-bold hover:bg-rose-600 hover:text-white cursor-pointer">CLEAR STALE DB FUEL (0 L)</button>' +
               '</div>' +
             '</div>' +
           '</div>' +
-          '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-2">' +
-            '<div class="font-bold uppercase tracking-wider border-b border_ui pb-2">// SITE DIESEL DELIVERY LEDGER (' + site.siteId + ')</div>' +
+          '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-2.5">' +
+            '<div class="flex flex-wrap items-center justify-between gap-2 border-b border_ui pb-2">' +
+              '<span class="font-bold uppercase tracking-wider">// FSE DIESEL DELIVERY LOG — EDITABLE BY ADMIN (' + site.siteId + ')</span>' +
+              '<span class="text-[10px] opacity-70">' + hist.length + ' DELIVER' + (hist.length === 1 ? 'Y' : 'IES') + ' SYNCED FROM FSE</span>' +
+            '</div>' +
             (hist.length === 0
-              ? '<div class="opacity-60 py-2">No delivery history logged yet for this site.</div>'
+              ? '<div class="opacity-65 py-3 text-center border_ui text-[11px]">No diesel deliveries logged by FSE yet for ' + site.siteId + '. Once FSE records a delivery date, it appears here for Admin review &amp; editing.</div>'
               : '<div class="overflow-x-auto"><table class="w-full text-left border-collapse text-[11px]">' +
-                  '<thead><tr class="border-b border_ui opacity-60"><th class="py-1.5 pr-3">DATE</th><th class="py-1.5 pr-3">TIME</th><th class="py-1.5 pr-3">QTY (L)</th><th class="py-1.5 pr-3">SUPPLIER</th><th class="py-1.5">LOGGED BY</th></tr></thead>' +
-                  '<tbody>' + hist.map(h =>
-                    '<tr class="border-b border_ui/50"><td class="py-1.5 pr-3 font-bold">' + (h.date || 'N/A') + '</td><td class="py-1.5 pr-3">' + (h.time || '--:--') + '</td><td class="py-1.5 pr-3 text-(--color-accent) font-bold">+' + (h.qty || h.litersAdded || 0) + ' L</td><td class="py-1.5 pr-3">' + (h.supplier || 'N/A') + '</td><td class="py-1.5 opacity-70">' + (h.loggedBy || h.fse || 'FSE') + '</td></tr>'
-                  ).join('') + '</tbody></table></div>') +
+                  '<thead><tr class="border-b border_ui opacity-60"><th class="py-1.5 pr-3">DATE RECEIVED (FSE)</th><th class="py-1.5 pr-3">TIME</th><th class="py-1.5 pr-3">QTY (L)</th><th class="py-1.5 pr-3">SUPPLIER</th><th class="py-1.5 pr-3">LOGGED BY</th><th class="py-1.5 text-right">ADMIN EDIT</th></tr></thead>' +
+                  '<tbody>' + hist.map((h, idx) => {
+                    const isEditing = adminEditingDeliveryIdx === idx;
+                    const isoVal = h.dateIso || toIsoDateOnly(h.date);
+                    const timeVal = (h.time && /^\d{2}:\d{2}/.test(h.time)) ? h.time.slice(0, 5) : '09:00';
+                    const qtyVal = Number(h.qty || h.litersAdded || 0);
+                    if (isEditing) {
+                      return '<tr class="border-b border-amber-500/50 bg-amber-500/10">' +
+                        '<td class="py-2 pr-2"><input type="date" id="admEditDelDate_' + idx + '" value="' + isoVal + '" class="border_ui bg-(--color-card-bg) px-1.5 py-1 text-[10px] outline-none"></td>' +
+                        '<td class="py-2 pr-2"><input type="time" id="admEditDelTime_' + idx + '" value="' + timeVal + '" class="border_ui bg-(--color-card-bg) px-1.5 py-1 text-[10px] outline-none"></td>' +
+                        '<td class="py-2 pr-2"><input type="number" step="1" min="1" id="admEditDelQty_' + idx + '" value="' + qtyVal + '" class="w-20 border_ui bg-(--color-card-bg) px-1.5 py-1 text-[10px] font-bold outline-none"></td>' +
+                        '<td class="py-2 pr-2"><input type="text" id="admEditDelSup_' + idx + '" value="' + (h.supplier || '') + '" class="w-28 border_ui bg-(--color-card-bg) px-1.5 py-1 text-[10px] outline-none"></td>' +
+                        '<td class="py-2 pr-2 opacity-75">' + (h.loggedBy || h.fse || 'FSE') + '</td>' +
+                        '<td class="py-2 text-right whitespace-nowrap space-x-1">' +
+                          '<button type="button" onclick="saveAdminEditedDelivery(' + idx + ')" class="border_ui border-emerald-500 bg-emerald-500 text-black px-2 py-0.5 text-[10px] font-bold cursor-pointer">SAVE</button>' +
+                          '<button type="button" onclick="cancelAdminEditDelivery()" class="border_ui px-2 py-0.5 text-[10px] cursor-pointer">CANCEL</button>' +
+                        '</td>' +
+                      '</tr>';
+                    }
+                    return '<tr class="border-b border_ui/50">' +
+                      '<td class="py-1.5 pr-3 font-bold">' + (h.date || 'N/A') + '</td>' +
+                      '<td class="py-1.5 pr-3">' + (h.time || '--:--') + '</td>' +
+                      '<td class="py-1.5 pr-3 text-(--color-accent) font-bold">+' + qtyVal + ' L</td>' +
+                      '<td class="py-1.5 pr-3">' + (h.supplier || 'N/A') + '</td>' +
+                      '<td class="py-1.5 pr-3 opacity-70">' + (h.loggedBy || h.fse || 'FSE') + '</td>' +
+                      '<td class="py-1.5 text-right whitespace-nowrap space-x-1">' +
+                        '<button type="button" onclick="startAdminEditDelivery(' + idx + ')" class="border_ui border-amber-400/70 text-amber-400 px-2 py-0.5 text-[10px] font-bold hover:bg-amber-500 hover:text-black cursor-pointer">EDIT</button>' +
+                        '<button type="button" onclick="deleteAdminDelivery(' + idx + ')" class="border_ui border-rose-500/50 text-rose-400 px-2 py-0.5 text-[10px] hover:bg-rose-600 hover:text-white cursor-pointer">DEL</button>' +
+                      '</td>' +
+                    '</tr>';
+                  }).join('') + '</tbody></table></div>') +
           '</div>';
       } else if (adminActiveModule === 'analytics') {
         // STRICTLY SINGLE-SITE FUEL ANATOMY, DEPLETION FORECAST & 7-DAY AUTOMATIC ALARM
@@ -5753,17 +6117,21 @@
       showToast('PPM ' + decision + ' for ' + site.siteId + ' — Next PPM: ' + (site.nextPpmDate || 'N/A'));
     }
 
+    let adminEditingDeliveryIdx = -1;
+
     function adminOverrideLogPpm(siteId) {
       if (!isAdminUnlocked || !adminSession) return;
       const site = masterSites.find(s => s.siteId === siteId);
       if (!site) return;
 
-      const reason = prompt('Log Admin Override PPM for ' + site.siteId + ' — enter verification note:', 'Admin Override PPM verified directly');
+      const dateInput = document.getElementById('admOverridePpmDate');
+      const chosenIso = (dateInput && dateInput.value) ? dateInput.value : getLocalTodayIso();
+      const reason = prompt('Log / Override PPM for ' + site.siteId + ' on ' + chosenIso + ' — enter verification note:', 'Admin Override PPM verified directly');
       if (reason === null) return;
 
       const now = new Date();
-      const submittedDate = now.toISOString().slice(0, 10);
-      const submittedAt = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' +
+      const submittedDate = chosenIso;
+      const submittedAt = formatIsoToDisplayDate(chosenIso) + ' ' +
                           now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
       const ticks = site.maintenanceTicks || [];
 
@@ -5777,13 +6145,15 @@
         reviewStatus: 'OVERRIDDEN',
         adminNote: reason.trim() || 'Admin Override PPM',
         reviewedBy: adminSession.adminName,
-        reviewedAt: submittedDate,
+        reviewedAt: formatIsoToDisplayDate(getLocalTodayIso()),
         items: ticks.map(t => ({ task: t.task, done: true, photoDataUrl: t.photoDataUrl || null, mediaType: t.mediaType || null }))
       };
 
       if (!site.submittedPpms) site.submittedPpms = [];
       site.submittedPpms.unshift(sub);
-      site.lastPpmDate = submittedDate;
+      if (!site.lastPpmDate || submittedDate >= site.lastPpmDate) {
+        site.lastPpmDate = submittedDate;
+      }
       site.ppmManuallySet = true;
       synchronizeSite(site);
       syncPpmDatesToCalendar();
@@ -5812,10 +6182,10 @@
       renderCalendar();
       renderTasks();
       updateAdminPortalUiState();
-      showToast('Admin Override PPM recorded for ' + site.siteId);
+      showToast('Historical / Override PPM recorded for ' + site.siteId + ' (' + submittedDate + ')');
     }
 
-    function handleAdminSaveFseProfile(e) {
+    async function handleAdminSaveFseProfile(e) {
       e.preventDefault();
       if (!isAdminUnlocked || !adminSession) return;
       const site = masterSites.find(s => s.siteId === adminSession.siteId);
@@ -5828,7 +6198,7 @@
       site.fsePhone = document.getElementById('admProfileFsePhone').value.trim();
       site.fseEmail = document.getElementById('admProfileFseEmail').value.trim();
       saveState();
-      sbUpsertSite(site);
+      const res = await sbUpsertSite(site);
       populateAdminLoginDropdown();
       renderSites();
       updateAdminPortalUiState();
@@ -5839,10 +6209,10 @@
         localStorage.setItem('coloplus_fse_session', JSON.stringify(fseSession));
         updateFseUiState();
       }
-      showToast('Saved site & FSE profile for ' + site.siteId);
+      if (res && res.ok) showToast('Saved & synced site & FSE profile for ' + site.siteId);
     }
 
-    function handleAdminSaveSecurityProfile(e) {
+    async function handleAdminSaveSecurityProfile(e) {
       e.preventDefault();
       if (!isAdminUnlocked || !adminSession) return;
       const site = masterSites.find(s => s.siteId === adminSession.siteId);
@@ -5851,24 +6221,37 @@
       site.security = document.getElementById('admProfileSecName').value.trim() || 'On-site Security';
       site.securityPhone = document.getElementById('admProfileSecPhone').value.trim();
       saveState();
-      sbUpsertSite(site);
+      const res = await sbUpsertSite(site);
       updateAdminPortalUiState();
-      showToast('Saved Security (CLO) profile for ' + site.siteId);
+      if (res && res.ok) showToast('Saved & synced Security (CLO) profile for ' + site.siteId);
     }
 
-    function updateAdminTicketStatus(ticketId, newStatus) {
+    async function updateAdminTicketStatus(ticketId, newStatus) {
       if (!isAdminUnlocked) return;
       const t = masterRepairs.find(r => r.ticketId === ticketId);
       if (!t) return;
+      const nowIso = new Date().toISOString();
+      const dbStatus = normalizeDbRepairStatus(newStatus);
       t.status = newStatus;
       if (newStatus === 'RESOLVED') {
         t.adminReviewed = true;
-        t.dateResolved = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        t.dateResolved = formatIsoToDisplayDate(getLocalTodayIso());
+      } else {
+        t.dateResolved = null;
       }
       saveState();
       if (sb) {
         try {
-          Promise.resolve(sb.from('machinery_repairs').update({ status: newStatus }).eq('ticket_id', ticketId)).catch(() => {});
+          const upd = { status: dbStatus };
+          if (!liveTableCols.machinery_repairs || liveTableCols.machinery_repairs.has('resolved_at')) {
+            upd.resolved_at = newStatus === 'RESOLVED' ? nowIso : null;
+          }
+          const { error } = await sb.from('machinery_repairs').update(upd).eq('ticket_id', ticketId);
+          if (error && String(error.message || '').includes('resolved_at')) {
+            await sb.from('machinery_repairs').update({ status: dbStatus }).eq('ticket_id', ticketId);
+          } else if (error) {
+            showToast('DB Ticket Update Error: ' + error.message);
+          }
         } catch (err) {}
       }
       renderRepairs();
@@ -5880,7 +6263,7 @@
         const fs = masterSites.find(x => x.siteId === fseSession.siteId);
         if (fs) renderFseRepairsModule(fs);
       }
-      showToast('Ticket ' + ticketId + ' updated to ' + newStatus);
+      showToast('Ticket ' + ticketId + ' synced as ' + newStatus);
     }
 
     function syncAdminEmailRecipientBox() {
@@ -6168,7 +6551,7 @@
       }
     }
 
-    function handleAdminSavePpmCycle(e) {
+    async function handleAdminSavePpmCycle(e) {
       e.preventDefault();
       if (!isAdminUnlocked || !adminSession) return;
       const site = masterSites.find(s => s.siteId === adminSession.siteId);
@@ -6191,7 +6574,7 @@
       }
 
       saveState();
-      sbUpsertSite(site);
+      const res = await sbUpsertSite(site);
       syncPpmDatesToCalendar();
       renderCalendar();
       renderTasks();
@@ -6207,10 +6590,10 @@
           })).catch(() => {});
         } catch (err) {}
       }
-      showToast('Personalized PPM synced for ' + site.siteId + ' — Unique date: ' + site.nextPpmDate);
+      if (res && res.ok) showToast('Personalized PPM synced to DB for ' + site.siteId + ' — Unique date: ' + site.nextPpmDate);
     }
 
-    function handleAdminSaveBub(e) {
+    async function handleAdminSaveBub(e) {
       e.preventDefault();
       if (!isAdminUnlocked || !adminSession) return;
       const site = masterSites.find(s => s.siteId === adminSession.siteId);
@@ -6220,14 +6603,14 @@
       if (document.getElementById('admBubVoltage')) site.batteryVoltage = document.getElementById('admBubVoltage').value.trim();
       if (document.getElementById('admBubHealth')) site.batteryStatus = document.getElementById('admBubHealth').value;
       saveState();
-      sbUpsertSite(site);
+      const res = await sbUpsertSite(site);
       renderPowerMatrix();
       updateAdminPortalUiState();
       if (fseSession && fseSession.siteId === site.siteId) renderFseBubModule(site);
-      showToast('Admin updated battery telemetry for ' + site.siteId);
+      if (res && res.ok) showToast('Battery (BUB) telemetry saved & synced to database for ' + site.siteId);
     }
 
-    function handleAdminSaveLight(e) {
+    async function handleAdminSaveLight(e) {
       e.preventDefault();
       if (!isAdminUnlocked || !adminSession) return;
       const site = masterSites.find(s => s.siteId === adminSession.siteId);
@@ -6236,14 +6619,14 @@
       site.gridStatus = document.getElementById('admGridStatus').value.trim();
       if (document.getElementById('admTokenStatus')) site.nepaTokenStatus = document.getElementById('admTokenStatus').value;
       saveState();
-      sbUpsertSite(site);
+      const res = await sbUpsertSite(site);
       renderPowerMatrix();
       updateAdminPortalUiState();
       if (fseSession && fseSession.siteId === site.siteId) renderFseBubModule(site);
-      showToast('Admin updated site light & grid telemetry for ' + site.siteId);
+      if (res && res.ok) showToast('Light & Grid telemetry saved & synced to database for ' + site.siteId);
     }
 
-    function handleAdminUpdateFuel(e) {
+    async function handleAdminUpdateFuel(e) {
       e.preventDefault();
       if (!isAdminUnlocked || !adminSession) return;
       const site = masterSites.find(s => s.siteId === adminSession.siteId);
@@ -6255,8 +6638,6 @@
         site.genSize = normalizeGenKva(genKvaInput.value);
         site.loadKw = site.genSize;
       }
-      const supInput = document.getElementById('admFuelSupplier');
-      if (supInput) site.supplier = supInput.value.trim();
       const newVal = Math.max(0, Math.min(site.tankCap, parseFloat(document.getElementById('admFuelLevel').value) || 0));
       const cpdInput = document.getElementById('admFuelCpd');
       if (cpdInput) site.cpd = Math.max(0.5, parseFloat(cpdInput.value) || site.cpd);
@@ -6265,49 +6646,129 @@
       site.currentDL = newVal;
       synchronizeSite(site);
       saveState();
-      sbUpsertSite(site);
+      const res = await sbUpsertSite(site);
       checkAndTrigger7DayFuelAlarms();
       updateKpis();
       renderSites();
       updateAdminPortalUiState();
       if (fseSession && fseSession.siteId === site.siteId) renderFseFuelModule(site);
-      showToast('Updated ' + site.siteId + ': ' + newVal + 'L · ' + site.genSize + ' kVA · ' + site.cpd + ' L/d');
+      if (res && res.ok) {
+        showToast('Synced to DB — ' + site.siteId + ': ' + newVal + 'L · ' + site.genSize + ' kVA · ' + site.cpd + ' L/d · Tank ' + site.tankCap + 'L');
+      }
     }
 
-    function handleAdminLogDelivery(e) {
-      e.preventDefault();
+    // Admin Inline Edit / Delete for FSE-Logged Diesel Deliveries (Admin edits existing FSE logs, does NOT log new deliveries)
+    function startAdminEditDelivery(idx) {
+      if (!isAdminUnlocked || !adminSession) return;
+      adminEditingDeliveryIdx = idx;
+      const site = masterSites.find(s => s.siteId === adminSession.siteId);
+      if (site) renderAdminModuleContent(site);
+    }
+
+    function cancelAdminEditDelivery() {
+      adminEditingDeliveryIdx = -1;
+      const site = adminSession ? masterSites.find(s => s.siteId === adminSession.siteId) : null;
+      if (site) renderAdminModuleContent(site);
+    }
+
+    async function saveAdminEditedDelivery(idx) {
       if (!isAdminUnlocked || !adminSession) return;
       const site = masterSites.find(s => s.siteId === adminSession.siteId);
-      if (!site) return;
-      const qty = parseFloat(document.getElementById('admDelQty').value) || 0;
-      const dateRaw = document.getElementById('admDelDate').value;
-      const timeRaw = document.getElementById('admDelTime').value;
-      const formattedDate = new Date(dateRaw + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      if (!site || !site.refuelHistory || !site.refuelHistory[idx]) return;
 
-      if (site.lastSupplyDate) {
-        site.previousSupplyDate = site.lastSupplyDate;
-        site.previousSupplyTime = site.lastSupplyTime || '--:--';
-        site.previousSupplyQty = (site.lastSupplyQty || 0) + ' L';
+      const entry = site.refuelHistory[idx];
+      const newDateIso = (document.getElementById('admEditDelDate_' + idx) || {}).value || entry.dateIso || getLocalTodayIso();
+      const newTime = (document.getElementById('admEditDelTime_' + idx) || {}).value || entry.time || '09:00';
+      const newQty = Math.max(1, parseFloat((document.getElementById('admEditDelQty_' + idx) || {}).value) || 0);
+      const newSup = ((document.getElementById('admEditDelSup_' + idx) || {}).value || '').trim() || entry.supplier || 'N/A';
+
+      const oldQty = Number(entry.qty || entry.litersAdded || 0);
+      const qtyDelta = newQty - oldQty;
+
+      entry.dateIso = newDateIso;
+      entry.date = formatIsoToDisplayDate(newDateIso);
+      entry.time = newTime;
+      entry.qty = newQty;
+      entry.litersAdded = newQty;
+      entry.supplier = newSup;
+
+      // Update site latest/previous supply summary and adjust live diesel by exact delta
+      if (idx === 0) {
+        site.lastSupplyQty = newQty;
+        site.lastSupplyDate = entry.date;
+        site.lastSupplyDateIso = newDateIso;
+        site.lastSupplyTime = newTime;
+        site.supplier = newSup;
+      } else if (idx === 1) {
+        site.previousSupplyDate = entry.date;
+        site.previousSupplyTime = newTime;
+        site.previousSupplyQty = newQty + ' L';
       }
-      site.lastSupplyQty = qty;
-      site.lastSupplyDate = formattedDate;
-      site.lastSupplyTime = timeRaw;
-      const parsedDelTs = Date.parse(dateRaw + 'T' + (timeRaw || '00:00') + ':00');
-      const clampedDelTs = !isNaN(parsedDelTs) ? Math.min(Date.now(), parsedDelTs) : Date.now();
-      site.baselineDL = Math.min(site.tankCap, parseFloat((site.currentDL + qty).toFixed(2)));
-      site.fuelBaselineAt = new Date(clampedDelTs).toISOString();
-      site.currentDL = site.baselineDL;
-      if (!site.refuelHistory) site.refuelHistory = [];
-      site.refuelHistory.unshift({ date: formattedDate, time: timeRaw, qty, litersAdded: qty, supplier: site.supplier || 'Admin', loggedBy: adminSession.adminName });
+      if (qtyDelta !== 0) {
+        const adjusted = Math.max(0, Math.min(site.tankCap, parseFloat((site.currentDL + qtyDelta).toFixed(2))));
+        site.baselineDL = adjusted;
+        site.currentDL = adjusted;
+        site.fuelBaselineAt = new Date().toISOString();
+      }
 
+      adminEditingDeliveryIdx = -1;
       synchronizeSite(site);
       saveState();
-      sbInsertDelivery(site.siteId, site.tenantId, qty, dateRaw, timeRaw, site.supplier || 'Admin', adminSession.adminName);
+
+      if (sb && entry.id) {
+        const { error: delUpdErr } = await sb
+          .from('diesel_deliveries')
+          .update({
+            qty_litres: newQty,
+            received_date: newDateIso,
+            received_time: newTime,
+            supplier: newSup
+          })
+          .eq('id', entry.id);
+        if (delUpdErr) {
+          console.warn('Delivery DB update warning:', delUpdErr.message);
+          showToast('Note: Run migrate_latest.sql to enable DB delivery row edits (' + delUpdErr.message + ')');
+        }
+      }
+      const res = await sbUpsertSite(site);
       checkAndTrigger7DayFuelAlarms();
       updateKpis();
       renderSites();
       updateAdminPortalUiState();
-      showToast('Admin recorded +' + qty + 'L delivery at ' + timeRaw);
+      if (fseSession && fseSession.siteId === site.siteId) renderFseFuelModule(site);
+      if (res && res.ok) showToast('Edited FSE delivery synced (' + newQty + ' L on ' + entry.date + ')');
+    }
+
+    async function deleteAdminDelivery(idx) {
+      if (!isAdminUnlocked || !adminSession) return;
+      const site = masterSites.find(s => s.siteId === adminSession.siteId);
+      if (!site || !site.refuelHistory || !site.refuelHistory[idx]) return;
+      const entry = site.refuelHistory[idx];
+      if (!confirm('Remove FSE delivery entry (' + (entry.qty || 0) + ' L on ' + (entry.date || '') + ') from ' + site.siteId + '?')) return;
+
+      site.refuelHistory.splice(idx, 1);
+      if (site.refuelHistory.length > 0) {
+        site.lastSupplyQty = Number(site.refuelHistory[0].qty || 0);
+        site.lastSupplyDate = site.refuelHistory[0].date || '';
+        site.lastSupplyDateIso = site.refuelHistory[0].dateIso || '';
+        site.lastSupplyTime = site.refuelHistory[0].time || '';
+      } else {
+        site.lastSupplyQty = 0;
+        site.lastSupplyDate = '';
+        site.lastSupplyDateIso = '';
+        site.lastSupplyTime = '';
+      }
+      adminEditingDeliveryIdx = -1;
+      synchronizeSite(site);
+      saveState();
+
+      if (sb && entry.id) {
+        await sb.from('diesel_deliveries').delete().eq('id', entry.id).catch(() => {});
+      }
+      await sbUpsertSite(site);
+      updateAdminPortalUiState();
+      if (fseSession && fseSession.siteId === site.siteId) renderFseFuelModule(site);
+      showToast('Removed delivery entry for ' + site.siteId);
     }
 
     function resetAllToMasterAudit() {
@@ -6598,6 +7059,8 @@
         if (lockedDisp) lockedDisp.classList.add('hidden');
         handleRepairSiteChange();
       }
+      const dateInput = document.getElementById('newRepairDate');
+      if (dateInput) dateInput.value = getLocalTodayIso();
       document.getElementById('addRepairModal').classList.remove('hidden');
     }
     function closeAddRepairModal() {
@@ -6643,7 +7106,9 @@
       const issueText = document.getElementById('newRepairIssue').value.trim();
       const techName = document.getElementById('newRepairTech').value.trim() || (fseSession ? fseSession.fseName : 'FSE');
       const genHours = parseInt(document.getElementById('newRepairGenHours').value) || 1200;
-      const todayFormatted = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      const repairDateInput = document.getElementById('newRepairDate');
+      const loggedIso = (repairDateInput && repairDateInput.value) ? repairDateInput.value : getLocalTodayIso();
+      const todayFormatted = formatIsoToDisplayDate(loggedIso);
       const ticketId = 'RCA-2026-' + Math.floor(100 + Math.random() * 900);
 
       // Optional file attachment upload (Photo / Video / PDF up to 20MB)
@@ -6686,6 +7151,7 @@
         genRunHours: genHours,
         attachmentUrl: attachmentUrl,
         attachmentName: attachmentName,
+        loggedIso: loggedIso,
         dateLogged: todayFormatted,
         loggedDate: todayFormatted,
         adminReviewed: activeSection === 'admin',

@@ -520,7 +520,8 @@
           <label class="opacity-60 text-[10px] block mb-1">ISSUE &amp; ROOT CAUSE ANALYSIS (RCA)</label>
           <textarea id="newRepairIssue" rows="3" required placeholder="Describe technical issue, root cause, and action taken..." class="w-full border_ui bg-transparent p-2 outline-none"></textarea>
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-3 gap-3">
+          <div><label class="opacity-60 text-[10px] block mb-1">REPAIR / LOG DATE</label><input type="date" id="newRepairDate" class="w-full border_ui bg-(--color-card-bg) px-2 py-1.5 outline-none"></div>
           <div><label class="opacity-60 text-[10px] block mb-1">TECHNICIAN / FSE</label><input type="text" id="newRepairTech" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>
           <div><label class="opacity-60 text-[10px] block mb-1">GEN RUN HOURS</label><input type="number" id="newRepairGenHours" value="1250" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>
         </div>
