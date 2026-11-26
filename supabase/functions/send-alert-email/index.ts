@@ -219,6 +219,8 @@ serve(async (req: Request) => {
     if (site?.fse_email) recipients.push(site.fse_email);
     if (ADMIN_ALERT_EMAIL) recipients.push(ADMIN_ALERT_EMAIL);
     if (FINANCE_TEAM_EMAIL) recipients.push(FINANCE_TEAM_EMAIL);
+    const { data: finRow } = await sb.from("app_settings").select("value").eq("key", "finance_email").maybeSingle();
+    if (finRow?.value) recipients.push(finRow.value);
 
     const dailyCostNgn = Math.round(Number(site?.cpd ?? 0) * 2100);
     const subject = `[${severity}] ColoPlus Diesel Alert — ${siteId}${site?.state ? ` (${site.state})` : ""}`;
