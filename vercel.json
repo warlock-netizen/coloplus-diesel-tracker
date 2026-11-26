@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/fse", "destination": "/fse.html" },
+    { "source": "/admin", "destination": "/admin.html" }
+  ]
+}
