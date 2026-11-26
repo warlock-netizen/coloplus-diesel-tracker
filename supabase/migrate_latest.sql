@@ -9,12 +9,32 @@
 --   5. Resets current_dl to 0 while preserving daily usage (cpd)
 -- =============================================================================
 
--- 1. Add missing columns to public.sites and public.ppm_checklists
+-- 1. Add missing columns to public.sites, public.ppm_checklists, and public.calendar_tasks
 alter table public.sites add column if not exists fse_email text;
 alter table public.sites add column if not exists ppm_cycle_days integer not null default 30;
 alter table public.sites add column if not exists last_ppm_date date;
 alter table public.sites add column if not exists next_ppm_date date;
 alter table public.ppm_checklists add column if not exists photo_url text;
+alter table public.calendar_tasks add column if not exists assignee_email text;
+alter table public.calendar_tasks add column if not exists specific_issue text;
+alter table public.calendar_tasks add column if not exists email_sent_at timestamptz;
+
+-- 1B. Create app_settings table to persist Finance Team email & saved team emails across devices
+create table if not exists public.app_settings (
+  key text primary key,
+  value text not null default '',
+  updated_at timestamptz not null default now()
+);
+
+alter table public.app_settings enable row level security;
+
+drop policy if exists "Read app_settings" on public.app_settings;
+create policy "Read app_settings" on public.app_settings
+  for select using (true);
+
+drop policy if exists "Admin manage app_settings" on public.app_settings;
+create policy "Admin manage app_settings" on public.app_settings
+  for all using (public.is_admin());
 
 -- 2. Create submitted_ppms table (FSE submits PPM -> Admin Reviews: PENDING / ACCEPTED / OVERRIDDEN)
 create table if not exists public.submitted_ppms (

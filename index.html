@@ -749,8 +749,8 @@
             <!-- Populated dynamically -->
           </div>
 
-          <!-- Selected Site Quick Snapshot Strip (Gen, Usage, Issues, Tickets, Last/Next PPM & Submission Status) -->
-          <div id="adminSiteSnapshotStrip" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 text-xs">
+          <!-- Selected Site Quick Snapshot Strip (Animated Tank + Gen/Usage, Issues/Tickets, Last/Next PPM & Status) -->
+          <div id="adminSiteSnapshotStrip" class="grid grid-cols-1 lg:grid-cols-12 gap-2 text-xs">
             <!-- Populated dynamically -->
           </div>
 
@@ -814,7 +814,7 @@
             </div>
           </div>
 
-          <!-- Tasks Panel -->
+          <!-- Tasks & Team Email Channel Panel -->
           <div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3 flex flex-col justify-between">
             <div class="space-y-3">
               <div class="flex items-center justify-between border-b border_ui pb-2">
@@ -822,36 +822,100 @@
                 <button onclick="selectCalendarDate(null)" class="border_ui px-2 py-0.5 text-[10px] btn-invert cursor-pointer">SHOW ALL</button>
               </div>
 
+              <!-- Separate Channel Tabs: Calendar Tasks vs Team Assigned (Email Channel) -->
+              <div class="grid grid-cols-2 gap-1.5 text-[10px]">
+                <button type="button" id="calTabCalendarBtn" onclick="setCalendarTaskTab('calendar')" class="border_ui px-2 py-1.5 font-bold nav_active btn-invert cursor-pointer uppercase">
+                  CALENDAR (<span id="calTabCalendarCount">0</span>)
+                </button>
+                <button type="button" id="calTabTeamBtn" onclick="setCalendarTaskTab('team')" class="border_ui px-2 py-1.5 font-bold opacity-75 btn-invert cursor-pointer uppercase">
+                  TEAM EMAIL CHANNEL (<span id="calTabTeamCount">0</span>)
+                </button>
+              </div>
+
               <!-- Read-Only Notice for Non-Admins -->
               <div id="calendarAdminOnlyNotice" class="border_ui border-amber-500/40 bg-amber-500/10 p-2.5 text-[10px] text-amber-300 flex items-center justify-between gap-2">
-                <span>// VIEW-ONLY: Only Admin can add, edit, or delete calendar tasks.</span>
+                <span>// VIEW-ONLY: Only Admin can assign tasks, edit the calendar, or dispatch task emails.</span>
                 <button type="button" onclick="switchSection('admin')" class="border_ui border-amber-400 px-2 py-1 font-bold hover:bg-amber-500 hover:text-black cursor-pointer shrink-0">ADMIN LOGIN</button>
               </div>
 
               <form id="calendarAddTaskForm" onsubmit="handleAddTask(event)" class="hidden space-y-2 border_ui p-2.5 bg-black/10 dark:bg-white/5">
-                <div class="opacity-60 text-[10px] uppercase font-bold">// ADD NEW TASK (ADMIN ONLY)</div>
-                <input type="text" id="newTaskTitle" required placeholder="Task description (e.g. Gen PPM / Diesel drop)" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none">
+                <div class="opacity-70 text-[10px] uppercase font-bold text-amber-400">// ASSIGN TASK &amp; EMAIL CHANNEL (ADMIN ONLY)</div>
                 <div class="grid grid-cols-2 gap-2">
-                  <select id="newTaskSite" class="border_ui bg-(--color-card-bg) px-2 py-1.5 outline-none">
-                    <!-- Populated dynamically -->
-                  </select>
-                  <input type="date" id="newTaskDate" required class="border_ui bg-(--color-card-bg) px-2 py-1.5 outline-none">
+                  <div>
+                    <label class="block text-[9px] opacity-60 uppercase mb-0.5">1. SELECT SITE</label>
+                    <select id="newTaskSite" onchange="handleTaskSiteChange()" class="w-full border_ui bg-(--color-card-bg) px-2 py-1.5 outline-none">
+                      <!-- Populated dynamically -->
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-[9px] opacity-60 uppercase mb-0.5">2. SELECT DATE</label>
+                    <input type="date" id="newTaskDate" required class="w-full border_ui bg-(--color-card-bg) px-2 py-1.5 outline-none">
+                  </div>
                 </div>
                 <div class="grid grid-cols-2 gap-2">
-                  <select id="newTaskCategory" class="border_ui bg-(--color-card-bg) px-2 py-1.5 outline-none">
-                    <option value="FUEL">FUEL</option>
-                    <option value="BUB">LIGHT &amp; BUB</option>
-                    <option value="PPM">REPAIRS &amp; PPM</option>
-                    <option value="GENERAL">GENERAL</option>
-                  </select>
-                  <button type="submit" class="border_ui py-1.5 font-bold nav_active btn-invert cursor-pointer">+ ADD TASK</button>
+                  <div>
+                    <label class="block text-[9px] opacity-60 uppercase mb-0.5">3. OPTION / CATEGORY</label>
+                    <select id="newTaskCategory" class="w-full border_ui bg-(--color-card-bg) px-2 py-1.5 outline-none">
+                      <option value="FUEL">FUEL &amp; DIESEL</option>
+                      <option value="BUB">LIGHT &amp; BATTERY (BUB)</option>
+                      <option value="PPM">REPAIRS &amp; PPM</option>
+                      <option value="GENERAL">GENERAL OPS</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-[9px] opacity-60 uppercase mb-0.5">4. SPECIFIC ISSUE</label>
+                    <select id="newTaskIssue" class="w-full border_ui bg-(--color-card-bg) px-2 py-1.5 outline-none">
+                      <option value="Diesel Low / Refill Needed">Diesel Low / Refill Needed</option>
+                      <option value="Generator Fault (AVR / Top Gasket)">Generator Fault (AVR / Gasket)</option>
+                      <option value="Cooling / Belt / Solenoid Fault">Radiator / Fan Belt / Solenoid</option>
+                      <option value="Battery (BUB) / Rectifier Issue">Battery (BUB) / Rectifier Issue</option>
+                      <option value="NEPA Grid Outage / Token">NEPA Grid Outage / Token</option>
+                      <option value="Scheduled PPM Service">Scheduled PPM Service</option>
+                      <option value="Site Security / Access">Site Security / Access</option>
+                      <option value="General / Custom Task">General / Custom Task</option>
+                    </select>
+                  </div>
                 </div>
+                <div>
+                  <label class="block text-[9px] opacity-60 uppercase mb-0.5">5. TASK DETAILS</label>
+                  <input type="text" id="newTaskTitle" required placeholder="e.g. Top up 500L diesel &amp; inspect AVR voltage" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none focus:border-(--color-primary)">
+                </div>
+                <div>
+                  <div class="flex items-center justify-between mb-0.5">
+                    <label class="text-[9px] opacity-60 uppercase">6. ASSIGN TO TEAM MEMBER EMAIL</label>
+                    <button type="button" id="useSiteFseEmailBtn" onclick="fillSiteFseEmailForTask()" class="text-[9px] underline text-amber-400 cursor-pointer">USE SITE FSE EMAIL</button>
+                  </div>
+                  <input type="email" id="newTaskAssigneeEmail" list="savedTeamEmailList" placeholder="teammember@coloplus.com (optional)" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none focus:border-(--color-primary)">
+                  <datalist id="savedTeamEmailList"></datalist>
+                </div>
+                <label class="flex items-center gap-2 text-[10px] opacity-85 cursor-pointer select-none pt-0.5">
+                  <input type="checkbox" id="newTaskSendEmailNow" checked class="accent-amber-500">
+                  <span>Send task assignment to this email immediately via Resend</span>
+                </label>
+                <button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">
+                  + ADD TASK &amp; SEND TO EMAIL
+                </button>
+                <div id="taskEmailStatusBox" class="hidden border_ui p-2 text-[10px]"></div>
               </form>
 
               <div id="tasksListContainer" class="space-y-1.5 max-h-[360px] overflow-y-auto no-scrollbar">
                 <!-- Populated dynamically -->
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- SEPARATE TEAM ASSIGNED TASKS (EMAIL CHANNEL) PANEL -->
+        <div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border_ui pb-2">
+            <div>
+              <div class="font-bold uppercase text-amber-400">// TEAM ASSIGNED TASKS — EMAIL DISPATCH CHANNEL</div>
+              <div class="text-[10px] opacity-65">Tasks assigned by Admin to team members appear here separately with direct email dispatch &amp; status tracking.</div>
+            </div>
+            <span id="teamChannelBadge" class="border_ui px-2.5 py-1 text-[10px] font-bold text-(--color-accent)">0 ASSIGNED TASKS</span>
+          </div>
+          <div id="teamAssignedTasksGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
+            <!-- Populated dynamically -->
           </div>
         </div>
       </section>
@@ -3693,17 +3757,16 @@
         const { data: ppmRows, error: ppmErr } = await sb
           .from('submitted_ppms')
           .select('*')
-          .order('submitted_at', { ascending: false })
+          .order('created_at', { ascending: false })
           .limit(200);
         if (!ppmErr && ppmRows && ppmRows.length > 0) {
           const ppmBySite = {};
           ppmRows.forEach(p => {
             if (!ppmBySite[p.site_id]) ppmBySite[p.site_id] = [];
-            const dtStr = p.submitted_at ? new Date(p.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + new Date(p.submitted_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : (p.submitted_date || '');
             ppmBySite[p.site_id].push({
-              id: p.submission_id || String(p.id),
-              submittedDate: p.submitted_date || (p.submitted_at || '').slice(0, 10),
-              submittedAt: dtStr,
+              id: String(p.id),
+              submittedDate: p.submitted_date || (p.created_at || '').slice(0, 10),
+              submittedAt: p.submitted_at || p.submitted_date || '',
               submittedBy: p.submitted_by || 'FSE',
               completedCount: Number(p.completed_count || 0),
               totalCount: Number(p.total_count || 12),
@@ -3718,6 +3781,27 @@
             const st = masterSites.find(s => s.siteId === sid);
             if (st) st.submittedPpms = ppmBySite[sid];
           });
+        }
+
+        // Sync saved Finance email & team email directory from app_settings
+        const { data: settingsRows, error: settingsErr } = await sb
+          .from('app_settings')
+          .select('*');
+        if (!settingsErr && settingsRows && settingsRows.length > 0) {
+          settingsRows.forEach(r => {
+            if (r.key === 'finance_email' && r.value) {
+              emailChannelSettings.financeEmail = r.value.trim();
+            } else if (r.key === 'team_emails' && r.value) {
+              try {
+                const parsed = JSON.parse(r.value);
+                if (Array.isArray(parsed)) {
+                  emailChannelSettings.teamEmails = [...new Set([...emailChannelSettings.teamEmails, ...parsed])];
+                }
+              } catch (_) {}
+            }
+          });
+          saveEmailChannelSettingsLocal();
+          populateSavedTeamEmailDatalist();
         }
 
         saveState();
@@ -3741,6 +3825,9 @@
             site: t.site_id || 'ALL SITES',
             date: t.due_date,
             category: t.category,
+            specificIssue: t.specific_issue || '',
+            assigneeEmail: t.assignee_email || '',
+            emailSentAt: t.email_sent_at || '',
             done: !!t.done
           }));
           localStorage.setItem('coloplus_tasks_v1', JSON.stringify(masterTasks));
@@ -4092,14 +4179,92 @@
       }
     }
 
-    // ==================== CALENDAR & TASKS LOGIC ====================
+    // ==================== CALENDAR & TASKS + TEAM EMAIL CHANNEL ====================
     let calendarViewDate = new Date();
     let selectedCalendarDate = null;
+    let activeCalendarTaskTab = 'calendar'; // 'calendar' | 'team'
     let masterTasks = [];
     try {
       const savedTasks = localStorage.getItem('coloplus_tasks_v1');
       if (savedTasks) masterTasks = JSON.parse(savedTasks);
     } catch (e) { masterTasks = []; }
+
+    let emailChannelSettings = { financeEmail: '', teamEmails: [] };
+    try {
+      const savedEmailCfg = localStorage.getItem('coloplus_email_settings_v1');
+      if (savedEmailCfg) {
+        const parsed = JSON.parse(savedEmailCfg);
+        emailChannelSettings.financeEmail = parsed.financeEmail || '';
+        emailChannelSettings.teamEmails = Array.isArray(parsed.teamEmails) ? parsed.teamEmails : [];
+      }
+    } catch (e) {}
+
+    function saveEmailChannelSettingsLocal() {
+      localStorage.setItem('coloplus_email_settings_v1', JSON.stringify(emailChannelSettings));
+    }
+
+    function rememberTeamEmail(email) {
+      const clean = (email || '').trim().toLowerCase();
+      if (!clean || !clean.includes('@')) return;
+      if (!emailChannelSettings.teamEmails.includes(clean)) {
+        emailChannelSettings.teamEmails.unshift(clean);
+        if (emailChannelSettings.teamEmails.length > 30) {
+          emailChannelSettings.teamEmails = emailChannelSettings.teamEmails.slice(0, 30);
+        }
+        saveEmailChannelSettingsLocal();
+        populateSavedTeamEmailDatalist();
+        if (sb && isAdminUnlocked) {
+          try {
+            Promise.resolve(sb.from('app_settings').upsert({
+              key: 'team_emails',
+              value: JSON.stringify(emailChannelSettings.teamEmails),
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'key' })).catch(() => {});
+          } catch (_) {}
+        }
+      }
+    }
+
+    function populateSavedTeamEmailDatalist() {
+      const dl = document.getElementById('savedTeamEmailList');
+      if (!dl) return;
+      const allEmails = new Set();
+      if (emailChannelSettings.financeEmail) allEmails.add(emailChannelSettings.financeEmail);
+      (emailChannelSettings.teamEmails || []).forEach(em => { if (em) allEmails.add(em); });
+      masterSites.forEach(s => { if (s.fseEmail) allEmails.add(s.fseEmail); });
+      dl.innerHTML = Array.from(allEmails).map(em => '<option value="' + em + '"></option>').join('');
+    }
+
+    function setCalendarTaskTab(tab) {
+      activeCalendarTaskTab = tab;
+      const calBtn = document.getElementById('calTabCalendarBtn');
+      const teamBtn = document.getElementById('calTabTeamBtn');
+      if (calBtn) calBtn.className = 'border_ui px-2 py-1.5 font-bold btn-invert cursor-pointer uppercase ' + (tab === 'calendar' ? 'nav_active' : 'opacity-75');
+      if (teamBtn) teamBtn.className = 'border_ui px-2 py-1.5 font-bold btn-invert cursor-pointer uppercase ' + (tab === 'team' ? 'nav_active' : 'opacity-75');
+      renderTasks();
+    }
+
+    function handleTaskSiteChange() {
+      const siteVal = document.getElementById('newTaskSite') ? document.getElementById('newTaskSite').value : '';
+      const btn = document.getElementById('useSiteFseEmailBtn');
+      const site = masterSites.find(s => s.siteId === siteVal);
+      if (btn) {
+        btn.innerText = (site && site.fseEmail) ? ('USE FSE (' + site.fseEmail + ')') : 'USE SITE FSE EMAIL';
+      }
+    }
+
+    function fillSiteFseEmailForTask() {
+      const siteVal = document.getElementById('newTaskSite') ? document.getElementById('newTaskSite').value : '';
+      const site = masterSites.find(s => s.siteId === siteVal);
+      const emailEl = document.getElementById('newTaskAssigneeEmail');
+      if (!emailEl) return;
+      if (site && site.fseEmail) {
+        emailEl.value = site.fseEmail;
+        showToast('Filled FSE email: ' + site.fseEmail);
+      } else {
+        showToast('No FSE email saved for this site yet — enter any team email directly');
+      }
+    }
 
     function initCalendarAndTasks() {
       const siteSel = document.getElementById('newTaskSite');
@@ -4109,13 +4274,15 @@
       }
       const dateInput = document.getElementById('newTaskDate');
       if (dateInput) dateInput.value = new Date().toISOString().slice(0, 10);
+      populateSavedTeamEmailDatalist();
+      handleTaskSiteChange();
 
       if (masterTasks.length === 0) {
         const todayStr = new Date().toISOString().slice(0, 10);
         masterTasks = [
-          { id: 't1', title: 'Inspect Gen Fuel Filters & Alternator', site: 'CP/CP/EK/002', date: todayStr, category: 'PPM', done: false },
-          { id: 't2', title: 'Verify Diesel Delivery & Dip Reading', site: 'CP/CP/AN/001', date: todayStr, category: 'FUEL', done: false },
-          { id: 't3', title: 'Check BUB Battery Bank Voltage & Light Hours', site: 'CP/CP/LA/001', date: todayStr, category: 'BUB', done: true }
+          { id: 't1', title: 'Inspect Gen Fuel Filters & Alternator', site: 'CP/CP/EK/002', date: todayStr, category: 'PPM', specificIssue: 'Scheduled PPM Service', assigneeEmail: '', emailSentAt: '', done: false },
+          { id: 't2', title: 'Verify Diesel Delivery & Dip Reading', site: 'CP/CP/AN/001', date: todayStr, category: 'FUEL', specificIssue: 'Diesel Low / Refill Needed', assigneeEmail: '', emailSentAt: '', done: false },
+          { id: 't3', title: 'Check BUB Battery Bank Voltage & Light Hours', site: 'CP/CP/LA/001', date: todayStr, category: 'BUB', specificIssue: 'Battery (BUB) / Rectifier Issue', assigneeEmail: '', emailSentAt: '', done: true }
         ];
         localStorage.setItem('coloplus_tasks_v1', JSON.stringify(masterTasks));
       }
@@ -4227,27 +4394,164 @@
       const notice = document.getElementById('calendarAdminOnlyNotice');
       if (addForm) addForm.classList.toggle('hidden', !isAdminUnlocked);
       if (notice) notice.classList.toggle('hidden', isAdminUnlocked);
-      if (!container) return;
 
-      const list = selectedCalendarDate ? masterTasks.filter(t => t.date === selectedCalendarDate) : masterTasks;
+      const allDated = selectedCalendarDate ? masterTasks.filter(t => t.date === selectedCalendarDate) : masterTasks;
+      const teamTasksAll = masterTasks.filter(t => t.assigneeEmail && t.assigneeEmail.trim() !== '');
+      const teamTasksDated = allDated.filter(t => t.assigneeEmail && t.assigneeEmail.trim() !== '');
+      const calendarOnlyDated = allDated.filter(t => !t.assigneeEmail || t.assigneeEmail.trim() === '');
 
-      if (list.length === 0) {
-        container.innerHTML = '<div class="opacity-60 text-[11px] py-3 text-center border_ui">No tasks scheduled for this view.</div>';
+      const calCountEl = document.getElementById('calTabCalendarCount');
+      const teamCountEl = document.getElementById('calTabTeamCount');
+      if (calCountEl) calCountEl.innerText = calendarOnlyDated.length;
+      if (teamCountEl) teamCountEl.innerText = teamTasksDated.length;
+
+      if (container) {
+        const list = activeCalendarTaskTab === 'team' ? teamTasksDated : calendarOnlyDated;
+        if (list.length === 0) {
+          container.innerHTML = '<div class="opacity-60 text-[11px] py-3 text-center border_ui">' +
+            (activeCalendarTaskTab === 'team' ? 'No team-assigned email tasks for this date.' : 'No general calendar tasks scheduled for this view.') +
+            '</div>';
+        } else {
+          container.innerHTML = list.map(t =>
+            '<div class="border_ui p-2.5 flex items-start justify-between gap-2">' +
+              '<div ' + (isAdminUnlocked ? ('onclick="toggleTaskDone(\'' + t.id + '\')" class="cursor-pointer flex-1"') : 'class="flex-1"') + '>' +
+                '<div class="font-bold text-[11px] ' + (t.done ? 'line-through opacity-50' : '') + '">' + (t.done ? '[✓] ' : '[ ] ') + t.title + '</div>' +
+                '<div class="text-[10px] opacity-65 mt-0.5">' + t.site + ' · ' + t.date + ' · ' + t.category + (t.specificIssue ? ' · ' + t.specificIssue : '') + '</div>' +
+                (t.assigneeEmail ? (
+                  '<div class="text-[10px] mt-1 flex flex-wrap items-center gap-1.5">' +
+                    '<span class="border_ui px-1.5 py-0.5 text-amber-400 font-bold">TO: ' + t.assigneeEmail + '</span>' +
+                    '<span class="border_ui px-1.5 py-0.5 ' + (t.emailSentAt ? 'text-emerald-400 border-emerald-500/40' : 'opacity-65') + '">' + (t.emailSentAt ? 'EMAILED' : 'PENDING EMAIL') + '</span>' +
+                  '</div>'
+                ) : '') +
+              '</div>' +
+              '<div class="flex flex-col gap-1 shrink-0">' +
+                (isAdminUnlocked && t.assigneeEmail ? '<button type="button" onclick="sendTaskAssignmentEmail(\'' + t.id + '\')" class="border_ui border-amber-400/60 px-1.5 py-0.5 text-[9px] font-bold text-amber-400 hover:bg-amber-500 hover:text-black cursor-pointer">' + (t.emailSentAt ? 'RESEND' : 'SEND') + '</button>' : '') +
+                (isAdminUnlocked ? '<button type="button" onclick="deleteTask(\'' + t.id + '\')" class="border_ui px-1.5 py-0.5 text-[9px] hover:bg-rose-600 hover:text-white cursor-pointer">DEL</button>' : '') +
+              '</div>' +
+            '</div>'
+          ).join('');
+        }
+      }
+
+      // Render Separate Team Assigned Tasks (Email Dispatch Channel) Grid below calendar
+      const teamGrid = document.getElementById('teamAssignedTasksGrid');
+      const teamBadge = document.getElementById('teamChannelBadge');
+      if (teamBadge) teamBadge.innerText = teamTasksAll.length + ' ASSIGNED TASK' + (teamTasksAll.length === 1 ? '' : 'S');
+      if (teamGrid) {
+        if (teamTasksAll.length === 0) {
+          teamGrid.innerHTML = '<div class="col-span-full border_ui p-4 text-center opacity-60 text-[11px]">No team member tasks assigned yet. Select a site, date, specific issue, and team member email above to assign &amp; dispatch.</div>';
+        } else {
+          teamGrid.innerHTML = teamTasksAll.map(t =>
+            '<div class="border_ui p-3 bg-black/10 dark:bg-white/5 flex flex-col justify-between gap-2">' +
+              '<div class="space-y-1">' +
+                '<div class="flex items-start justify-between gap-2 border-b border_ui pb-1.5">' +
+                  '<div>' +
+                    '<div class="font-bold text-xs ' + (t.done ? 'line-through opacity-50' : '') + '">' + (t.done ? '[✓] ' : '') + t.title + '</div>' +
+                    '<div class="text-[10px] opacity-65">' + t.site + ' · Due: ' + t.date + '</div>' +
+                  '</div>' +
+                  '<span class="border_ui px-1.5 py-0.5 text-[9px] font-bold ' + (t.emailSentAt ? 'text-emerald-400 border-emerald-500/40' : 'text-amber-400 border-amber-500/40') + '">' + (t.emailSentAt ? 'EMAIL SENT' : 'NOT SENT') + '</span>' +
+                '</div>' +
+                '<div class="text-[10px] space-y-0.5">' +
+                  '<div class="flex justify-between gap-2"><span class="opacity-60">OPTION / ISSUE:</span><span class="font-bold text-right">' + t.category + (t.specificIssue ? ' — ' + t.specificIssue : '') + '</span></div>' +
+                  '<div class="flex justify-between gap-2"><span class="opacity-60">ASSIGNED TO:</span><span class="font-bold text-(--color-accent) truncate">' + t.assigneeEmail + '</span></div>' +
+                  (t.emailSentAt ? '<div class="flex justify-between gap-2"><span class="opacity-60">DISPATCHED:</span><span class="opacity-80">' + t.emailSentAt + '</span></div>' : '') +
+                '</div>' +
+              '</div>' +
+              (isAdminUnlocked ? (
+                '<div class="pt-1.5 border-t border_ui flex items-center justify-between gap-1.5">' +
+                  '<button type="button" onclick="toggleTaskDone(\'' + t.id + '\')" class="border_ui px-2 py-1 text-[9px] font-bold btn-invert cursor-pointer">' + (t.done ? 'REOPEN' : 'MARK DONE') + '</button>' +
+                  '<div class="flex items-center gap-1.5">' +
+                    '<button type="button" onclick="sendTaskAssignmentEmail(\'' + t.id + '\')" class="border_ui border-amber-400/70 px-2.5 py-1 text-[9px] font-bold text-amber-400 hover:bg-amber-500 hover:text-black cursor-pointer">' + (t.emailSentAt ? 'RESEND EMAIL' : 'SEND EMAIL') + '</button>' +
+                    '<button type="button" onclick="deleteTask(\'' + t.id + '\')" class="border_ui px-2 py-1 text-[9px] hover:bg-rose-600 hover:text-white cursor-pointer">DEL</button>' +
+                  '</div>' +
+                '</div>'
+              ) : '') +
+            '</div>'
+          ).join('');
+        }
+      }
+    }
+
+    async function sendTaskAssignmentEmail(taskId) {
+      if (!isAdminUnlocked) {
+        showToast('Access Denied: Only Admin can send task emails');
+        return;
+      }
+      const task = masterTasks.find(x => String(x.id) === String(taskId));
+      if (!task || !task.assigneeEmail) {
+        showToast('No assignee email set for this task');
+        return;
+      }
+      const statusBox = document.getElementById('taskEmailStatusBox');
+      if (statusBox) {
+        statusBox.className = 'border_ui border-amber-500/40 bg-amber-500/10 p-2 text-[10px] text-amber-300';
+        statusBox.innerText = 'Sending task assignment email to ' + task.assigneeEmail + '...';
+        statusBox.classList.remove('hidden');
+      }
+
+      const site = masterSites.find(s => s.siteId === task.site);
+      const subject = '[TASK ASSIGNED] ' + task.site + ' — ' + (task.specificIssue || task.category) + ' (Due ' + task.date + ')';
+      const message =
+        'COLOPLUS TECH — TEAM TASK ASSIGNMENT\n' +
+        '====================================\n' +
+        'Site: ' + task.site + (site ? ' (' + site.state + ' — ' + site.address + ')' : '') + '\n' +
+        'Due Date: ' + task.date + '\n' +
+        'Category / Option: ' + task.category + '\n' +
+        'Specific Issue: ' + (task.specificIssue || 'General') + '\n' +
+        'Task Details: ' + task.title + '\n' +
+        'Assigned By: ' + (adminSession ? adminSession.adminName : 'NOC Administrator') + '\n\n' +
+        'Please complete this task on or before the due date and update the portal.';
+
+      if (!sb) {
+        showToast('Supabase client unavailable for email dispatch');
         return;
       }
 
-      container.innerHTML = list.map(t =>
-        '<div class="border_ui p-2.5 flex items-start justify-between gap-2">' +
-          '<div ' + (isAdminUnlocked ? ('onclick="toggleTaskDone(\'' + t.id + '\')" class="cursor-pointer flex-1"') : 'class="flex-1"') + '>' +
-            '<div class="font-bold text-[11px] ' + (t.done ? 'line-through opacity-50' : '') + '">' + (t.done ? '[✓] ' : '[ ] ') + t.title + '</div>' +
-            '<div class="text-[10px] opacity-60 mt-0.5">' + t.site + ' · ' + t.date + ' · ' + t.category + '</div>' +
-          '</div>' +
-          (isAdminUnlocked ? '<button onclick="deleteTask(\'' + t.id + '\')" class="border_ui px-1.5 py-0.5 text-[9px] hover:bg-rose-600 hover:text-white cursor-pointer">DEL</button>' : '') +
-        '</div>'
-      ).join('');
+      try {
+        const { data, error } = await sb.functions.invoke('send-alert-email', {
+          body: {
+            type: 'CUSTOM_EMAIL',
+            target: 'CUSTOM',
+            custom_email: task.assigneeEmail,
+            subject: subject,
+            message: message
+          }
+        });
+        if (error || (data && data.ok === false) || (data && data.error)) {
+          const msg = (error && error.message) || (data && (data.error || (data.data && data.data.message))) || 'Resend delivery failed';
+          if (statusBox) {
+            statusBox.className = 'border_ui border-rose-500/50 bg-rose-500/10 p-2 text-[10px] text-rose-400 font-bold';
+            statusBox.innerText = 'Email error: ' + msg;
+            statusBox.classList.remove('hidden');
+          }
+          showToast('Task email failed: ' + msg);
+          return;
+        }
+        const now = new Date();
+        task.emailSentAt = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' +
+                           now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        localStorage.setItem('coloplus_tasks_v1', JSON.stringify(masterTasks));
+        if (!String(task.id).startsWith('t_') && !String(task.id).startsWith('ppm_auto_')) {
+          try { Promise.resolve(sb.from('calendar_tasks').update({ email_sent_at: now.toISOString() }).eq('id', task.id)).catch(() => {}); } catch (_) {}
+        }
+        if (statusBox) {
+          statusBox.className = 'border_ui border-emerald-500/50 bg-emerald-500/10 p-2 text-[10px] text-emerald-400 font-bold';
+          statusBox.innerText = 'Task email sent to ' + task.assigneeEmail + ' via Resend!';
+          statusBox.classList.remove('hidden');
+        }
+        renderTasks();
+        showToast('Task email sent to ' + task.assigneeEmail);
+      } catch (err) {
+        if (statusBox) {
+          statusBox.className = 'border_ui border-rose-500/50 bg-rose-500/10 p-2 text-[10px] text-rose-400 font-bold';
+          statusBox.innerText = 'Could not reach Resend email service.';
+          statusBox.classList.remove('hidden');
+        }
+        showToast('Could not reach email service');
+      }
     }
 
-    function handleAddTask(e) {
+    async function handleAddTask(e) {
       e.preventDefault();
       if (!isAdminUnlocked) {
         showToast('Access Denied: Only Admin can edit the calendar');
@@ -4258,16 +4562,60 @@
       const site = document.getElementById('newTaskSite').value;
       const date = document.getElementById('newTaskDate').value;
       const category = document.getElementById('newTaskCategory').value;
+      const specificIssue = document.getElementById('newTaskIssue') ? document.getElementById('newTaskIssue').value : '';
+      const assigneeEmail = document.getElementById('newTaskAssigneeEmail') ? document.getElementById('newTaskAssigneeEmail').value.trim() : '';
+      const sendNow = document.getElementById('newTaskSendEmailNow') ? document.getElementById('newTaskSendEmailNow').checked : true;
       if (!title || !date) return;
 
-      const newTask = { id: 't_' + Date.now(), title, site, date, category, done: false };
+      const newTask = {
+        id: 't_' + Date.now(),
+        title,
+        site,
+        date,
+        category,
+        specificIssue,
+        assigneeEmail,
+        emailSentAt: '',
+        done: false
+      };
       masterTasks.unshift(newTask);
       localStorage.setItem('coloplus_tasks_v1', JSON.stringify(masterTasks));
-      sbInsertTask(newTask);
+
+      if (assigneeEmail) {
+        rememberTeamEmail(assigneeEmail);
+        setCalendarTaskTab('team');
+      }
+
+      if (sb) {
+        try {
+          const { data: inserted } = await sb.from('calendar_tasks').insert({
+            site_id: site || 'ALL SITES',
+            title: title,
+            due_date: date,
+            category: category,
+            specific_issue: specificIssue || null,
+            assignee_email: assigneeEmail || null,
+            done: false
+          }).select('id').maybeSingle();
+          if (inserted && inserted.id) {
+            newTask.id = inserted.id;
+            localStorage.setItem('coloplus_tasks_v1', JSON.stringify(masterTasks));
+          }
+        } catch (err) {
+          sbInsertTask(newTask);
+        }
+      }
+
       document.getElementById('newTaskTitle').value = '';
+      if (document.getElementById('newTaskAssigneeEmail')) document.getElementById('newTaskAssigneeEmail').value = '';
       renderCalendar();
       renderTasks();
-      showToast('Task added for ' + date);
+
+      if (assigneeEmail && sendNow) {
+        await sendTaskAssignmentEmail(newTask.id);
+      } else {
+        showToast('Task added for ' + date + (assigneeEmail ? ' (Assigned to ' + assigneeEmail + ')' : ''));
+      }
     }
 
     function toggleTaskDone(id) {
@@ -4967,11 +5315,12 @@
       if (sb) {
         try {
           Promise.resolve(sb.rpc('fse_submit_ppm', {
+            p_id: sub.id,
             p_site_id: site.siteId,
             p_tenant_id: site.tenantId || '',
-            p_submission_id: sub.id,
-            p_submitted_by: sub.submittedBy,
             p_submitted_date: sub.submittedDate,
+            p_submitted_at: sub.submittedAt,
+            p_submitted_by: sub.submittedBy,
             p_completed_count: sub.completedCount,
             p_total_count: sub.totalCount,
             p_items: sub.items
@@ -5999,7 +6348,7 @@
       const quick = document.getElementById('adminQuickSiteSwitch');
       if (quick) quick.value = site.siteId;
 
-      // Render Selected-Site Snapshot Strip (Gen/Usage, Issues & Tickets, Last PPM, Next PPM, Prev PPM Submitted Status)
+      // Render Selected-Site Snapshot Strip (Compact Animated Tank + Gen/Usage, Issues/Tickets, Last/Next PPM & Prev PPM Status)
       const snapEl = document.getElementById('adminSiteSnapshotStrip');
       if (snapEl) {
         const siteTickets = masterRepairs.filter(r => r.siteId === site.siteId);
@@ -6023,31 +6372,57 @@
           }
           prevPpmSub = latestPpm.submittedAt + ' (' + latestPpm.completedCount + '/' + latestPpm.totalCount + ')';
         }
+
+        const fillPct = Math.max(0, Math.min(100, Number(site.fillPct || 0)));
+        const visH = fillPct > 0 ? Math.max(12, fillPct) : 0;
+        const tankFluidColor = (site.currentDL <= 0 || fillPct <= 20) ? '#ef4444' : (fillPct <= 45 ? '#f59e0b' : '#10b981');
+
         snapEl.innerHTML =
-          '<div class="border_ui p-2.5 bg-(--color-card-bg)/50">' +
-            '<div class="text-[9px] uppercase opacity-60">GEN TYPE &amp; DAILY USAGE</div>' +
-            '<div class="font-bold text-sm text-amber-400 mt-0.5">' + genKva + ' kVA · ' + site.cpd + ' L/d</div>' +
-            '<div class="text-[10px] opacity-65">Fuel: ' + site.currentDL + ' L (' + site.fillPct + '%)</div>' +
+          '<div class="lg:col-span-4 border_ui p-2.5 bg-(--color-card-bg)/50 flex items-center gap-3">' +
+            '<div class="w-14 h-20 border_ui bg-black/30 relative overflow-hidden flex flex-col justify-end shrink-0">' +
+              '<div class="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">' +
+                '<span class="px-1 text-[9px] font-bold bg-black/65 text-white border_ui">' + fillPct + '%</span>' +
+              '</div>' +
+              '<div class="w-full relative transition-all duration-700 overflow-hidden" style="height:' + visH + '%; background-color:' + tankFluidColor + ';">' +
+                (visH > 0 ? (
+                  '<div class="w-[200%] h-2.5 absolute -top-1.5 left-0 liquid-wave opacity-60">' +
+                    '<svg viewBox="0 0 1200 120" preserveAspectRatio="none" class="w-full h-full fill-white">' +
+                      '<path d="M0,0 C150,90 350,-40 500,45 C650,130 900,10 1200,50 L1200,120 L0,120 Z"></path>' +
+                    '</svg>' +
+                  '</div>' +
+                  '<div class="w-1 h-1 rounded-full bg-white/70 absolute bubble-1"></div>' +
+                  '<div class="w-1 h-1 rounded-full bg-white/60 absolute bubble-2"></div>'
+                ) : '') +
+              '</div>' +
+            '</div>' +
+            '<div class="min-w-0 flex-1 space-y-0.5">' +
+              '<div class="text-[9px] uppercase opacity-60">LIVE TANK · GEN &amp; DAILY USAGE</div>' +
+              '<div class="font-bold text-sm text-amber-400">' + genKva + ' kVA · ' + site.cpd + ' L/day</div>' +
+              '<div class="text-[11px] font-bold">' + site.currentDL + ' L <span class="opacity-60 font-normal">/ ' + site.tankCap + ' L</span></div>' +
+              '<div class="text-[10px] opacity-65">' + site.daysRemaining + 'd autonomy · ' + site.cph + ' L/hr</div>' +
+            '</div>' +
           '</div>' +
-          '<div class="border_ui p-2.5 bg-(--color-card-bg)/50">' +
-            '<div class="text-[9px] uppercase opacity-60">SITE ISSUES &amp; TICKETS</div>' +
-            '<div class="font-bold text-sm ' + (openTickets > 0 ? 'text-rose-400' : 'text-emerald-400') + ' mt-0.5">' + openTickets + ' OPEN / ' + siteTickets.length + ' TICKETS</div>' +
-            '<div class="text-[10px] opacity-65 truncate">' + (issuesList.length > 0 ? issuesList[0] : 'No major issues flagged') + '</div>' +
-          '</div>' +
-          '<div class="border_ui p-2.5 bg-(--color-card-bg)/50">' +
-            '<div class="text-[9px] uppercase opacity-60">LAST PPM DATE</div>' +
-            '<div class="font-bold text-sm mt-0.5">' + (site.lastPpmDate || 'NOT RECORDED') + '</div>' +
-            '<div class="text-[10px] opacity-65">Cycle: ' + (site.ppmCycleDays || 30) + ' days</div>' +
-          '</div>' +
-          '<div class="border_ui p-2.5 bg-(--color-card-bg)/50">' +
-            '<div class="text-[9px] uppercase opacity-60">NEXT SCHEDULED PPM</div>' +
-            '<div class="font-bold text-sm text-(--color-accent) mt-0.5">' + (site.nextPpmDate || 'NOT SCHEDULED') + '</div>' +
-            '<div class="text-[10px] opacity-65">Synced with Calendar</div>' +
-          '</div>' +
-          '<div class="border_ui p-2.5 bg-(--color-card-bg)/50">' +
-            '<div class="text-[9px] uppercase opacity-60">PREVIOUS PPM STATUS</div>' +
-            '<div class="font-bold text-xs mt-1 ' + prevPpmColor + '">' + prevPpmStatusLabel + '</div>' +
-            '<div class="text-[10px] opacity-65 truncate">' + prevPpmSub + '</div>' +
+          '<div class="lg:col-span-8 grid grid-cols-2 sm:grid-cols-4 gap-2">' +
+            '<div class="border_ui p-2.5 bg-(--color-card-bg)/50 flex flex-col justify-between">' +
+              '<div class="text-[9px] uppercase opacity-60">ISSUES &amp; TICKETS</div>' +
+              '<div class="font-bold text-sm ' + (openTickets > 0 ? 'text-rose-400' : 'text-emerald-400') + ' mt-0.5">' + openTickets + ' OPEN / ' + siteTickets.length + ' TOTAL</div>' +
+              '<div class="text-[10px] opacity-65 truncate">' + (issuesList.length > 0 ? issuesList[0] : 'No major issues flagged') + '</div>' +
+            '</div>' +
+            '<div class="border_ui p-2.5 bg-(--color-card-bg)/50 flex flex-col justify-between">' +
+              '<div class="text-[9px] uppercase opacity-60">LAST PPM DATE</div>' +
+              '<div class="font-bold text-sm mt-0.5">' + (site.lastPpmDate || 'NOT RECORDED') + '</div>' +
+              '<div class="text-[10px] opacity-65">Cycle: ' + (site.ppmCycleDays || 30) + ' days</div>' +
+            '</div>' +
+            '<div class="border_ui p-2.5 bg-(--color-card-bg)/50 flex flex-col justify-between">' +
+              '<div class="text-[9px] uppercase opacity-60">NEXT SCHEDULED PPM</div>' +
+              '<div class="font-bold text-sm text-(--color-accent) mt-0.5">' + (site.nextPpmDate || 'NOT SCHEDULED') + '</div>' +
+              '<div class="text-[10px] opacity-65">Synced with Calendar</div>' +
+            '</div>' +
+            '<div class="border_ui p-2.5 bg-(--color-card-bg)/50 flex flex-col justify-between">' +
+              '<div class="text-[9px] uppercase opacity-60">PREVIOUS PPM STATUS</div>' +
+              '<div class="font-bold text-xs mt-1 ' + prevPpmColor + '">' + prevPpmStatusLabel + '</div>' +
+              '<div class="text-[10px] opacity-65 truncate">' + prevPpmSub + '</div>' +
+            '</div>' +
           '</div>';
       }
 
@@ -6561,22 +6936,48 @@
               '</div>' +
             '</div>' +
 
+            '<!-- Saved Finance Team Email Settings & Live Test -->' +
+            '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
+              '<div class="flex flex-wrap items-center justify-between gap-2 border-b border_ui pb-2">' +
+                '<div>' +
+                  '<div class="font-bold uppercase text-amber-400">// FINANCE TEAM EMAIL CHANNEL (SAVED AUTOMATICALLY)</div>' +
+                  '<div class="text-[10px] opacity-65">Store Finance Team email once so it auto-fills &amp; receives automatic reminders and test emails.</div>' +
+                '</div>' +
+                '<span class="border_ui px-2 py-0.5 text-[10px] font-bold ' + (emailChannelSettings.financeEmail ? 'text-emerald-400 border-emerald-500/40' : 'text-amber-400 border-amber-500/40') + '">' + (emailChannelSettings.financeEmail ? 'SAVED: ' + emailChannelSettings.financeEmail : 'NOT SAVED YET') + '</span>' +
+              '</div>' +
+              '<div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-end">' +
+                '<div class="sm:col-span-6">' +
+                  '<label class="block text-[10px] opacity-60 mb-1">FINANCE TEAM EMAIL ADDRESS</label>' +
+                  '<input type="email" id="admFinanceEmailInput" value="' + (emailChannelSettings.financeEmail || '') + '" placeholder="finance@coloplus.com" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none focus:border-(--color-primary)">' +
+                '</div>' +
+                '<div class="sm:col-span-3">' +
+                  '<button type="button" onclick="saveAdminFinanceEmail()" class="w-full border_ui py-1.5 font-bold nav_active btn-invert cursor-pointer">SAVE EMAIL</button>' +
+                '</div>' +
+                '<div class="sm:col-span-3">' +
+                  '<button type="button" onclick="sendTestFinanceEmail()" class="w-full border_ui border-amber-400 py-1.5 font-bold text-amber-400 hover:bg-amber-500 hover:text-black cursor-pointer">SEND TEST EMAIL</button>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+
             '<!-- Custom Email Composer (Resend) -->' +
             '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
-              '<div class="font-bold uppercase text-(--color-accent) border-b border_ui pb-2">// SEND EMAIL FOR ' + site.siteId + ' (VIA RESEND)</div>' +
+              '<div class="font-bold uppercase text-(--color-accent) border-b border_ui pb-2">// CUSTOM EMAIL COMPOSER — FINANCE / FSE / TEAM (VIA RESEND)</div>' +
               '<form onsubmit="handleAdminSendCustomEmail(event)" class="space-y-2.5">' +
                 '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">' +
-                  '<div><label class="block text-[10px] opacity-60 mb-1">RECIPIENT</label><select id="admEmailTarget" onchange="document.getElementById(\'admCustomEmailWrap\').classList.toggle(\'hidden\', this.value !== \'CUSTOM\')" class="w-full border_ui bg-(--color-card-bg) px-2.5 py-1.5 outline-none">' +
+                  '<div><label class="block text-[10px] opacity-60 mb-1">RECIPIENT CHANNEL</label><select id="admEmailTarget" onchange="syncAdminEmailRecipientBox()" class="w-full border_ui bg-(--color-card-bg) px-2.5 py-1.5 outline-none">' +
+                    '<option value="FINANCE">FINANCE TEAM (' + (emailChannelSettings.financeEmail || 'Enter email ->') + ')</option>' +
                     '<option value="SITE_FSE">THIS SITE FSE (' + (site.fseEmail || 'No email set yet') + ')</option>' +
-                    '<option value="FINANCE">FINANCE TEAM</option>' +
+                    '<option value="CUSTOM">TEAM MEMBER / SPECIFIC EMAIL</option>' +
                     '<option value="ADMIN">ADMIN ALERT EMAIL</option>' +
-                    '<option value="CUSTOM">SPECIFIC EMAIL ADDRESS</option>' +
                   '</select></div>' +
-                  '<div id="admCustomEmailWrap" class="hidden"><label class="block text-[10px] opacity-60 mb-1">RECIPIENT EMAIL</label><input type="email" id="admCustomEmailTo" placeholder="recipient@coloplus.com" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
+                  '<div id="admRecipientEmailWrap"><label id="admRecipientEmailLabel" class="block text-[10px] opacity-60 mb-1">FINANCE TEAM EMAIL (AUTO-SAVED)</label><input type="email" id="admCustomEmailTo" list="savedTeamEmailList" value="' + (emailChannelSettings.financeEmail || '') + '" placeholder="finance@coloplus.com" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none focus:border-(--color-primary)"></div>' +
                 '</div>' +
-                '<div><label class="block text-[10px] opacity-60 mb-1">SUBJECT</label><input type="text" id="admEmailSubject" required placeholder="e.g. ' + site.siteId + ' — PPM Dispatch / Diesel Update" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
-                '<div><label class="block text-[10px] opacity-60 mb-1">MESSAGE</label><textarea id="admEmailBody" rows="4" required placeholder="Type your message to the site FSE or Finance team..." class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></textarea></div>' +
-                '<button type="submit" class="border_ui px-5 py-2 font-bold nav_active btn-invert cursor-pointer">SEND EMAIL VIA RESEND &gt;&gt;</button>' +
+                '<div><label class="block text-[10px] opacity-60 mb-1">SUBJECT</label><input type="text" id="admEmailSubject" required placeholder="e.g. ' + site.siteId + ' — Finance Diesel Approval / PPM Notice" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none focus:border-(--color-primary)"></div>' +
+                '<div><label class="block text-[10px] opacity-60 mb-1">MESSAGE</label><textarea id="admEmailBody" rows="4" required placeholder="Type your message for Finance Team, Site FSE, or Team Member..." class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none focus:border-(--color-primary)"></textarea></div>' +
+                '<div class="flex flex-wrap items-center gap-2">' +
+                  '<button type="submit" class="border_ui px-5 py-2 font-bold nav_active btn-invert cursor-pointer">SEND EMAIL VIA RESEND &gt;&gt;</button>' +
+                '</div>' +
+                '<div id="admEmailFeedbackBox" class="hidden border_ui p-2.5 text-[11px]"></div>' +
               '</form>' +
             '</div>' +
           '</div>';
@@ -6626,7 +7027,7 @@
                 reviewed_by: sub.reviewedBy,
                 reviewed_at: nowIso
               })
-              .eq('submission_id', sub.id)
+              .eq('id', sub.id)
           ).catch(() => {});
         } catch (err) {}
       }
@@ -6678,10 +7079,11 @@
       if (sb) {
         try {
           Promise.resolve(sb.from('submitted_ppms').insert({
+            id: sub.id,
             site_id: site.siteId,
-            submission_id: sub.id,
             submitted_by: sub.submittedBy,
             submitted_date: sub.submittedDate,
+            submitted_at: sub.submittedAt,
             completed_count: sub.completedCount,
             total_count: sub.totalCount,
             items: sub.items,
@@ -6763,6 +7165,120 @@
       showToast('Ticket ' + ticketId + ' updated to ' + newStatus);
     }
 
+    function syncAdminEmailRecipientBox() {
+      const sel = document.getElementById('admEmailTarget');
+      const wrap = document.getElementById('admRecipientEmailWrap');
+      const label = document.getElementById('admRecipientEmailLabel');
+      const input = document.getElementById('admCustomEmailTo');
+      if (!sel || !wrap || !input) return;
+      const site = adminSession ? masterSites.find(s => s.siteId === adminSession.siteId) : null;
+      const val = sel.value;
+
+      if (val === 'ADMIN') {
+        wrap.classList.add('hidden');
+        return;
+      }
+      wrap.classList.remove('hidden');
+      if (val === 'FINANCE') {
+        if (label) label.innerText = 'FINANCE TEAM EMAIL (AUTO-SAVED)';
+        input.value = emailChannelSettings.financeEmail || '';
+        input.placeholder = 'finance@coloplus.com';
+      } else if (val === 'SITE_FSE') {
+        if (label) label.innerText = 'SITE FSE EMAIL (' + (site ? site.siteId : '') + ')';
+        input.value = (site && site.fseEmail) ? site.fseEmail : '';
+        input.placeholder = 'fse@coloplus.com';
+      } else {
+        if (label) label.innerText = 'TEAM MEMBER / RECIPIENT EMAIL';
+        input.value = '';
+        input.placeholder = 'teammember@coloplus.com';
+      }
+    }
+
+    function persistFinanceEmail(emailVal) {
+      const clean = (emailVal || '').trim();
+      emailChannelSettings.financeEmail = clean;
+      saveEmailChannelSettingsLocal();
+      if (clean) rememberTeamEmail(clean);
+      populateSavedTeamEmailDatalist();
+      if (sb && isAdminUnlocked) {
+        try {
+          Promise.resolve(sb.from('app_settings').upsert({
+            key: 'finance_email',
+            value: clean,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'key' })).catch(() => {});
+        } catch (_) {}
+      }
+    }
+
+    function saveAdminFinanceEmail() {
+      if (!isAdminUnlocked) return;
+      const inp = document.getElementById('admFinanceEmailInput');
+      const val = inp ? inp.value.trim() : '';
+      if (!val || !val.includes('@')) {
+        showToast('Please enter a valid Finance Team email address');
+        return;
+      }
+      persistFinanceEmail(val);
+      const site = adminSession ? masterSites.find(s => s.siteId === adminSession.siteId) : null;
+      if (site) renderAdminModuleContent(site);
+      showToast('Finance Team email saved: ' + val);
+    }
+
+    async function sendTestFinanceEmail() {
+      if (!isAdminUnlocked || !sb) return;
+      const inp = document.getElementById('admFinanceEmailInput');
+      const email = inp ? inp.value.trim() : emailChannelSettings.financeEmail;
+      if (!email || !email.includes('@')) {
+        showToast('Enter a valid Finance Team email first to test');
+        return;
+      }
+      persistFinanceEmail(email);
+
+      const fb = document.getElementById('admEmailFeedbackBox');
+      if (fb) {
+        fb.className = 'border_ui border-amber-500/40 bg-amber-500/10 p-2.5 text-[11px] text-amber-300';
+        fb.innerText = 'Sending test email to Finance Team (' + email + ') via Resend...';
+        fb.classList.remove('hidden');
+      }
+
+      const site = adminSession ? masterSites.find(s => s.siteId === adminSession.siteId) : null;
+      try {
+        const { data, error } = await sb.functions.invoke('send-alert-email', {
+          body: {
+            type: 'CUSTOM_EMAIL',
+            target: 'CUSTOM',
+            custom_email: email,
+            subject: '[TEST] ColoPlus NOC — Finance Team Email Channel Verified',
+            message: 'Hello Finance Team,\n\nThis is a live test email from the ColoPlus Diesel & Operations Command Center.\nSaved Finance Email: ' + email + (site ? '\nActive Site Context: ' + site.siteId + ' (' + site.state + ')' : '') + '\nSent by: ' + (adminSession ? adminSession.adminName : 'Admin') + '\n\nYour Finance email channel is active and stored for automatic diesel/alert notifications.'
+          }
+        });
+        if (error || (data && data.ok === false) || (data && data.error)) {
+          const msg = (error && error.message) || (data && (data.error || (data.data && data.data.message))) || 'Delivery failed';
+          if (fb) {
+            fb.className = 'border_ui border-rose-500/50 bg-rose-500/10 p-2.5 text-[11px] text-rose-400 font-bold';
+            fb.innerText = 'Test email failed: ' + msg;
+            fb.classList.remove('hidden');
+          }
+          showToast('Test email failed: ' + msg);
+          return;
+        }
+        if (fb) {
+          fb.className = 'border_ui border-emerald-500/50 bg-emerald-500/10 p-2.5 text-[11px] text-emerald-400 font-bold';
+          fb.innerText = 'Test email successfully sent to ' + email + ' via Resend! (Saved automatically)';
+          fb.classList.remove('hidden');
+        }
+        showToast('Test email sent to ' + email);
+      } catch (err) {
+        if (fb) {
+          fb.className = 'border_ui border-rose-500/50 bg-rose-500/10 p-2.5 text-[11px] text-rose-400 font-bold';
+          fb.innerText = 'Could not reach Resend Edge Function.';
+          fb.classList.remove('hidden');
+        }
+        showToast('Could not reach email service');
+      }
+    }
+
     async function handleAdminSendCustomEmail(e) {
       e.preventDefault();
       if (!isAdminUnlocked || !sb) return;
@@ -6771,28 +7287,73 @@
       let customEmail = document.getElementById('admCustomEmailTo') ? document.getElementById('admCustomEmailTo').value.trim() : '';
       const subject = document.getElementById('admEmailSubject').value.trim();
       const message = document.getElementById('admEmailBody').value.trim();
+      const fb = document.getElementById('admEmailFeedbackBox');
 
-      if (target === 'SITE_FSE') {
-        if (!site || !site.fseEmail) {
-          showToast('Please save an FSE Email for ' + (site ? site.siteId : 'this site') + ' first.');
+      if (target === 'FINANCE') {
+        const finEmail = customEmail || emailChannelSettings.financeEmail;
+        if (!finEmail || !finEmail.includes('@')) {
+          showToast('Please enter a Finance Team email address first');
           return;
         }
+        persistFinanceEmail(finEmail);
         target = 'CUSTOM';
-        customEmail = site.fseEmail;
+        customEmail = finEmail;
+      } else if (target === 'SITE_FSE') {
+        const fseEmail = customEmail || (site && site.fseEmail);
+        if (!fseEmail || !fseEmail.includes('@')) {
+          showToast('Please save or enter an FSE Email for ' + (site ? site.siteId : 'this site') + ' first.');
+          return;
+        }
+        if (site && !site.fseEmail) {
+          site.fseEmail = fseEmail;
+          saveState();
+          sbUpsertSite(site);
+        }
+        rememberTeamEmail(fseEmail);
+        target = 'CUSTOM';
+        customEmail = fseEmail;
+      } else if (target === 'CUSTOM') {
+        if (!customEmail || !customEmail.includes('@')) {
+          showToast('Please enter a valid recipient email address');
+          return;
+        }
+        rememberTeamEmail(customEmail);
+      }
+
+      if (fb) {
+        fb.className = 'border_ui border-amber-500/40 bg-amber-500/10 p-2.5 text-[11px] text-amber-300';
+        fb.innerText = 'Sending email to ' + (customEmail || target) + ' via Resend...';
+        fb.classList.remove('hidden');
       }
 
       try {
-        const { error } = await sb.functions.invoke('send-alert-email', {
+        const { data, error } = await sb.functions.invoke('send-alert-email', {
           body: { type: 'CUSTOM_EMAIL', target, custom_email: customEmail, subject, message }
         });
-        if (error) {
-          showToast('Email error: ' + error.message);
+        if (error || (data && data.ok === false) || (data && data.error)) {
+          const msg = (error && error.message) || (data && (data.error || (data.data && data.data.message))) || 'Delivery failed';
+          if (fb) {
+            fb.className = 'border_ui border-rose-500/50 bg-rose-500/10 p-2.5 text-[11px] text-rose-400 font-bold';
+            fb.innerText = 'Email error: ' + msg;
+            fb.classList.remove('hidden');
+          }
+          showToast('Email error: ' + msg);
         } else {
           document.getElementById('admEmailSubject').value = '';
           document.getElementById('admEmailBody').value = '';
+          if (fb) {
+            fb.className = 'border_ui border-emerald-500/50 bg-emerald-500/10 p-2.5 text-[11px] text-emerald-400 font-bold';
+            fb.innerText = 'Email successfully sent to ' + (customEmail || target) + ' via Resend!';
+            fb.classList.remove('hidden');
+          }
           showToast('Email sent via Resend to ' + (customEmail || target));
         }
       } catch (err) {
+        if (fb) {
+          fb.className = 'border_ui border-rose-500/50 bg-rose-500/10 p-2.5 text-[11px] text-rose-400 font-bold';
+          fb.innerText = 'Failed to reach Resend email service.';
+          fb.classList.remove('hidden');
+        }
         showToast('Failed to send custom email');
       }
     }

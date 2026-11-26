@@ -161,7 +161,7 @@ serve(async (req: Request) => {
     }
 
     // -------------------------------------------------------------------------
-    // MODE 2C: CUSTOM ADMIN EMAIL BROADCAST (Finance / FSE / All FSEs / Custom)
+    // MODE 2C: CUSTOM ADMIN EMAIL BROADCAST (Finance / FSE / Team Task / Custom)
     // -------------------------------------------------------------------------
     if (eventType === "CUSTOM_EMAIL") {
       const target: string = payload.target ?? "FINANCE";
@@ -170,8 +170,14 @@ serve(async (req: Request) => {
       const bodyText: string = payload.message ?? "";
       let recipients: string[] = [];
 
-      if (target === "FINANCE" && FINANCE_TEAM_EMAIL) {
-        recipients.push(FINANCE_TEAM_EMAIL);
+      if (target === "FINANCE") {
+        if (customTo) {
+          recipients.push(customTo);
+        } else {
+          const { data: settingRow } = await sb.from("app_settings").select("value").eq("key", "finance_email").maybeSingle();
+          if (settingRow?.value) recipients.push(settingRow.value);
+          else if (FINANCE_TEAM_EMAIL) recipients.push(FINANCE_TEAM_EMAIL);
+        }
       } else if (target === "ADMIN" && ADMIN_ALERT_EMAIL) {
         recipients.push(ADMIN_ALERT_EMAIL);
       } else if (target === "ALL_FSES") {
