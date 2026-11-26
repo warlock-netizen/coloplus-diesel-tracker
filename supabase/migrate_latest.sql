@@ -188,30 +188,33 @@ where is_active = true;
 do $$
 begin
   alter publication supabase_realtime add table public.sites;
-exception when duplicate_object then null;
+exception when duplicate_object or undefined_object or undefined_table then null;
 end $$;
 do $$
 begin
   alter publication supabase_realtime add table public.diesel_deliveries;
-exception when duplicate_object then null;
+exception when duplicate_object or undefined_object or undefined_table then null;
 end $$;
 do $$
 begin
   alter publication supabase_realtime add table public.machinery_repairs;
-exception when duplicate_object then null;
+exception when duplicate_object or undefined_object or undefined_table then null;
 end $$;
 do $$
 begin
   alter publication supabase_realtime add table public.submitted_ppms;
-exception when duplicate_object then null;
+exception when duplicate_object or undefined_object or undefined_table then null;
 end $$;
 do $$
 begin
   alter publication supabase_realtime add table public.calendar_tasks;
-exception when duplicate_object then null;
+exception when duplicate_object or undefined_object or undefined_table then null;
 end $$;
 do $$
 begin
   alter publication supabase_realtime add table public.app_settings;
-exception when duplicate_object then null;
+exception when duplicate_object or undefined_object or undefined_table then null;
 end $$;
+
+-- 8. Immediately refresh PostgREST schema cache so new tables & columns work right away
+notify pgrst, 'reload schema';
