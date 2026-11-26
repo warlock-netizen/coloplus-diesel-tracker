@@ -143,6 +143,41 @@
       left: 68%;
     }
 
+    /* Monochrome-blended BUB Battery & Utility Grid Animations */
+    @keyframes battScan {
+      0% { transform: translateY(100%); opacity: 0; }
+      30% { opacity: 0.55; }
+      70% { opacity: 0.55; }
+      100% { transform: translateY(-100%); opacity: 0; }
+    }
+    @keyframes battCellPulse {
+      0%, 100% { opacity: 0.72; }
+      50% { opacity: 1; }
+    }
+    @keyframes gridFlow {
+      0% { stroke-dashoffset: 24; }
+      100% { stroke-dashoffset: 0; }
+    }
+    @keyframes gridNodePulse {
+      0%, 100% { opacity: 0.35; transform: scale(0.92); }
+      50% { opacity: 1; transform: scale(1.1); }
+    }
+    .batt-scan-line {
+      animation: battScan 2.6s linear infinite;
+    }
+    .batt-cell-active {
+      animation: battCellPulse 2.2s ease-in-out infinite;
+    }
+    .grid-flow-line {
+      stroke-dasharray: 4 4;
+      animation: gridFlow 1.4s linear infinite;
+    }
+    .grid-node-pulse {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: gridNodePulse 1.8s ease-in-out infinite;
+    }
+
     .no-scrollbar {
       scrollbar-width: none;
       -ms-overflow-style: none;
@@ -773,8 +808,8 @@
             </button>
             <button id="adminTabBtnAnalytics" onclick="openAdminModule('analytics')" class="border_ui p-3 text-left cursor-pointer btn-invert opacity-75">
               <div class="text-[10px] opacity-70 uppercase">ADMIN MODULE 04</div>
-              <div class="font-bold text-sm">FLEET ANALYTICS</div>
-              <div class="text-[10px] opacity-75">Runway, BUB &amp; Alerts</div>
+              <div class="font-bold text-sm">SITE TELEMETRY &amp; ALARMS</div>
+              <div class="text-[10px] opacity-75">Fuel Depletion Curve &amp; 7-Day Alarm</div>
             </button>
             <button id="adminTabBtnDirectory" onclick="openAdminModule('directory')" class="border_ui p-3 text-left cursor-pointer btn-invert opacity-75">
               <div class="text-[10px] opacity-70 uppercase">ADMIN MODULE 05</div>
@@ -1659,6 +1694,12 @@
             <label class="opacity-60 text-[10px] block mb-1">GEN RUN HOURS</label>
             <input type="number" id="newRepairGenHours" value="1250" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none">
           </div>
+        </div>
+
+        <div class="border_ui p-2.5 bg-black/10 dark:bg-white/5 space-y-1.5">
+          <label class="opacity-70 text-[10px] uppercase font-bold block">ATTACH EVIDENCE (PHOTO / VIDEO / PDF — MAX 20MB, OPTIONAL)</label>
+          <input type="file" id="newRepairAttachment" accept="image/*,video/*,.pdf" onchange="previewRepairAttachment(this)" class="w-full text-[11px] file:mr-2 file:border file:border_ui file:bg-(--color-card-bg) file:px-2.5 file:py-1 file:text-[10px] file:font-bold file:cursor-pointer cursor-pointer">
+          <div id="newRepairAttachmentInfo" class="hidden text-[10px] text-(--color-accent) font-bold"></div>
         </div>
 
         <div class="flex items-center justify-end gap-2 pt-3 border-t border_ui">
@@ -3377,54 +3418,85 @@
       return Date.parse('2026-11-02T00:00:00Z');
     }
 
-    // Strict Mathematical Correlation & Real-Time Fuel Synchronization Engine
+    // Strict 100% Exact Mathematical Correlation & Real-Time Fuel Depletion Engine
     function synchronizeSite(s) {
       s.tankCap = Math.max(100, parseFloat(s.tankCap) || 1000);
-      s.cpd = Math.max(1, parseFloat(s.cpd) || 40);
-      s.cpd12h = parseFloat((s.cpd / 2).toFixed(1));
-      s.cph = parseFloat((s.cpd / 24).toFixed(2));
+      s.cpd = Math.max(0.5, parseFloat(s.cpd) || 40);
+      const cphExact = s.cpd / 24.0;
+      s.cpd12h = parseFloat((s.cpd / 2.0).toFixed(2));
+      s.cph = parseFloat(cphExact.toFixed(3));
 
-      // Anchor baseline fuel reading & timestamp, then synchronize to current Date.now()
+      // Anchor baseline fuel reading & timestamp, then compute exact continuous depletion to Date.now()
       if (s.baselineDL === undefined || s.baselineDL === null || isNaN(parseFloat(s.baselineDL))) {
-        s.baselineDL = Math.max(0, parseFloat(s.currentDL) || 0);
+        s.baselineDL = Math.max(0, Math.min(s.tankCap, parseFloat(s.currentDL) || 0));
       } else {
-        s.baselineDL = Math.max(0, parseFloat(s.baselineDL) || 0);
+        s.baselineDL = Math.max(0, Math.min(s.tankCap, parseFloat(s.baselineDL) || 0));
       }
       const baselineTs = parseBaselineTimestamp(s);
       s.fuelBaselineAt = new Date(baselineTs).toISOString();
 
       const now = new Date();
-      const elapsedHours = Math.max(0, (now.getTime() - baselineTs) / 3600000);
-      s.elapsedHoursSinceBaseline = parseFloat(elapsedHours.toFixed(1));
-      s.burnedSinceBaseline = parseFloat((s.cph * elapsedHours).toFixed(1));
-      s.currentDL = Math.max(0, parseFloat((s.baselineDL - s.burnedSinceBaseline).toFixed(1)));
+      const elapsedMs = Math.max(0, now.getTime() - baselineTs);
+      const elapsedHoursExact = elapsedMs / 3600000.0;
+      const burnedExact = cphExact * elapsedHoursExact;
+      const currentDLExact = Math.max(0, Math.min(s.tankCap, s.baselineDL - burnedExact));
 
-      // Correlated metrics from synchronized live fuel level
-      s.daysRemaining = parseFloat((s.currentDL / s.cpd).toFixed(1));
-      s.fillPct = Math.min(100, Math.max(0, Math.round((s.currentDL / s.tankCap) * 100)));
+      s.elapsedHoursSinceBaseline = parseFloat(elapsedHoursExact.toFixed(2));
+      s.burnedSinceBaseline = parseFloat(Math.min(s.baselineDL, burnedExact).toFixed(2));
+      s.currentDL = parseFloat(currentDLExact.toFixed(1));
+
+      // Exact unrounded autonomy math (days + hours + exact dry-out timestamp)
+      const hoursRemainingExact = cphExact > 0 ? (currentDLExact / cphExact) : 0;
+      const daysRemainingExact = s.cpd > 0 ? (currentDLExact / s.cpd) : 0;
+      s.hoursRemaining = parseFloat(hoursRemainingExact.toFixed(2));
+      s.daysRemaining = parseFloat(daysRemainingExact.toFixed(2));
+      s.fillPct = Math.min(100, Math.max(0, parseFloat(((currentDLExact / s.tankCap) * 100).toFixed(1))));
       s.dailyCostNgn = Math.round(s.cpd * 2100);
+      s.litresToFull = parseFloat(Math.max(0, s.tankCap - currentDLExact).toFixed(1));
+      s.litresFor7Days = parseFloat((7 * s.cpd).toFixed(1));
 
-      // Empty forecast calculation
-      const dryTime = new Date(now.getTime() + s.daysRemaining * 24 * 60 * 60 * 1000);
-      s.predictedDryDate = dryTime.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' +
-                           dryTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      // Exact human-readable countdown (Days + Hours + Minutes)
+      const wholeDays = Math.floor(hoursRemainingExact / 24);
+      const remHrs = Math.floor(hoursRemainingExact % 24);
+      const remMins = Math.floor((hoursRemainingExact * 60) % 60);
+      s.autonomyBreakdown = currentDLExact <= 0
+        ? '0d 0h (EMPTY)'
+        : (wholeDays + 'd ' + remHrs + 'h ' + remMins + 'm');
 
-      // Autonomous Status classification
-      if (s.daysRemaining <= 2.0) {
+      // Exact Empty Forecast Date & Time (computed from unrounded hoursRemainingExact -> 0 rounding drift)
+      if (currentDLExact <= 0) {
+        s.predictedDryDate = 'EMPTY NOW (0 L)';
+        s.predictedDryIso = now.toISOString();
+      } else {
+        const dryTime = new Date(now.getTime() + hoursRemainingExact * 3600 * 1000);
+        s.predictedDryIso = dryTime.toISOString();
+        s.predictedDryDate = dryTime.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' +
+                             dryTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      }
+
+      // 7-Day Automatic Fuel Depletion Alarm Classification
+      s.is7DayAlarm = daysRemainingExact <= 7.0;
+      if (currentDLExact <= 0 || daysRemainingExact <= 3.0) {
         s.status = 'CRITICAL';
-      } else if (s.daysRemaining <= 4.0) {
+      } else if (daysRemainingExact <= 7.0) {
         s.status = 'WARNING';
       } else {
         s.status = 'HEALTHY';
       }
 
-      // 200L Reorder Point
-      if (s.currentDL <= 200) {
-        s.refuelDate = 'IMMEDIATE REORDER (< 200L)';
+      // Exact 7-Day Alarm Trigger Date (when fuel crosses the 7-day remaining mark)
+      if (currentDLExact <= 0) {
+        s.alarm7DayDate = 'EMPTY — IMMEDIATE REFUEL';
+        s.refuelDate = 'IMMEDIATE REFUEL (0 L)';
+      } else if (daysRemainingExact <= 7.0) {
+        s.alarm7DayDate = 'ACTIVE NOW (<= 7 DAYS LEFT)';
+        s.refuelDate = '7-DAY ALARM ACTIVE (' + s.autonomyBreakdown + ' left)';
       } else {
-        const daysTo200 = Math.max(0, (s.currentDL - 200) / s.cpd);
-        const refuelTime = new Date(now.getTime() + daysTo200 * 24 * 60 * 60 * 1000);
-        s.refuelDate = refuelTime.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        const hoursUntil7DayMark = (daysRemainingExact - 7.0) * 24.0;
+        const alarmDateObj = new Date(now.getTime() + hoursUntil7DayMark * 3600 * 1000);
+        const fmtAlarmDate = alarmDateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        s.alarm7DayDate = fmtAlarmDate;
+        s.refuelDate = '7-Day Alarm on ' + fmtAlarmDate;
       }
 
       // Regular 12-item PPM Checklist
@@ -3533,6 +3605,7 @@
       setInterval(() => {
         masterSites.forEach(s => synchronizeSite(s));
         updateKpis();
+        checkAndTrigger7DayFuelAlarms();
         if (fseSession && activeSection === 'fse' && fseActiveModule === 'fuel') {
           const s = masterSites.find(x => x.siteId === fseSession.siteId);
           if (s) renderFseFuelModule(s);
@@ -3744,6 +3817,7 @@
               priority: r.severity || 'High',
               issue: r.issue || '',
               technician: r.logged_by || 'FSE',
+              attachmentUrl: r.attachment_url || '',
               dateLogged: (r.created_at || '').slice(0, 10),
               loggedDate: (r.created_at || '').slice(0, 10),
               adminReviewed: (r.status || '').toUpperCase() === 'RESOLVED'
@@ -4832,6 +4906,177 @@
       });
     }
 
+    // Monochrome-Blended Animated BUB (Backup Battery) Visual
+    function buildAnimatedBatteryHtml(site) {
+      const soc = Math.max(0, Math.min(100, Number(site.batterySoc || 0)));
+      const battHrs = Number(site.batteryAutonomyHours || 0);
+      const status = (site.batteryStatus || 'HEALTHY').toUpperCase();
+      const activeBars = Math.max(0, Math.min(5, Math.round(soc / 20)));
+      const barTone = soc > 70 ? '#22c55e' : (soc > 40 ? '#f59e0b' : '#ef4444');
+      const badgeCls = soc > 70 ? 'text-emerald-400 border-emerald-500/40' : (soc > 40 ? 'text-amber-400 border-amber-500/40' : 'text-rose-400 border-rose-500/50');
+
+      let cellsHtml = '';
+      for (let i = 5; i >= 1; i--) {
+        const isLit = i <= activeBars;
+        cellsHtml += '<div class="w-full h-3.5 border_ui transition-all duration-500 ' + (isLit ? 'batt-cell-active' : 'opacity-20') + '" style="' +
+          (isLit ? ('background-color:' + barTone + '; opacity:0.85; animation-delay:' + ((5 - i) * 0.2) + 's;') : 'background-color:transparent;') +
+        '"></div>';
+      }
+
+      return '<div class="flex items-center gap-4 p-3 border_ui bg-black/10 dark:bg-white/5">' +
+        '<div class="flex flex-col items-center shrink-0">' +
+          '<div class="w-7 h-2 border_ui border-b-0 bg-(--color-primary) opacity-80"></div>' +
+          '<div class="w-16 p-1.5 border_ui bg-black/25 relative overflow-hidden flex flex-col gap-1">' +
+            '<div class="absolute inset-x-0 h-4 bg-gradient-to-b from-transparent via-white/25 to-transparent pointer-events-none batt-scan-line"></div>' +
+            cellsHtml +
+          '</div>' +
+          '<div class="text-[9px] font-bold mt-1 tracking-wider opacity-80">BUB · ' + soc + '%</div>' +
+        '</div>' +
+        '<div class="flex-1 min-w-0 space-y-1.5 text-[11px]">' +
+          '<div class="flex flex-wrap items-center justify-between gap-1 border-b border_ui pb-1">' +
+            '<span class="font-bold uppercase tracking-wider">BUB = BACKUP BATTERY</span>' +
+            '<span class="border_ui px-1.5 py-0.5 text-[9px] font-bold ' + badgeCls + '">' + status + '</span>' +
+          '</div>' +
+          '<div class="flex justify-between"><span class="opacity-65">State of Charge (SOC):</span><span class="font-bold">' + soc + '%</span></div>' +
+          '<div class="flex justify-between"><span class="opacity-65">Battery Autonomy:</span><span class="font-bold text-(--color-accent)">' + battHrs + ' hrs off-grid</span></div>' +
+          '<div class="flex justify-between"><span class="opacity-65">Bank Voltage:</span><span class="font-bold">' + (site.batteryVoltage || '52.8 V') + '</span></div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    // Monochrome-Blended Animated Utility Light (Power Grid / NEPA) Visual
+    function buildAnimatedGridHtml(site) {
+      const lightHrs = site.gridHoursPerDay !== undefined ? Number(site.gridHoursPerDay) : 12;
+      const gStatus = (site.gridStatus || 'ONLINE (NEPA AVAILABLE)').toUpperCase();
+      const isOnline = gStatus.includes('ONLINE');
+      const isIntermittent = gStatus.includes('INTERMITTENT') || gStatus.includes('UNSTABLE');
+      const strokeTone = isOnline ? '#22c55e' : (isIntermittent ? '#f59e0b' : '#ef4444');
+      const badgeCls = isOnline ? 'text-emerald-400 border-emerald-500/40' : (isIntermittent ? 'text-amber-400 border-amber-500/40' : 'text-rose-400 border-rose-500/50');
+      const lineAnimClass = (isOnline || isIntermittent) ? 'grid-flow-line' : '';
+      const nodeAnimClass = (isOnline || isIntermittent) ? 'grid-node-pulse' : 'opacity-30';
+
+      return '<div class="flex items-center gap-4 p-3 border_ui bg-black/10 dark:bg-white/5">' +
+        '<div class="flex flex-col items-center shrink-0">' +
+          '<div class="w-20 h-24 border_ui bg-black/25 p-1.5 flex items-center justify-center">' +
+            '<svg viewBox="0 0 80 88" class="w-full h-full" aria-label="Utility Power Grid Animation">' +
+              '<!-- Wireframe Utility Grid Lines -->' +
+              '<line x1="8" y1="22" x2="72" y2="22" stroke="' + strokeTone + '" stroke-width="1.5" class="' + lineAnimClass + '"/>' +
+              '<line x1="8" y1="42" x2="72" y2="42" stroke="' + strokeTone + '" stroke-width="1.5" class="' + lineAnimClass + '" style="animation-delay:0.35s"/>' +
+              '<line x1="8" y1="62" x2="72" y2="62" stroke="' + strokeTone + '" stroke-width="1.5" class="' + lineAnimClass + '" style="animation-delay:0.7s"/>' +
+              '<!-- Transmission Pylon Wireframe -->' +
+              '<polygon points="40,8 24,78 56,78" fill="none" stroke="currentColor" stroke-opacity="0.7" stroke-width="1.4"/>' +
+              '<line x1="20" y1="22" x2="60" y2="22" stroke="currentColor" stroke-opacity="0.75" stroke-width="1.4"/>' +
+              '<line x1="26" y1="42" x2="54" y2="42" stroke="currentColor" stroke-opacity="0.65" stroke-width="1.2"/>' +
+              '<line x1="31" y1="62" x2="49" y2="62" stroke="currentColor" stroke-opacity="0.55" stroke-width="1.2"/>' +
+              '<line x1="32" y1="22" x2="48" y2="42" stroke="currentColor" stroke-opacity="0.4" stroke-width="1"/>' +
+              '<line x1="48" y1="22" x2="32" y2="42" stroke="currentColor" stroke-opacity="0.4" stroke-width="1"/>' +
+              '<line x1="29" y1="42" x2="51" y2="62" stroke="currentColor" stroke-opacity="0.4" stroke-width="1"/>' +
+              '<line x1="51" y1="42" x2="29" y2="62" stroke="currentColor" stroke-opacity="0.4" stroke-width="1"/>' +
+              '<!-- Live Grid Nodes -->' +
+              '<circle cx="14" cy="22" r="3" fill="' + strokeTone + '" class="' + nodeAnimClass + '"/>' +
+              '<circle cx="66" cy="22" r="3" fill="' + strokeTone + '" class="' + nodeAnimClass + '" style="animation-delay:0.4s"/>' +
+              '<circle cx="40" cy="8" r="3.2" fill="' + strokeTone + '" class="' + nodeAnimClass + '" style="animation-delay:0.2s"/>' +
+              '<circle cx="14" cy="42" r="2.5" fill="' + strokeTone + '" class="' + nodeAnimClass + '" style="animation-delay:0.6s"/>' +
+              '<circle cx="66" cy="42" r="2.5" fill="' + strokeTone + '" class="' + nodeAnimClass + '" style="animation-delay:0.8s"/>' +
+            '</svg>' +
+          '</div>' +
+          '<div class="text-[9px] font-bold mt-1 tracking-wider opacity-80">GRID · ' + lightHrs + 'H/D</div>' +
+        '</div>' +
+        '<div class="flex-1 min-w-0 space-y-1.5 text-[11px]">' +
+          '<div class="flex flex-wrap items-center justify-between gap-1 border-b border_ui pb-1">' +
+            '<span class="font-bold uppercase tracking-wider">LIGHT = UTILITY GRID</span>' +
+            '<span class="border_ui px-1.5 py-0.5 text-[9px] font-bold ' + badgeCls + '">' + (isOnline ? 'GRID ONLINE' : (isIntermittent ? 'INTERMITTENT' : 'OUTAGE')) + '</span>' +
+          '</div>' +
+          '<div class="flex justify-between"><span class="opacity-65">Grid Supply / Day:</span><span class="font-bold text-amber-400">' + lightHrs + ' hrs/day</span></div>' +
+          '<div class="flex justify-between"><span class="opacity-65">Grid Status:</span><span class="font-bold truncate max-w-[140px]">' + (site.gridStatus || 'ONLINE') + '</span></div>' +
+          '<div class="flex justify-between"><span class="opacity-65">Prepaid Token:</span><span class="font-bold">' + (site.nepaTokenStatus || 'LOADED') + '</span></div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    // Automatic 7-Day Fuel Depletion Alarm Engine
+    let sent7DayAlarmsMap = {};
+    try {
+      const savedAlarms = localStorage.getItem('coloplus_7day_alarms_v1');
+      if (savedAlarms) sent7DayAlarmsMap = JSON.parse(savedAlarms);
+    } catch (e) { sent7DayAlarmsMap = {}; }
+
+    function getLast7DayAlarmTime(siteId) {
+      return sent7DayAlarmsMap[siteId] || null;
+    }
+
+    async function send7DayFuelAlarm(siteId, isManual) {
+      const site = masterSites.find(s => s.siteId === siteId);
+      if (!site || !sb) return false;
+      synchronizeSite(site);
+
+      const recipients = [];
+      if (emailChannelSettings.financeEmail) recipients.push(emailChannelSettings.financeEmail);
+      if (site.fseEmail) recipients.push(site.fseEmail);
+
+      const subject = '[7-DAY FUEL ALARM] ' + site.siteId + ' (' + site.state + ') — ' + site.autonomyBreakdown + ' Left (' + site.currentDL + ' L)';
+      const message =
+        'COLOPLUS TECH — AUTOMATIC 7-DAY FUEL DEPLETION ALARM\n' +
+        '=====================================================\n' +
+        'Site ID: ' + site.siteId + ' (' + site.tenantId + ')\n' +
+        'State / Location: ' + site.state + ' — ' + site.address + '\n' +
+        'Generator Type: ' + Number(site.genSize || site.loadKw || 15) + ' kVA\n' +
+        'Current Live Diesel: ' + site.currentDL + ' L / ' + site.tankCap + ' L (' + site.fillPct + '%)\n' +
+        'Daily Usage (CPD): ' + site.cpd + ' L/day (' + site.cph + ' L/hr)\n' +
+        'Exact Autonomy Left: ' + site.autonomyBreakdown + ' (' + site.daysRemaining + ' days)\n' +
+        'Predicted Dry-Out Time: ' + site.predictedDryDate + '\n' +
+        'Recommended 7-Day Refill Buffer: ' + site.litresFor7Days + ' L (Tank space: ' + site.litresToFull + ' L)\n' +
+        'Assigned FSE: ' + (site.fse || 'N/A') + ' (' + (site.fsePhone || 'N/A') + ')\n\n' +
+        'Action Required: Please schedule diesel replenishment before the dry-out timestamp above.';
+
+      let sentAny = false;
+      const targets = recipients.length > 0
+        ? recipients.map(em => ({ target: 'CUSTOM', custom_email: em }))
+        : [{ target: 'ADMIN', custom_email: '' }];
+      if (recipients.length > 0) {
+        targets.push({ target: 'ADMIN', custom_email: '' });
+      }
+
+      for (const t of targets) {
+        try {
+          const { data, error } = await sb.functions.invoke('send-alert-email', {
+            body: { type: 'CUSTOM_EMAIL', target: t.target, custom_email: t.custom_email, subject, message }
+          });
+          if (!error && !(data && data.ok === false)) sentAny = true;
+        } catch (_) {}
+      }
+
+      if (sentAny) {
+        sent7DayAlarmsMap[site.siteId] = new Date().toISOString();
+        localStorage.setItem('coloplus_7day_alarms_v1', JSON.stringify(sent7DayAlarmsMap));
+        if (isManual) {
+          showToast('7-Day Fuel Alarm sent for ' + site.siteId + (recipients.length ? ' to ' + recipients.join(', ') : ' to Admin'));
+          if (isAdminUnlocked && adminSession) updateAdminPortalUiState();
+        }
+      } else if (isManual) {
+        showToast('Could not send 7-Day Fuel Alarm — check Finance/FSE email or Resend config');
+      }
+      return sentAny;
+    }
+
+    function checkAndTrigger7DayFuelAlarms() {
+      if (!sb || !isAdminUnlocked) return;
+      const nowMs = Date.now();
+      const cooldownMs = 24 * 60 * 60 * 1000; // max 1 auto-alarm per site per 24h
+      masterSites.forEach(site => {
+        synchronizeSite(site);
+        if (site.currentDL > 0 && site.daysRemaining <= 7.0) {
+          const lastIso = sent7DayAlarmsMap[site.siteId];
+          const lastMs = lastIso ? Date.parse(lastIso) : 0;
+          if (!lastMs || (nowMs - lastMs) >= cooldownMs) {
+            sent7DayAlarmsMap[site.siteId] = new Date().toISOString();
+            localStorage.setItem('coloplus_7day_alarms_v1', JSON.stringify(sent7DayAlarmsMap));
+            send7DayFuelAlarm(site.siteId, false);
+          }
+        }
+      });
+    }
+
     // Reusable Animated Diesel Tank + Generator Type + Daily Usage Widget
     function buildAnimatedTankHtml(site) {
       const genKva = Number(site.genSize || site.loadKw || 15);
@@ -4839,19 +5084,19 @@
       const visualHeight = fillPct > 0 ? Math.max(10, fillPct) : 0;
       let fluidColor = '#10b981';
       let badgeCls = 'text-emerald-400 border-emerald-500/40';
-      let stateLabel = 'NORMAL';
+      let stateLabel = 'HEALTHY (> 7 DAYS)';
       if (site.currentDL <= 0 || fillPct <= 0) {
         fluidColor = '#ef4444';
         badgeCls = 'text-rose-400 border-rose-500/50';
         stateLabel = 'EMPTY (0 L)';
-      } else if (site.status === 'CRITICAL' || fillPct <= 20) {
+      } else if (site.daysRemaining <= 3.0) {
         fluidColor = '#ef4444';
         badgeCls = 'text-rose-400 border-rose-500/50';
-        stateLabel = 'CRITICAL';
-      } else if (site.status === 'WARNING' || fillPct <= 45) {
+        stateLabel = 'CRITICAL (<= 3 DAYS)';
+      } else if (site.daysRemaining <= 7.0) {
         fluidColor = '#f59e0b';
         badgeCls = 'text-amber-400 border-amber-500/50';
-        stateLabel = 'REORDER';
+        stateLabel = '7-DAY ALARM ACTIVE';
       }
 
       return '<div class="grid grid-cols-1 sm:grid-cols-12 gap-3 p-3 border_ui bg-black/10 dark:bg-white/5 items-center">' +
@@ -4905,8 +5150,9 @@
           '<div class="space-y-1 pt-0.5">' +
             '<div class="flex justify-between"><span class="opacity-65">Fuel Level / Tank Cap:</span><span class="font-bold">' + site.currentDL + ' L / ' + site.tankCap + ' L</span></div>' +
             '<div class="flex justify-between"><span class="opacity-65">Hourly / 12h Usage:</span><span class="font-bold">' + site.cph + ' L/hr · ' + site.cpd12h + ' L/12h</span></div>' +
-            '<div class="flex justify-between"><span class="opacity-65">Autonomy / Dry Forecast:</span><span class="font-bold">' + site.daysRemaining + 'd · ' + site.predictedDryDate + '</span></div>' +
-            '<div class="flex justify-between"><span class="opacity-65">Reorder Benchmark (200L):</span><span class="font-bold text-amber-400">' + site.refuelDate + '</span></div>' +
+            '<div class="flex justify-between"><span class="opacity-65">Exact Time Remaining:</span><span class="font-bold">' + (site.autonomyBreakdown || (site.daysRemaining + 'd')) + '</span></div>' +
+            '<div class="flex justify-between"><span class="opacity-65">Exact Dry-Out Date:</span><span class="font-bold text-rose-400">' + site.predictedDryDate + '</span></div>' +
+            '<div class="flex justify-between"><span class="opacity-65">7-Day Alarm Trigger:</span><span class="font-bold text-amber-400">' + (site.alarm7DayDate || site.refuelDate) + '</span></div>' +
           '</div>' +
         '</div>' +
       '</div>';
@@ -4983,8 +5229,10 @@
       site.lastSupplyDate = formattedDate;
       site.lastSupplyTime = timeRaw;
       site.supplier = supplier;
-      site.baselineDL = Math.min(site.tankCap, site.currentDL + qty);
-      site.fuelBaselineAt = new Date(dateRaw + 'T' + (timeRaw || '00:00') + ':00').toISOString();
+      const parsedDelTs = Date.parse(dateRaw + 'T' + (timeRaw || '00:00') + ':00');
+      const clampedDelTs = !isNaN(parsedDelTs) ? Math.min(Date.now(), parsedDelTs) : Date.now();
+      site.baselineDL = Math.min(site.tankCap, parseFloat((site.currentDL + qty).toFixed(2)));
+      site.fuelBaselineAt = new Date(clampedDelTs).toISOString();
       site.currentDL = site.baselineDL;
 
       if (!site.refuelHistory) site.refuelHistory = [];
@@ -5028,22 +5276,11 @@
         cardsEl.innerHTML =
           '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-2.5">' +
             '<div class="font-bold uppercase tracking-wider border-b border_ui pb-2">// BATTERY LIFE &amp; BUB STATUS (READ-ONLY)</div>' +
-            '<div class="space-y-1.5 text-[11px]">' +
-              '<div class="flex justify-between"><span class="opacity-65">Battery Autonomy:</span><span class="font-bold text-(--color-accent)">' + battHrs + ' hrs off-grid</span></div>' +
-              '<div class="flex justify-between"><span class="opacity-65">State of Charge (SOC):</span><span class="font-bold">' + soc + '%</span></div>' +
-              '<div class="w-full border_ui h-2 bg-black/20 overflow-hidden"><div class="h-full ' + battColor + '" style="width:' + soc + '%;"></div></div>' +
-              '<div class="flex justify-between"><span class="opacity-65">Bank Voltage:</span><span class="font-bold">' + (site.batteryVoltage || '52.8 V') + '</span></div>' +
-              '<div class="flex justify-between"><span class="opacity-65">Battery Health:</span><span class="font-bold">' + (site.batteryStatus || 'HEALTHY') + '</span></div>' +
-            '</div>' +
+            buildAnimatedBatteryHtml(site) +
           '</div>' +
           '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-2.5">' +
-            '<div class="font-bold uppercase tracking-wider border-b border_ui pb-2">// UTILITY LIGHT &amp; GRID STATUS (READ-ONLY)</div>' +
-            '<div class="space-y-1.5 text-[11px]">' +
-              '<div class="flex justify-between"><span class="opacity-65">Hours of Light / Day:</span><span class="font-bold text-amber-400">' + lightHrs + ' hrs/day</span></div>' +
-              '<div class="flex justify-between"><span class="opacity-65">Utility Grid Status:</span><span class="font-bold">' + (site.gridStatus || 'PHCN ONLINE') + '</span></div>' +
-              '<div class="flex justify-between"><span class="opacity-65">Prepaid Token Status:</span><span class="font-bold">' + (site.nepaTokenStatus || 'LOADED') + '</span></div>' +
-              '<div class="flex justify-between"><span class="opacity-65">Total Gen Offload:</span><span class="font-bold">' + totalOffload + ' hrs/day</span></div>' +
-            '</div>' +
+            '<div class="font-bold uppercase tracking-wider border-b border_ui pb-2">// UTILITY LIGHT &amp; POWER GRID STATUS (READ-ONLY)</div>' +
+            buildAnimatedGridHtml(site) +
           '</div>';
       }
     }
@@ -5099,7 +5336,10 @@
           '<div class="border_ui p-2.5 space-y-1">' +
             '<div class="flex justify-between font-bold"><span>' + t.ticketId + ' · ' + (t.category || 'GENERAL') + '</span><span class="text-amber-400">' + t.status + '</span></div>' +
             '<div class="opacity-80 text-[11px]">' + t.issue + '</div>' +
-            '<div class="opacity-50 text-[10px]">Logged: ' + t.loggedDate + ' · Tech: ' + (t.technician || fseSession.fseName) + '</div>' +
+            '<div class="flex items-center justify-between gap-2 opacity-60 text-[10px]">' +
+              '<span>Logged: ' + t.loggedDate + ' · Tech: ' + (t.technician || fseSession.fseName) + '</span>' +
+              (t.attachmentUrl ? '<a href="' + t.attachmentUrl + '" target="_blank" class="underline text-amber-400 font-bold opacity-100">VIEW ATTACHMENT</a>' : '') +
+            '</div>' +
           '</div>'
         ).join('');
       }
@@ -6433,25 +6673,28 @@
     function renderAdminTicketAlerts() {
       const banner = document.getElementById('adminTicketAlertBanner');
       if (!banner) return;
-      const unread = masterRepairs.filter(r => !r.adminReviewed && (r.status || '').toUpperCase() !== 'RESOLVED');
-      if (unread.length === 0) {
+      const unreadTickets = masterRepairs.filter(r => !r.adminReviewed && (r.status || '').toUpperCase() !== 'RESOLVED');
+      const fuelAlarmSites = masterSites
+        .filter(s => s.is7DayAlarm || s.daysRemaining <= 7.0)
+        .sort((a, b) => a.daysRemaining - b.daysRemaining);
+
+      if (unreadTickets.length === 0 && fuelAlarmSites.length === 0) {
         banner.classList.add('hidden');
         return;
       }
-      banner.classList.remove('hidden');
-      banner.innerHTML =
-        '<div class="flex items-center justify-between border-b border-rose-500/30 pb-2">' +
-          '<div class="flex items-center gap-2">' +
-            '<span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping inline-block"></span>' +
-            '<span class="font-bold uppercase tracking-wider text-rose-400">// INCOMING SITE REPAIR TICKET ALERTS (' + unread.length + ')</span>' +
+
+      const ticketsHtml = unreadTickets.length > 0 ? (
+        '<div class="space-y-1.5">' +
+          '<div class="flex items-center justify-between border-b border-rose-500/30 pb-1.5">' +
+            '<span class="font-bold uppercase tracking-wider text-rose-400 text-[11px]">// INCOMING SITE REPAIR TICKETS (' + unreadTickets.length + ')</span>' +
+            '<button type="button" onclick="acknowledgeAllAdminTickets()" class="border_ui border-rose-500/50 px-2.5 py-0.5 text-[10px] font-bold hover:bg-rose-600 hover:text-white cursor-pointer">MARK ALL REVIEWED</button>' +
           '</div>' +
-          '<button type="button" onclick="acknowledgeAllAdminTickets()" class="border_ui border-rose-500/50 px-2.5 py-1 text-[10px] font-bold hover:bg-rose-600 hover:text-white cursor-pointer">MARK ALL REVIEWED</button>' +
-        '</div>' +
-        '<div class="space-y-2">' +
-          unread.slice(0, 5).map(t =>
+          unreadTickets.slice(0, 5).map(t =>
             '<div class="border_ui border-rose-500/30 bg-black/20 p-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">' +
               '<div>' +
-                '<div class="font-bold text-rose-300">' + t.ticketId + ' · ' + t.siteId + ' (' + (t.category || t.type || 'REPAIR') + ')</div>' +
+                '<div class="font-bold text-rose-300">' + t.ticketId + ' · ' + t.siteId + ' (' + (t.category || t.type || 'REPAIR') + ')' +
+                  (t.attachmentUrl ? ' <a href="' + t.attachmentUrl + '" target="_blank" class="underline text-amber-400 ml-1">[ATTACHMENT]</a>' : '') +
+                '</div>' +
                 '<div class="text-[11px] opacity-90 mt-0.5">' + t.issue + '</div>' +
                 '<div class="text-[10px] opacity-60 mt-0.5">Logged: ' + (t.loggedDate || t.dateLogged || 'Today') + ' · Tech: ' + (t.technician || 'FSE') + ' · Status: ' + t.status + '</div>' +
               '</div>' +
@@ -6461,7 +6704,41 @@
               '</div>' +
             '</div>'
           ).join('') +
-        '</div>';
+        '</div>'
+      ) : '';
+
+      const fuelAlertsHtml = fuelAlarmSites.length > 0 ? (
+        '<div class="space-y-1.5">' +
+          '<div class="flex items-center justify-between border-b border-amber-500/30 pb-1.5">' +
+            '<span class="font-bold uppercase tracking-wider text-amber-400 text-[11px]">// INCOMING 7-DAY FUEL ALERTS (' + fuelAlarmSites.length + ' SITE' + (fuelAlarmSites.length === 1 ? '' : 'S') + ' &lt;= 7 DAYS)</span>' +
+            '<span class="text-[10px] opacity-70">Auto-alarm triggers when fuel finishes within 7 days</span>' +
+          '</div>' +
+          '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">' +
+            fuelAlarmSites.slice(0, 6).map(s =>
+              '<div class="border_ui border-amber-500/40 bg-black/20 p-2.5 flex items-center justify-between gap-2">' +
+                '<div class="min-w-0">' +
+                  '<div class="font-bold text-amber-300 truncate">' + s.siteId + ' (' + s.state + ')</div>' +
+                  '<div class="text-[10px] opacity-85">' + s.currentDL + ' L · ' + s.cpd + ' L/d · <span class="text-rose-400 font-bold">' + (s.autonomyBreakdown || (s.daysRemaining + 'd')) + '</span></div>' +
+                  '<div class="text-[9px] opacity-60 truncate">Dry: ' + s.predictedDryDate + '</div>' +
+                '</div>' +
+                '<div class="flex flex-col gap-1 shrink-0">' +
+                  '<button type="button" onclick="switchAdminSite(\'' + s.siteId + '\'); openAdminModule(\'fuel\');" class="border_ui px-2 py-0.5 text-[9px] font-bold btn-invert cursor-pointer">INSPECT</button>' +
+                  '<button type="button" onclick="send7DayFuelAlarm(\'' + s.siteId + '\', true)" class="border_ui border-amber-400/70 px-2 py-0.5 text-[9px] font-bold text-amber-400 hover:bg-amber-500 hover:text-black cursor-pointer">ALARM</button>' +
+                '</div>' +
+              '</div>'
+            ).join('') +
+          '</div>' +
+        '</div>'
+      ) : '';
+
+      banner.classList.remove('hidden');
+      banner.innerHTML =
+        '<div class="flex items-center gap-2">' +
+          '<span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping inline-block"></span>' +
+          '<span class="font-bold uppercase tracking-wider text-rose-400">// INCOMING SITE REPAIR &amp; FUEL ISSUES</span>' +
+        '</div>' +
+        ticketsHtml +
+        fuelAlertsHtml;
     }
 
     function acknowledgeAdminTicket(ticketId) {
@@ -6563,7 +6840,10 @@
                         '</select>' +
                       '</div>' +
                       '<div class="text-[11px] opacity-85">' + t.issue + '</div>' +
-                      '<div class="text-[10px] opacity-55">Logged: ' + (t.loggedDate || t.dateLogged || 'N/A') + ' · Tech: ' + (t.technician || 'FSE') + '</div>' +
+                      '<div class="flex items-center justify-between gap-2 text-[10px] opacity-60">' +
+                        '<span>Logged: ' + (t.loggedDate || t.dateLogged || 'N/A') + ' · Tech: ' + (t.technician || 'FSE') + '</span>' +
+                        (t.attachmentUrl ? '<a href="' + t.attachmentUrl + '" target="_blank" class="underline text-amber-400 font-bold opacity-100">VIEW ATTACHMENT</a>' : '') +
+                      '</div>' +
                     '</div>'
                   ).join('')) +
             '</div>' +
@@ -6620,18 +6900,13 @@
         const totalOffload = (parseFloat(battHrs) + parseFloat(lightHrs)).toFixed(1);
         container.innerHTML =
           '<div class="border_ui border-amber-500/40 bg-amber-500/10 p-2.5 text-[11px] text-amber-300">' +
-            '// ADMIN-ONLY CONTROL: Changes to Light &amp; Battery (BUB) sync directly to FSE Portal (read-only for FSEs) and Supabase.' +
-          '</div>' +
-          '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">' +
-            '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">BATTERY LIFE</div><div class="text-xl font-bold mt-1 text-(--color-accent)">' + battHrs + ' HRS</div><div class="text-[10px] opacity-60">' + (site.batteryStatus || 'HEALTHY') + '</div></div>' +
-            '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">SOC / VOLTAGE</div><div class="text-xl font-bold mt-1">' + soc + '%</div><div class="text-[10px] opacity-60">' + (site.batteryVoltage || '52.8 V') + '</div></div>' +
-            '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">HOURS OF LIGHT</div><div class="text-xl font-bold mt-1 text-amber-400">' + lightHrs + ' HRS/D</div><div class="text-[10px] opacity-60">' + (site.gridStatus || 'PHCN ONLINE') + '</div></div>' +
-            '<div class="border_ui p-3 card_surface"><div class="opacity-50 text-[10px] uppercase">TOTAL GEN OFFLOAD</div><div class="text-xl font-bold mt-1">' + totalOffload + ' HRS/D</div><div class="text-[10px] opacity-60">Token: ' + (site.nepaTokenStatus || 'LOADED') + '</div></div>' +
+            '// ADMIN-ONLY CONTROL (' + site.siteId + '): BUB = Backup Battery · Light = Utility Power Grid. Changes sync live to FSE Portal (view-only).' +
           '</div>' +
           '<div class="grid grid-cols-1 lg:grid-cols-2 gap-2.5">' +
             '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
-              '<div class="font-bold uppercase border-b border_ui pb-2">// BATTERY LIFE &amp; BUB (' + site.siteId + ')</div>' +
-              '<form onsubmit="handleAdminSaveBub(event)" class="space-y-2.5">' +
+              '<div class="font-bold uppercase border-b border_ui pb-2">// BUB — BACKUP BATTERY (' + site.siteId + ')</div>' +
+              buildAnimatedBatteryHtml(site) +
+              '<form onsubmit="handleAdminSaveBub(event)" class="space-y-2.5 pt-1">' +
                 '<div class="grid grid-cols-2 gap-2">' +
                   '<div><label class="block text-[10px] opacity-60 mb-1">BATTERY LIFE (HRS OFF-GRID)</label><input type="number" step="0.5" min="0" id="admBubHrs" value="' + battHrs + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
                   '<div><label class="block text-[10px] opacity-60 mb-1">BATTERY SOC (%)</label><input type="number" min="0" max="100" id="admBubSoc" value="' + soc + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
@@ -6648,8 +6923,9 @@
               '</form>' +
             '</div>' +
             '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
-              '<div class="font-bold uppercase border-b border_ui pb-2">// NO. OF HOURS OF LIGHT ON SITE</div>' +
-              '<form onsubmit="handleAdminSaveLight(event)" class="space-y-2.5">' +
+              '<div class="font-bold uppercase border-b border_ui pb-2">// UTILITY LIGHT — POWER GRID (' + site.siteId + ') · OFFLOAD: ' + totalOffload + 'H/D</div>' +
+              buildAnimatedGridHtml(site) +
+              '<form onsubmit="handleAdminSaveLight(event)" class="space-y-2.5 pt-1">' +
                 '<div class="grid grid-cols-2 gap-2">' +
                   '<div><label class="block text-[10px] opacity-60 mb-1">HOURS OF LIGHT (HRS/DAY)</label><input type="number" step="0.5" min="0" max="24" id="admLightHrs" value="' + lightHrs + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
                   '<div><label class="block text-[10px] opacity-60 mb-1">GRID STATUS</label><select id="admGridStatus" class="w-full border_ui bg-(--color-card-bg) px-2.5 py-1.5 outline-none">' +
@@ -6675,32 +6951,37 @@
         container.innerHTML =
           '<div class="grid grid-cols-1 lg:grid-cols-12 gap-2.5">' +
             '<div class="lg:col-span-7 border_ui p-4 bg-(--color-card-bg)/40 space-y-2.5">' +
-              '<div class="flex items-center justify-between border-b border_ui pb-2">' +
-                '<span class="font-bold uppercase">// ANIMATED DIESEL TANK, GEN TYPE &amp; DAILY USAGE (' + site.siteId + ')</span>' +
+              '<div class="flex flex-wrap items-center justify-between gap-2 border-b border_ui pb-2">' +
+                '<span class="font-bold uppercase">// ANIMATED DIESEL TANK &amp; EXACT TELEMETRY (' + site.siteId + ')</span>' +
                 '<span class="border_ui px-2 py-0.5 text-[10px] font-bold text-amber-400">' + genKva + ' kVA · ' + site.cpd + ' L/DAY</span>' +
               '</div>' +
               buildAnimatedTankHtml(site) +
             '</div>' +
-            '<div class="lg:col-span-5 grid grid-cols-2 gap-2 text-xs">' +
-              '<div class="border_ui p-3 card_surface flex flex-col justify-between"><div class="opacity-50 text-[10px] uppercase">LIVE SYNC FUEL</div><div class="text-xl font-bold mt-1 text-(--color-accent)">' + site.currentDL + ' L</div><div class="text-[10px] opacity-60">' + site.fillPct + '% of ' + site.tankCap + 'L</div></div>' +
-              '<div class="border_ui p-3 card_surface flex flex-col justify-between"><div class="opacity-50 text-[10px] uppercase">GENERATOR TYPE</div><div class="text-xl font-bold mt-1 text-amber-400">' + genKva + ' kVA</div><div class="text-[10px] opacity-60">' + (site.powerSource || 'In-house') + '</div></div>' +
-              '<div class="border_ui p-3 card_surface flex flex-col justify-between"><div class="opacity-50 text-[10px] uppercase">DAILY USAGE (CPD)</div><div class="text-xl font-bold mt-1">' + site.cpd + ' L/d</div><div class="text-[10px] opacity-60">' + site.cph + ' L/h · 12h: ' + site.cpd12h + 'L</div></div>' +
-              '<div class="border_ui p-3 card_surface flex flex-col justify-between"><div class="opacity-50 text-[10px] uppercase">AUTONOMY / DRY</div><div class="text-lg font-bold mt-1">' + site.daysRemaining + ' DAYS</div><div class="text-[10px] opacity-60">' + site.predictedDryDate + '</div></div>' +
+            '<div class="lg:col-span-5 border_ui p-4 bg-(--color-card-bg)/40 space-y-2 text-[11px]">' +
+              '<div class="font-bold uppercase border-b border_ui pb-1.5 text-(--color-accent)">// EXACT FUEL DEPLETION MATH (' + site.siteId + ')</div>' +
+              '<div class="flex justify-between"><span class="opacity-65">Live Synchronized Fuel:</span><span class="font-bold text-(--color-accent)">' + site.currentDL + ' L (' + site.fillPct + '%)</span></div>' +
+              '<div class="flex justify-between"><span class="opacity-65">Daily Usage (CPD):</span><span class="font-bold">' + site.cpd + ' L/day (' + site.cph + ' L/hr)</span></div>' +
+              '<div class="flex justify-between"><span class="opacity-65">12-Hour Shift Usage:</span><span class="font-bold">' + site.cpd12h + ' L / 12h</span></div>' +
+              '<div class="flex justify-between"><span class="opacity-65">Exact Time Remaining:</span><span class="font-bold ' + (site.is7DayAlarm ? 'text-rose-400' : 'text-emerald-400') + '">' + (site.autonomyBreakdown || (site.daysRemaining + 'd')) + ' (' + site.daysRemaining + 'd)</span></div>' +
+              '<div class="flex justify-between"><span class="opacity-65">Exact Dry-Out Date/Time:</span><span class="font-bold text-rose-400">' + site.predictedDryDate + '</span></div>' +
+              '<div class="flex justify-between"><span class="opacity-65">7-Day Alarm Trigger:</span><span class="font-bold text-amber-400">' + (site.alarm7DayDate || 'N/A') + '</span></div>' +
+              '<div class="flex justify-between"><span class="opacity-65">7-Day Buffer / Space to Full:</span><span class="font-bold">' + (site.litresFor7Days || 0) + ' L / ' + (site.litresToFull || 0) + ' L</span></div>' +
+              '<div class="flex justify-between border-t border_ui pt-1.5"><span class="opacity-65">Baseline Burned:</span><span class="opacity-85">-' + (site.burnedSinceBaseline || 0) + ' L over ' + (site.elapsedHoursSinceBaseline || 0) + 'h</span></div>' +
             '</div>' +
           '</div>' +
           '<div class="grid grid-cols-1 lg:grid-cols-2 gap-2.5">' +
             '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
-              '<div class="font-bold uppercase border-b border_ui pb-2">// INPUT FUEL LEVEL &amp; DAILY USAGE (' + site.siteId + ')</div>' +
+              '<div class="font-bold uppercase border-b border_ui pb-2">// EDIT FUEL LEVEL &amp; DAILY USAGE — ' + site.siteId + ' ONLY</div>' +
               '<form onsubmit="handleAdminUpdateFuel(event)" class="space-y-2.5">' +
                 '<div class="grid grid-cols-2 gap-2">' +
-                  '<div><label class="block text-[10px] opacity-60 mb-1">CURRENT FUEL LEVEL (LITRES)</label><input type="number" step="0.1" min="0" id="admFuelLevel" value="' + site.currentDL + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 font-bold outline-none"></div>' +
-                  '<div><label class="block text-[10px] opacity-60 mb-1">DAILY USAGE (CPD L/DAY)</label><input type="number" step="0.5" min="1" id="admFuelCpd" value="' + site.cpd + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 font-bold outline-none"></div>' +
+                  '<div><label class="block text-[10px] opacity-60 mb-1">CURRENT FUEL LEVEL (LITRES)</label><input type="number" step="0.1" min="0" max="' + site.tankCap + '" id="admFuelLevel" value="' + site.currentDL + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 font-bold outline-none"></div>' +
+                  '<div><label class="block text-[10px] opacity-60 mb-1">DAILY USAGE (LITRES / DAY)</label><input type="number" step="0.5" min="0.5" id="admFuelCpd" value="' + site.cpd + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 font-bold outline-none"></div>' +
                 '</div>' +
-                '<button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">SAVE FUEL LEVEL &amp; USAGE</button>' +
+                '<button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">SAVE FUEL LEVEL &amp; DAILY USAGE</button>' +
               '</form>' +
             '</div>' +
             '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
-              '<div class="font-bold uppercase border-b border_ui pb-2">// TIME DIESEL RECEIVED &amp; PREVIOUS DATE</div>' +
+              '<div class="font-bold uppercase border-b border_ui pb-2">// LOG DIESEL DELIVERY — ' + site.siteId + '</div>' +
               '<form onsubmit="handleAdminLogDelivery(event)" class="space-y-2">' +
                 '<div class="grid grid-cols-3 gap-2">' +
                   '<input type="number" id="admDelQty" required placeholder="Qty (L)" class="border_ui bg-transparent px-2 py-1.5 outline-none">' +
@@ -6726,158 +7007,102 @@
                   ).join('') + '</tbody></table></div>') +
           '</div>';
       } else if (adminActiveModule === 'analytics') {
-        const esc = v => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        const activeSites = getActiveScopeSites().slice();
-        activeSites.forEach(s => synchronizeSite(s));
+        // STRICTLY SINGLE-SITE FUEL ANATOMY, DEPLETION FORECAST & 7-DAY AUTOMATIC ALARM
+        synchronizeSite(site);
+        const genKva = Number(site.genSize || site.loadKw || 15);
+        const maxHorizonDays = Math.max(10, Math.ceil(site.daysRemaining) + 1);
+        const plotW = 540;
+        const plotH = 165;
+        const padL = 52;
+        const padT = 22;
+        const padB = 26;
+        const svgW = padL + plotW + 30;
+        const svgH = padT + plotH + padB;
 
-        const criticalSites = activeSites
-          .filter(s => s.currentDL <= 200 || s.daysRemaining <= 2.0)
-          .sort((a, b) => a.daysRemaining - b.daysRemaining);
-        const warningSites = activeSites.filter(s => s.currentDL > 200 && s.daysRemaining > 2.0 && s.daysRemaining <= 4.0);
-        const healthySites = activeSites.filter(s => s.currentDL > 200 && s.daysRemaining > 4.0);
+        const maxL = Math.max(site.tankCap, site.currentDL, site.litresFor7Days || 100);
+        const xForDay = d => padL + (Math.min(maxHorizonDays, d) / maxHorizonDays) * plotW;
+        const yForLitres = l => padT + plotH - (Math.max(0, Math.min(maxL, l)) / maxL) * plotH;
 
-        const avgBub = activeSites.length ? (activeSites.reduce((sum, s) => sum + (Number(s.batteryAutonomyHours) || 0), 0) / activeSites.length).toFixed(1) : '0.0';
-        const avgLight = activeSites.length ? (activeSites.reduce((sum, s) => sum + (s.gridHoursPerDay !== undefined ? Number(s.gridHoursPerDay) : 12), 0) / activeSites.length).toFixed(1) : '0.0';
+        const xStart = xForDay(0);
+        const yStart = yForLitres(site.currentDL);
+        const xDry = xForDay(site.daysRemaining);
+        const yDry = yForLitres(0);
+        const y7DayThreshold = yForLitres(Math.min(maxL, site.litresFor7Days || 0));
 
-        // 1. Critical & Reorder Alert Cards
-        const alertCardsHtml = criticalSites.length === 0
-          ? '<div class="border_ui border-emerald-500/40 bg-emerald-500/10 p-3 text-[11px] font-bold text-emerald-400">ALL ' + activeSites.length + ' ACTIVE SITES ARE ABOVE THE 200L / 2.0-DAY CRITICAL THRESHOLD.</div>'
-          : '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">' +
-              criticalSites.map(s => {
-                const safeId = esc(s.siteId);
-                return '<div class="border_ui border-rose-500/60 bg-rose-500/10 p-3 space-y-2">' +
-                  '<div class="flex items-start justify-between gap-2">' +
-                    '<div>' +
-                      '<div class="font-bold text-xs text-rose-400">' + safeId + '</div>' +
-                      '<div class="text-[10px] opacity-75">' + esc(s.state) + ' · ' + esc(s.tenantId) + '</div>' +
-                    '</div>' +
-                    '<span class="border_ui border-rose-500/60 px-1.5 py-0.5 text-[9px] font-bold text-rose-400">CRITICAL / REORDER</span>' +
-                  '</div>' +
-                  '<div class="grid grid-cols-2 gap-1.5 text-[11px] border-t border_ui pt-2">' +
-                    '<div><span class="opacity-60">FUEL:</span> <span class="font-bold text-rose-400">' + s.currentDL + ' L</span></div>' +
-                    '<div><span class="opacity-60">AUTONOMY:</span> <span class="font-bold text-rose-400">' + s.daysRemaining + ' d</span></div>' +
-                  '</div>' +
-                  '<div class="text-[10px] opacity-70">Dry Est: ' + esc(s.predictedDryDate) + '</div>' +
-                  '<div class="flex gap-1.5 pt-1">' +
-                    '<button type="button" onclick="switchAdminSite(\'' + safeId + '\'); openAdminModule(\'fuel\');" class="flex-1 border_ui border-rose-400 bg-rose-600 text-white px-2 py-1.5 font-bold text-[10px] hover:bg-rose-500 cursor-pointer">INSPECT / REFUEL &gt;&gt;</button>' +
-                    '<button type="button" onclick="openEditSiteModal(\'' + safeId + '\')" class="border_ui px-2.5 py-1.5 font-bold text-[10px] btn-invert cursor-pointer">EDIT</button>' +
-                  '</div>' +
-                '</div>';
-              }).join('') +
-            '</div>';
+        const dayTicks = [];
+        const step = Math.max(1, Math.ceil(maxHorizonDays / 7));
+        for (let d = 0; d <= maxHorizonDays; d += step) dayTicks.push(d);
+        if (dayTicks[dayTicks.length - 1] !== maxHorizonDays) dayTicks.push(maxHorizonDays);
 
-        // 2. SVG Horizontal Bar / Runway Chart (Sorted Ascending: Least Days Left to Most)
-        const sortedRunway = activeSites.slice().sort((a, b) => a.daysRemaining - b.daysRemaining);
-        const maxDays = Math.max(10, ...sortedRunway.map(s => s.daysRemaining));
-        const rLeft = 128;
-        const rWidth = 490;
-        const rRowH = 28;
-        const rTop = 28;
-        const rSvgH = rTop + sortedRunway.length * rRowH + 22;
-        const thresholdX = rLeft + (2.0 / maxDays) * rWidth;
+        const curveColor = site.currentDL <= 0 || site.daysRemaining <= 3.0 ? '#ef4444' : (site.daysRemaining <= 7.0 ? '#f59e0b' : '#22c55e');
 
-        const runwayTicks = [0, 2, 4, 6, 8, Math.ceil(maxDays)].filter((v, i, arr) => v <= Math.ceil(maxDays) && arr.indexOf(v) === i);
-        const runwayGridSvg = runwayTicks.map(t => {
-          const tx = rLeft + (t / maxDays) * rWidth;
-          return '<line x1="' + tx.toFixed(1) + '" y1="' + (rTop - 6) + '" x2="' + tx.toFixed(1) + '" y2="' + (rSvgH - 18) + '" stroke="currentColor" stroke-opacity="0.12" stroke-width="1"/>' +
-                 '<text x="' + tx.toFixed(1) + '" y="' + (rSvgH - 4) + '" text-anchor="middle" fill="currentColor" fill-opacity="0.55" font-size="9">' + t + 'd</text>';
-        }).join('');
-
-        const runwayBarsSvg = sortedRunway.map((s, idx) => {
-          const y = rTop + idx * rRowH;
-          const barW = Math.max(4, (s.daysRemaining / maxDays) * rWidth);
-          const isCrit = s.currentDL <= 200 || s.daysRemaining <= 2.0;
-          const isWarn = !isCrit && s.daysRemaining <= 4.0;
-          const color = isCrit ? '#ef4444' : (isWarn ? '#f59e0b' : '#22c55e');
-          const safeId = esc(s.siteId);
-          return '<g class="cursor-pointer" tabindex="0" role="button" aria-label="Inspect ' + safeId + ' fuel runway (' + s.daysRemaining + ' days, ' + s.currentDL + 'L)" onclick="switchAdminSite(\'' + safeId + '\'); openAdminModule(\'fuel\');" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();switchAdminSite(\'' + safeId + '\');openAdminModule(\'fuel\');}">' +
-            '<title>' + safeId + ' (' + esc(s.state) + ') — ' + s.daysRemaining + ' days left · ' + s.currentDL + 'L / ' + s.tankCap + 'L (' + s.status + ')</title>' +
-            '<text x="' + (rLeft - 8) + '" y="' + (y + 15) + '" text-anchor="end" fill="currentColor" font-size="10" font-weight="bold">' + safeId + '</text>' +
-            '<rect x="' + rLeft + '" y="' + (y + 4) + '" width="' + rWidth + '" height="16" fill="currentColor" fill-opacity="0.06"/>' +
-            '<rect x="' + rLeft + '" y="' + (y + 4) + '" width="' + barW.toFixed(1) + '" height="16" fill="' + color + '" fill-opacity="0.85"/>' +
-            '<text x="' + (rLeft + rWidth + 8) + '" y="' + (y + 15) + '" fill="currentColor" font-size="10" font-weight="bold">' + s.daysRemaining + 'd · ' + s.currentDL + 'L</text>' +
-          '</g>';
-        }).join('');
-
-        const runwaySvg =
-          '<svg viewBox="0 0 760 ' + rSvgH + '" class="w-full h-auto font-mono" role="img" aria-label="Diesel autonomy runway ranking across 14 active sites">' +
-            runwayGridSvg +
-            runwayBarsSvg +
-            '<line x1="' + thresholdX.toFixed(1) + '" y1="' + (rTop - 10) + '" x2="' + thresholdX.toFixed(1) + '" y2="' + (rSvgH - 18) + '" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4 3"/>' +
-            '<text x="' + (thresholdX + 4).toFixed(1) + '" y="' + (rTop - 12) + '" fill="#ef4444" font-size="9" font-weight="bold">2.0d / 200L CRITICAL</text>' +
+        const depletionSvg =
+          '<svg viewBox="0 0 ' + svgW + ' ' + svgH + '" class="w-full h-auto font-mono" role="img" aria-label="Fuel depletion forecast for ' + site.siteId + '">' +
+            [0, 0.25, 0.5, 0.75, 1].map(frac => {
+              const lv = Math.round(maxL * frac);
+              const yy = yForLitres(lv);
+              return '<line x1="' + padL + '" y1="' + yy.toFixed(1) + '" x2="' + (padL + plotW) + '" y2="' + yy.toFixed(1) + '" stroke="currentColor" stroke-opacity="0.12" stroke-width="1"/>' +
+                     '<text x="' + (padL - 6) + '" y="' + (yy + 3).toFixed(1) + '" text-anchor="end" fill="currentColor" fill-opacity="0.55" font-size="9">' + lv + 'L</text>';
+            }).join('') +
+            dayTicks.map(d => {
+              const xx = xForDay(d);
+              return '<line x1="' + xx.toFixed(1) + '" y1="' + padT + '" x2="' + xx.toFixed(1) + '" y2="' + (padT + plotH) + '" stroke="currentColor" stroke-opacity="0.08" stroke-width="1"/>' +
+                     '<text x="' + xx.toFixed(1) + '" y="' + (svgH - 6) + '" text-anchor="middle" fill="currentColor" fill-opacity="0.6" font-size="9">Day ' + d + '</text>';
+            }).join('') +
+            '<!-- 7-Day Refuel Buffer Horizontal Threshold Line -->' +
+            '<line x1="' + padL + '" y1="' + y7DayThreshold.toFixed(1) + '" x2="' + (padL + plotW) + '" y2="' + y7DayThreshold.toFixed(1) + '" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="5 3"/>' +
+            '<text x="' + (padL + 6) + '" y="' + Math.max(padT + 10, y7DayThreshold - 5).toFixed(1) + '" fill="#f59e0b" font-size="9" font-weight="bold">7-DAY ALARM LEVEL (' + (site.litresFor7Days || 0) + ' L)</text>' +
+            '<!-- Shaded Depletion Area & Exact Burn Slope -->' +
+            '<polygon points="' + xStart.toFixed(1) + ',' + yStart.toFixed(1) + ' ' + xDry.toFixed(1) + ',' + yDry.toFixed(1) + ' ' + xStart.toFixed(1) + ',' + yDry.toFixed(1) + '" fill="' + curveColor + '" fill-opacity="0.15"/>' +
+            '<line x1="' + xStart.toFixed(1) + '" y1="' + yStart.toFixed(1) + '" x2="' + xDry.toFixed(1) + '" y2="' + yDry.toFixed(1) + '" stroke="' + curveColor + '" stroke-width="2.5"/>' +
+            '<circle cx="' + xStart.toFixed(1) + '" cy="' + yStart.toFixed(1) + '" r="4" fill="' + curveColor + '"/>' +
+            '<circle cx="' + xDry.toFixed(1) + '" cy="' + yDry.toFixed(1) + '" r="4" fill="#ef4444"/>' +
+            '<text x="' + Math.min(padL + plotW - 10, xDry + 6).toFixed(1) + '" y="' + (yDry - 8).toFixed(1) + '" fill="#ef4444" font-size="9" font-weight="bold">0L @ ' + site.daysRemaining + 'd</text>' +
           '</svg>';
 
-        // 3. SVG BUB Battery vs Utility Light Hours Comparison Chart (0 - 24h scale)
-        const bRowH = 32;
-        const bTop = 26;
-        const bSvgH = bTop + activeSites.length * bRowH + 22;
-        const bWidth = 490;
-        const bubGridSvg = [0, 6, 12, 18, 24].map(h => {
-          const hx = rLeft + (h / 24) * bWidth;
-          return '<line x1="' + hx.toFixed(1) + '" y1="' + (bTop - 6) + '" x2="' + hx.toFixed(1) + '" y2="' + (bSvgH - 18) + '" stroke="currentColor" stroke-opacity="0.12" stroke-width="1"/>' +
-                 '<text x="' + hx.toFixed(1) + '" y="' + (bSvgH - 4) + '" text-anchor="middle" fill="currentColor" fill-opacity="0.55" font-size="9">' + h + 'h</text>';
-        }).join('');
-
-        const bubBarsSvg = activeSites.map((s, idx) => {
-          const y = bTop + idx * bRowH;
-          const bubH = Math.min(24, Math.max(0, Number(s.batteryAutonomyHours) || 0));
-          const lightH = Math.min(24, Math.max(0, s.gridHoursPerDay !== undefined ? Number(s.gridHoursPerDay) : 12));
-          const bubW = Math.max(2, (bubH / 24) * bWidth);
-          const lightW = Math.max(2, (lightH / 24) * bWidth);
-          const safeId = esc(s.siteId);
-          return '<g class="cursor-pointer" tabindex="0" role="button" aria-label="Inspect ' + safeId + ' BUB ' + bubH + 'h vs Grid ' + lightH + 'h" onclick="switchAdminSite(\'' + safeId + '\'); openAdminModule(\'bub\');" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();switchAdminSite(\'' + safeId + '\');openAdminModule(\'bub\');}">' +
-            '<title>' + safeId + ' — BUB Autonomy: ' + bubH + 'h (SOC ' + (s.batterySoc || 0) + '%) | Utility Light: ' + lightH + 'h/day</title>' +
-            '<text x="' + (rLeft - 8) + '" y="' + (y + 16) + '" text-anchor="end" fill="currentColor" font-size="10" font-weight="bold">' + safeId + '</text>' +
-            '<rect x="' + rLeft + '" y="' + (y + 3) + '" width="' + bWidth + '" height="9" fill="currentColor" fill-opacity="0.06"/>' +
-            '<rect x="' + rLeft + '" y="' + (y + 3) + '" width="' + bubW.toFixed(1) + '" height="9" fill="#22c55e" fill-opacity="0.9"/>' +
-            '<rect x="' + rLeft + '" y="' + (y + 14) + '" width="' + bWidth + '" height="9" fill="currentColor" fill-opacity="0.06"/>' +
-            '<rect x="' + rLeft + '" y="' + (y + 14) + '" width="' + lightW.toFixed(1) + '" height="9" fill="#f59e0b" fill-opacity="0.9"/>' +
-            '<text x="' + (rLeft + bWidth + 8) + '" y="' + (y + 16) + '" fill="currentColor" font-size="9" font-weight="bold">BUB ' + bubH + 'h / GRID ' + lightH + 'h</text>' +
-          '</g>';
-        }).join('');
-
-        const bubSvg =
-          '<svg viewBox="0 0 760 ' + bSvgH + '" class="w-full h-auto font-mono" role="img" aria-label="BUB battery autonomy versus utility light hours across 14 active sites">' +
-            bubGridSvg +
-            bubBarsSvg +
-          '</svg>';
+        const lightH = Math.min(24, Math.max(0, site.gridHoursPerDay !== undefined ? Number(site.gridHoursPerDay) : 12));
+        const bubH = Math.min(24 - lightH, Math.max(0, Number(site.batteryAutonomyHours) || 0));
+        const genH = Math.max(0, parseFloat((24 - lightH - bubH).toFixed(1)));
+        const lastAlarmIso = getLast7DayAlarmTime(site.siteId);
+        const lastAlarmTxt = lastAlarmIso ? new Date(lastAlarmIso).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Not triggered yet';
+        const alarmRecipients = [
+          emailChannelSettings.financeEmail ? ('Finance: ' + emailChannelSettings.financeEmail) : null,
+          site.fseEmail ? ('FSE: ' + site.fseEmail) : null,
+          'Admin Alert Email'
+        ].filter(Boolean).join(' · ');
 
         container.innerHTML =
-          '<div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">' +
-            '<div class="border_ui p-3 bg-(--color-card-bg)/40"><div class="text-[10px] opacity-60 uppercase">ACTIVE SITES</div><div class="londrina-outline-regular text-3xl mt-0.5">' + activeSites.length + '</div></div>' +
-            '<div class="border_ui border-rose-500/40 p-3 bg-rose-500/10"><div class="text-[10px] text-rose-400 uppercase font-bold">CRITICAL / REORDER</div><div class="londrina-outline-regular text-3xl mt-0.5 text-rose-400">' + criticalSites.length + '</div></div>' +
-            '<div class="border_ui border-amber-500/40 p-3 bg-amber-500/10"><div class="text-[10px] text-amber-400 uppercase font-bold">WARNING (&lt;=4D)</div><div class="londrina-outline-regular text-3xl mt-0.5 text-amber-400">' + warningSites.length + '</div></div>' +
-            '<div class="border_ui border-emerald-500/40 p-3 bg-emerald-500/10"><div class="text-[10px] text-(--color-accent) uppercase font-bold">HEALTHY</div><div class="londrina-outline-regular text-3xl mt-0.5 text-(--color-accent)">' + healthySites.length + '</div></div>' +
-            '<div class="border_ui p-3 bg-(--color-card-bg)/40 col-span-2 sm:col-span-1"><div class="text-[10px] opacity-60 uppercase">AVG BUB / LIGHT</div><div class="font-bold text-sm mt-1.5">' + avgBub + 'h / ' + avgLight + 'h</div></div>' +
+          '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">' +
+            '<div class="border_ui p-3 bg-(--color-card-bg)/40"><div class="text-[10px] opacity-60 uppercase">EXACT AUTONOMY</div><div class="font-bold text-lg mt-0.5 ' + (site.is7DayAlarm ? 'text-rose-400' : 'text-emerald-400') + '">' + (site.autonomyBreakdown || (site.daysRemaining + 'd')) + '</div><div class="text-[10px] opacity-60">' + site.daysRemaining + ' days (' + site.hoursRemaining + ' hrs)</div></div>' +
+            '<div class="border_ui p-3 bg-(--color-card-bg)/40"><div class="text-[10px] opacity-60 uppercase">EXACT DRY-OUT TIME</div><div class="font-bold text-sm text-rose-400 mt-1">' + site.predictedDryDate + '</div><div class="text-[10px] opacity-60">At ' + site.cpd + ' L/day (' + site.cph + ' L/hr)</div></div>' +
+            '<div class="border_ui p-3 bg-(--color-card-bg)/40"><div class="text-[10px] opacity-60 uppercase">7-DAY ALARM STATUS</div><div class="font-bold text-sm mt-1 ' + (site.is7DayAlarm ? 'text-amber-400' : 'text-emerald-400') + '">' + (site.is7DayAlarm ? 'ALARM ACTIVE (<= 7D)' : 'NORMAL (> 7D)') + '</div><div class="text-[10px] opacity-60">Trigger: ' + (site.alarm7DayDate || 'N/A') + '</div></div>' +
+            '<div class="border_ui p-3 bg-(--color-card-bg)/40"><div class="text-[10px] opacity-60 uppercase">REFILL MATH (' + genKva + ' kVA)</div><div class="font-bold text-sm mt-1">' + (site.litresFor7Days || 0) + ' L (7d)</div><div class="text-[10px] opacity-60">Space to full: ' + (site.litresToFull || 0) + ' L</div></div>' +
           '</div>' +
-          '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
-            '<div class="flex flex-wrap items-center justify-between gap-2 border-b border_ui pb-2">' +
-              '<span class="font-bold uppercase text-rose-400">// CRITICAL &amp; REORDER SITE ALERTS (&lt;= 200L OR &lt;= 2.0 DAYS)</span>' +
-              '<span class="text-[10px] opacity-70">1-Click Jump to Inspect or Edit</span>' +
-            '</div>' +
-            alertCardsHtml +
-          '</div>' +
-          '<div class="grid grid-cols-1 xl:grid-cols-2 gap-2.5">' +
-            '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
+
+          '<div class="grid grid-cols-1 xl:grid-cols-12 gap-2.5">' +
+            '<div class="xl:col-span-8 border_ui p-4 bg-(--color-card-bg)/40 space-y-2.5">' +
               '<div class="flex flex-wrap items-center justify-between gap-2 border-b border_ui pb-2">' +
-                '<span class="font-bold uppercase">// DIESEL AUTONOMY RUNWAY (14 ACTIVE SITES)</span>' +
-                '<div class="flex items-center gap-2 text-[10px]">' +
-                  '<span class="text-rose-400 font-bold">■ CRIT</span>' +
-                  '<span class="text-amber-400 font-bold">■ WARN</span>' +
-                  '<span class="text-(--color-accent) font-bold">■ OK</span>' +
+                '<span class="font-bold uppercase">// FUEL DEPLETION CURVE — ' + site.siteId + ' ONLY</span>' +
+                '<span class="text-[10px] opacity-75">Exact linear burn: ' + site.currentDL + ' L − (' + site.cpd + ' L/day × Days)</span>' +
+              '</div>' +
+              '<div class="overflow-x-auto">' + depletionSvg + '</div>' +
+            '</div>' +
+            '<div class="xl:col-span-4 border_ui p-4 bg-(--color-card-bg)/40 space-y-3 flex flex-col justify-between">' +
+              '<div class="space-y-2.5">' +
+                '<div class="font-bold uppercase border-b border_ui pb-2">// 24H ENERGY MIX — ' + site.siteId + '</div>' +
+                '<div class="space-y-2 text-[11px]">' +
+                  '<div><div class="flex justify-between mb-1"><span class="opacity-70">Utility Grid (Light):</span><span class="font-bold text-amber-400">' + lightH + ' hrs/day</span></div><div class="w-full border_ui h-2.5 bg-black/20 overflow-hidden"><div class="h-full bg-amber-500" style="width:' + Math.round((lightH / 24) * 100) + '%;"></div></div></div>' +
+                  '<div><div class="flex justify-between mb-1"><span class="opacity-70">BUB Backup Battery:</span><span class="font-bold text-emerald-400">' + bubH + ' hrs/day</span></div><div class="w-full border_ui h-2.5 bg-black/20 overflow-hidden"><div class="h-full bg-emerald-500" style="width:' + Math.round((bubH / 24) * 100) + '%;"></div></div></div>' +
+                  '<div><div class="flex justify-between mb-1"><span class="opacity-70">Generator Runtime (' + genKva + ' kVA):</span><span class="font-bold text-rose-400">' + genH + ' hrs/day</span></div><div class="w-full border_ui h-2.5 bg-black/20 overflow-hidden"><div class="h-full bg-rose-500" style="width:' + Math.round((genH / 24) * 100) + '%;"></div></div></div>' +
                 '</div>' +
               '</div>' +
-              '<div class="overflow-x-auto">' + runwaySvg + '</div>' +
-            '</div>' +
-            '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
-              '<div class="flex flex-wrap items-center justify-between gap-2 border-b border_ui pb-2">' +
-                '<span class="font-bold uppercase">// BUB BATTERY VS UTILITY LIGHT HOURS</span>' +
-                '<div class="flex items-center gap-3 text-[10px]">' +
-                  '<span class="text-(--color-accent) font-bold">■ BUB AUTONOMY (HRS)</span>' +
-                  '<span class="text-amber-400 font-bold">■ UTILITY LIGHT (HRS/DAY)</span>' +
-                '</div>' +
+              '<div class="border_ui border-amber-500/40 bg-amber-500/10 p-3 space-y-2 text-[11px]">' +
+                '<div class="font-bold uppercase text-amber-400">// AUTOMATIC 7-DAY FUEL ALARM</div>' +
+                '<div class="text-[10px] opacity-85">Automatically emails Finance, Site FSE &amp; Admin whenever fuel drops to <strong>&lt;= 7.0 days</strong> remaining.</div>' +
+                '<div class="text-[10px] opacity-70"><strong>Recipients:</strong> ' + alarmRecipients + '</div>' +
+                '<div class="text-[10px] opacity-70"><strong>Last Auto-Alarm:</strong> ' + lastAlarmTxt + '</div>' +
+                '<button type="button" onclick="send7DayFuelAlarm(\'' + site.siteId + '\', true)" class="w-full border_ui border-amber-400 py-1.5 font-bold text-amber-400 hover:bg-amber-500 hover:text-black cursor-pointer text-[10px]">SEND 7-DAY ALARM EMAIL NOW</button>' +
               '</div>' +
-              '<div class="overflow-x-auto">' + bubSvg + '</div>' +
             '</div>' +
           '</div>';
       } else if (adminActiveModule === 'directory') {
@@ -7468,20 +7693,21 @@
       if (!isAdminUnlocked || !adminSession) return;
       const site = masterSites.find(s => s.siteId === adminSession.siteId);
       if (!site) return;
-      const newVal = parseFloat(document.getElementById('admFuelLevel').value) || 0;
+      const newVal = Math.max(0, Math.min(site.tankCap, parseFloat(document.getElementById('admFuelLevel').value) || 0));
       const cpdInput = document.getElementById('admFuelCpd');
-      if (cpdInput) site.cpd = parseFloat(cpdInput.value) || site.cpd;
+      if (cpdInput) site.cpd = Math.max(0.5, parseFloat(cpdInput.value) || site.cpd);
       site.baselineDL = newVal;
       site.fuelBaselineAt = new Date().toISOString();
       site.currentDL = newVal;
       synchronizeSite(site);
       saveState();
       sbUpsertSite(site);
+      checkAndTrigger7DayFuelAlarms();
       updateKpis();
       renderSites();
       updateAdminPortalUiState();
       if (fseSession && fseSession.siteId === site.siteId) renderFseFuelModule(site);
-      showToast('Admin updated fuel level (' + newVal + 'L) & daily usage (' + site.cpd + ' L/d)');
+      showToast('Updated ' + site.siteId + ': ' + newVal + 'L · ' + site.cpd + ' L/d (' + site.autonomyBreakdown + ')');
     }
 
     function handleAdminLogDelivery(e) {
@@ -7502,18 +7728,21 @@
       site.lastSupplyQty = qty;
       site.lastSupplyDate = formattedDate;
       site.lastSupplyTime = timeRaw;
-      site.baselineDL = Math.min(site.tankCap, site.currentDL + qty);
-      site.fuelBaselineAt = new Date(dateRaw + 'T' + (timeRaw || '00:00') + ':00').toISOString();
+      const parsedDelTs = Date.parse(dateRaw + 'T' + (timeRaw || '00:00') + ':00');
+      const clampedDelTs = !isNaN(parsedDelTs) ? Math.min(Date.now(), parsedDelTs) : Date.now();
+      site.baselineDL = Math.min(site.tankCap, parseFloat((site.currentDL + qty).toFixed(2)));
+      site.fuelBaselineAt = new Date(clampedDelTs).toISOString();
       site.currentDL = site.baselineDL;
       if (!site.refuelHistory) site.refuelHistory = [];
-      site.refuelHistory.unshift({ date: formattedDate, time: timeRaw, qty, supplier: site.supplier || 'Admin', loggedBy: adminSession.adminName });
+      site.refuelHistory.unshift({ date: formattedDate, time: timeRaw, qty, litersAdded: qty, supplier: site.supplier || 'Admin', loggedBy: adminSession.adminName });
 
       synchronizeSite(site);
       saveState();
       sbInsertDelivery(site.siteId, site.tenantId, qty, dateRaw, timeRaw, site.supplier || 'Admin', adminSession.adminName);
+      checkAndTrigger7DayFuelAlarms();
       updateKpis();
       renderSites();
-      renderAdminModuleContent(site);
+      updateAdminPortalUiState();
       showToast('Admin recorded +' + qty + 'L delivery at ' + timeRaw);
     }
 
@@ -7831,7 +8060,26 @@
       }
     }
 
-    function handleAddNewRepair(e) {
+    function previewRepairAttachment(inputEl) {
+      const info = document.getElementById('newRepairAttachmentInfo');
+      if (!info) return;
+      if (!inputEl || !inputEl.files || !inputEl.files[0]) {
+        info.classList.add('hidden');
+        return;
+      }
+      const f = inputEl.files[0];
+      const sizeMb = (f.size / (1024 * 1024)).toFixed(2);
+      if (f.size > 20 * 1024 * 1024) {
+        alert('Attachment rejected: ' + sizeMb + ' MB exceeds the 20 MB maximum limit.');
+        inputEl.value = '';
+        info.classList.add('hidden');
+        return;
+      }
+      info.innerText = 'Attached: ' + f.name + ' (' + sizeMb + ' MB)';
+      info.classList.remove('hidden');
+    }
+
+    async function handleAddNewRepair(e) {
       e.preventDefault();
       let siteId = document.getElementById('newRepairSiteId').value;
       if (activeSection === 'fse' && fseSession) siteId = fseSession.siteId;
@@ -7844,9 +8092,37 @@
       const techName = document.getElementById('newRepairTech').value.trim() || (fseSession ? fseSession.fseName : 'FSE');
       const genHours = parseInt(document.getElementById('newRepairGenHours').value) || 1200;
       const todayFormatted = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      const ticketId = 'RCA-2026-' + Math.floor(100 + Math.random() * 900);
+
+      // Optional file attachment upload (Photo / Video / PDF up to 20MB)
+      let attachmentUrl = '';
+      let attachmentName = '';
+      const fileInput = document.getElementById('newRepairAttachment');
+      if (fileInput && fileInput.files && fileInput.files[0]) {
+        const file = fileInput.files[0];
+        attachmentName = file.name;
+        if (sb && sb.storage) {
+          try {
+            const safeSite = (siteId || 'site').replace(/[^a-zA-Z0-9_-]/g, '_');
+            const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+            const path = 'tickets/' + safeSite + '/' + ticketId + '_' + Date.now() + '_' + safeName;
+            showToast('Uploading ticket attachment...');
+            const { error: upErr } = await sb.storage
+              .from('ppm-evidence')
+              .upload(path, file, { upsert: true, contentType: file.type || undefined });
+            if (!upErr) {
+              const { data: pub } = sb.storage.from('ppm-evidence').getPublicUrl(path);
+              if (pub && pub.publicUrl) attachmentUrl = pub.publicUrl;
+            }
+          } catch (_) {}
+        }
+        if (!attachmentUrl) {
+          attachmentUrl = URL.createObjectURL(file);
+        }
+      }
 
       const ticket = {
-        ticketId: 'RCA-2026-' + Math.floor(100 + Math.random() * 900),
+        ticketId: ticketId,
         siteId: siteId,
         tenantId: s ? s.tenantId : 'COLOPLUS',
         type: repairType,
@@ -7856,6 +8132,8 @@
         issue: issueText,
         technician: techName,
         genRunHours: genHours,
+        attachmentUrl: attachmentUrl,
+        attachmentName: attachmentName,
         dateLogged: todayFormatted,
         loggedDate: todayFormatted,
         adminReviewed: activeSection === 'admin',
@@ -7866,13 +8144,15 @@
       saveState();
       closeAddRepairModal();
       document.getElementById('addRepairForm').reset();
+      const attInfo = document.getElementById('newRepairAttachmentInfo');
+      if (attInfo) attInfo.classList.add('hidden');
 
       const rBadge = document.getElementById('repairBadgeCount');
       if (rBadge) rBadge.innerText = masterRepairs.length;
 
       // Sync to Supabase & email Admin via Resend Edge Function
       if (s) {
-        sbInsertRepair(s.siteId, s.tenantId, repairType, issueText, techName);
+        sbInsertRepair(s.siteId, s.tenantId, repairType, issueText + (attachmentUrl ? (' [Attachment: ' + attachmentUrl + ']') : ''), techName);
       }
       if (sb) {
         try {
@@ -7885,7 +8165,7 @@
               state: s ? s.state : '',
               category: repairType,
               status: repairStatus,
-              issue: issueText,
+              issue: issueText + (attachmentUrl ? (' | Attachment: ' + attachmentUrl) : ''),
               technician: techName,
               gen_run_hours: genHours
             }
@@ -7897,7 +8177,7 @@
       if (fseSession && fseSession.siteId === siteId && s) renderFseRepairsModule(s);
       if (isAdminUnlocked && adminSession) updateAdminPortalUiState();
       else renderAdminTicketAlerts();
-      showToast('Ticket ' + ticket.ticketId + ' logged — Admin alerted on dashboard & email');
+      showToast('Ticket ' + ticket.ticketId + ' logged' + (attachmentName ? ' with attachment' : '') + ' — Admin alerted');
     }
 
     // ==================== DIAGNOSTICS DRAWER ====================

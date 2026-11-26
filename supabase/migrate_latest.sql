@@ -18,6 +18,7 @@ alter table public.ppm_checklists add column if not exists photo_url text;
 alter table public.calendar_tasks add column if not exists assignee_email text;
 alter table public.calendar_tasks add column if not exists specific_issue text;
 alter table public.calendar_tasks add column if not exists email_sent_at timestamptz;
+alter table public.machinery_repairs add column if not exists attachment_url text;
 
 -- 1B. Create app_settings table to persist Finance Team email & saved team emails across devices
 create table if not exists public.app_settings (
