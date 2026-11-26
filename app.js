@@ -1174,10 +1174,17 @@
     const MASTER_AUDIT_REPAIRS = []
 ;
 
-    // Load persisted state or default to master audit
+    // Fresh DB-first cache keys (purges any legacy v5 stale browser cache automatically)
+    try {
+      localStorage.removeItem('coloplus_sites_live_v5');
+      localStorage.removeItem('coloplus_repairs_live_v5');
+      localStorage.removeItem('coloplus_hourly_scans_v1');
+    } catch (_) {}
+
+    // Load persisted state or default to fresh zero-fuel master template (overwritten live by Supabase)
     let masterSites = [];
     try {
-      const savedSites = localStorage.getItem('coloplus_sites_live_v5');
+      const savedSites = localStorage.getItem('coloplus_sites_live_v6_fresh');
       if (savedSites) {
         masterSites = JSON.parse(savedSites);
       } else {
@@ -1189,7 +1196,7 @@
 
     let masterRepairs = [];
     try {
-      const savedRepairs = localStorage.getItem('coloplus_repairs_live_v5');
+      const savedRepairs = localStorage.getItem('coloplus_repairs_live_v6_fresh');
       if (savedRepairs) {
         masterRepairs = JSON.parse(savedRepairs);
       } else {
@@ -1398,8 +1405,8 @@
 
     // Save State
     function saveState() {
-      localStorage.setItem('coloplus_sites_live_v5', JSON.stringify(masterSites));
-      localStorage.setItem('coloplus_repairs_live_v5', JSON.stringify(masterRepairs));
+      localStorage.setItem('coloplus_sites_live_v6_fresh', JSON.stringify(masterSites));
+      localStorage.setItem('coloplus_repairs_live_v6_fresh', JSON.stringify(masterRepairs));
     }
 
     // Initialize System (Portal-Mode Aware: home | fse | admin)
@@ -1596,11 +1603,11 @@
 
       // 4. Instant cross-tab sync within the same browser (FSE tab <-> Admin tab)
       window.addEventListener('storage', (ev) => {
-        if (ev.key === 'coloplus_sites_live_v5' || ev.key === 'coloplus_repairs_live_v5') {
+        if (ev.key === 'coloplus_sites_live_v6_fresh' || ev.key === 'coloplus_repairs_live_v6_fresh') {
           try {
-            const freshSites = localStorage.getItem('coloplus_sites_live_v5');
+            const freshSites = localStorage.getItem('coloplus_sites_live_v6_fresh');
             if (freshSites) masterSites = JSON.parse(freshSites);
-            const freshRepairs = localStorage.getItem('coloplus_repairs_live_v5');
+            const freshRepairs = localStorage.getItem('coloplus_repairs_live_v6_fresh');
             if (freshRepairs) masterRepairs = JSON.parse(freshRepairs);
             masterSites.forEach(s => synchronizeSite(s));
             updateKpis();
@@ -3431,7 +3438,7 @@
 
       masterRepairs.unshift(ticket);
       saveState();
-      sbInsertRepair(site.siteId, site.tenantId, fullCategory, details + (attachmentUrl ? (' [Attachment: ' + attachmentUrl + ']') : ''), ticket.technician);
+      const repRes = await sbInsertRepair(site.siteId, site.tenantId, fullCategory, details + (attachmentUrl ? (' [Attachment: ' + attachmentUrl + ']') : ''), ticket.technician);
       if (sb) {
         try {
           Promise.resolve(sb.functions.invoke('send-alert-email', {
@@ -3826,7 +3833,7 @@
       }
     }
 
-    function handleFseLogDelivery(e) {
+    async function handleFseLogDelivery(e) {
       e.preventDefault();
       if (!fseSession) return;
       const site = masterSites.find(s => s.siteId === fseSession.siteId);
@@ -3870,11 +3877,14 @@
 
       synchronizeSite(site);
       saveState();
-      sbInsertDelivery(site.siteId, site.tenantId, qty, dateRaw, timeRaw, supplier, fseSession.fseName);
+      const res = await sbInsertDelivery(site.siteId, site.tenantId, qty, dateRaw, timeRaw, supplier, fseSession.fseName);
       updateKpis();
       renderSites();
       renderFseFuelModule(site);
-      showToast('Recorded +' + qty + 'L delivery at ' + timeRaw + ' on ' + formattedDate);
+      if (document.getElementById('fseDeliveryQty')) document.getElementById('fseDeliveryQty').value = '';
+      if (res && res.ok) {
+        showToast('Saved & synced +' + qty + 'L delivery (' + formattedDate + ' @ ' + timeRaw + ') to database');
+      }
     }
 
     // FSE Module 2: Light & Battery (BUB) — READ-ONLY (Admin Edit Only)
@@ -4211,7 +4221,7 @@
       showToast('Deleted attachment for ' + tick.task);
     }
 
-    function submitFsePpmReport() {
+    async function submitFsePpmReport() {
       if (!fseSession) return;
       const site = masterSites.find(s => s.siteId === fseSession.siteId);
       if (!site) return;
@@ -4234,7 +4244,7 @@
       ticks.forEach(t => { t.done = true; });
       const doneCount = ticks.length;
       const now = new Date();
-      const submittedDate = now.toISOString().slice(0, 10);
+      const submittedDate = getLocalTodayIso();
       const submittedAt = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' +
                           now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
@@ -4262,9 +4272,11 @@
       site.submittedPpms.unshift(sub);
 
       saveState();
+      let dbSynced = false;
       if (sb) {
         try {
-          Promise.resolve(sb.rpc('fse_submit_ppm', {
+          setSupabaseSyncStatus('syncing', 'Submitting PPM report to Supabase...');
+          const { error: ppmRpcErr } = await sb.rpc('fse_submit_ppm', {
             p_id: sub.id,
             p_site_id: site.siteId,
             p_tenant_id: site.tenantId || '',
@@ -4274,13 +4286,24 @@
             p_completed_count: sub.completedCount,
             p_total_count: sub.totalCount,
             p_items: sub.items
-          })).catch(() => {});
-        } catch (err) {}
+          });
+          if (ppmRpcErr) {
+            setSupabaseSyncStatus('error', ppmRpcErr.message);
+            showToast('DB PPM Sync Error: ' + ppmRpcErr.message);
+          } else {
+            dbSynced = true;
+            setSupabaseSyncStatus('live', 'PPM synced to Supabase');
+          }
+        } catch (err) {
+          setSupabaseSyncStatus('error', err.message || 'Network error');
+        }
       }
 
       renderFseRepairsModule(site);
       if (isAdminUnlocked && adminSession) updateAdminPortalUiState();
-      showToast('PPM Report submitted (' + doneCount + '/' + ticks.length + ') — awaiting Admin review');
+      if (dbSynced) {
+        showToast('PPM Report (' + doneCount + '/' + ticks.length + ') saved & synced to database — awaiting Admin review');
+      }
     }
 
     function toggleSiteTickFromFse(idx) {
@@ -6496,6 +6519,7 @@
             previous_supply_qty: null,
             updated_at: nowIso
           }).eq('is_active', true);
+          await sb.from('diesel_deliveries').delete().neq('site_id', '');
           for (const s of masterSites) {
             await sb.from('sites').update({ load_kw: s.genSize }).eq('site_id', s.siteId);
           }
