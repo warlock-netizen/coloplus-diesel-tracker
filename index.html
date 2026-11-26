@@ -1,125 +1,159 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>COLOPLUS TECH // SMART DIESEL &amp; SITE AUTONOMY</title>
+  <title>COLOPLUS TECH // SMART DIESEL AUTONOMOUS AGENT</title>
 
-  <!-- NiceCrate Typography Stack: Inter Tight + Geist Mono -->
+  <!-- Exact ColoPlus Admin & FSE Typography: Londrina Outline + Source Code Pro -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&family=Inter+Tight:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Londrina+Outline&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
 
   <!-- Tailwind CSS Engine -->
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
 
   <style>
-    :root {
-      --bg: #efefed;
-      --fg: #000000;
-      --white: #ffffff;
-      --purple: #a574f4;
-      --orange: #ff5230;
-      --teal: #07574f;
-      --grey-900: #161616;
-      --grey-800: #202020;
-      --grey-700: #262626;
-      --grey-400: #3a3a3a;
-      --grey-200: #8c8c8a;
-      --grey-100: #a7a7a6;
+    /* Exact ColoPlus Admin & FSE Theme Tokens */
+    :root, html[data-theme="dark"] {
+      color-scheme: dark;
+      --color-primary: #f4f3ef;
+      --color-secondary: #0b0d10;
+      --color-card-bg: #111419;
+      --color-line: rgba(244, 243, 239, 0.18);
+      --color-line-hover: rgba(244, 243, 239, 0.42);
+      --color-accent: #22c55e;
+      --color-warning: #f59e0b;
+      --color-critical: #ef4444;
+      --color-muted: #a3a3a3;
+      --dot-color: rgba(244, 243, 239, 0.11);
+      --beam-color: rgba(244, 243, 239, 0.045);
+      --nav-bg: #111419;
+      --nav-fg: #f4f3ef;
       --ease-expo: cubic-bezier(0.22, 1, 0.36, 1);
       --ease-roll: cubic-bezier(0.6, 0, 0.2, 1);
       --ease-ink: cubic-bezier(0.65, 0, 0.35, 1);
     }
 
+    html[data-theme="light"] {
+      color-scheme: light;
+      --color-primary: #0a0a0a;
+      --color-secondary: #f4f3ef;
+      --color-card-bg: #ffffff;
+      --color-line: rgba(10, 10, 10, 0.18);
+      --color-line-hover: rgba(10, 10, 10, 0.44);
+      --color-accent: #16a34a;
+      --color-warning: #d97706;
+      --color-critical: #dc2626;
+      --color-muted: #525252;
+      --dot-color: rgba(10, 10, 10, 0.14);
+      --beam-color: rgba(10, 10, 10, 0.055);
+      --nav-bg: #0a0a0a;
+      --nav-fg: #f4f3ef;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     html {
-      scroll-behavior: smooth;
-      background-color: var(--bg);
-      color: var(--fg);
-      font-family: 'Inter Tight', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--color-secondary);
+      color: var(--color-primary);
+      font-family: 'Source Code Pro', monospace;
       -webkit-font-smoothing: antialiased;
       overflow-x: clip;
     }
 
     body {
-      background-color: var(--bg);
-      color: var(--fg);
+      background-color: var(--color-secondary);
+      color: var(--color-primary);
+      font-family: 'Source Code Pro', monospace;
       overflow-x: clip;
       position: relative;
+      transition: background-color 0.2s ease, color 0.2s ease;
     }
 
-    .font-mono-nc { font-family: 'Geist Mono', monospace; }
-
-    /* Signature Micro-Dot Grid Background */
-    .dot-grid-light {
-      background-color: var(--bg);
-      background-image: radial-gradient(circle, rgba(0, 0, 0, 0.14) 0.55px, transparent 1px);
-      background-size: 6.4px 6.4px;
-    }
-    .dot-grid-dark {
-      background-color: var(--grey-900);
-      background-image: radial-gradient(circle, rgba(255, 255, 255, 0.065) 0.55px, transparent 1px);
-      background-size: 6.4px 6.4px;
+    .londrina-outline-regular,
+    .hero-outline-title {
+      font-family: 'Londrina Outline', sans-serif;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      line-height: 0.96;
     }
 
-    /* Preloader */
-    #ncPreloader {
+    .border_ui {
+      border: 1px solid var(--color-line);
+    }
+
+    .cursor-blink {
+      animation: 1s step-end infinite blink;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* Signature Micro-Dot Grid Background in ColoPlus Palette */
+    .cp-dot-grid {
+      background-color: var(--color-secondary);
+      background-image: radial-gradient(circle, var(--dot-color) 0.7px, transparent 1px);
+      background-size: 7px 7px;
+    }
+
+    /* Fast Boot Preloader */
+    #cpPreloader {
       position: fixed;
       inset: 0;
       z-index: 100;
-      background: #000;
-      color: var(--bg);
+      background: #0b0d10;
+      color: #f4f3ef;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       padding: 28px 32px;
-      transition: transform 0.75s var(--ease-expo), opacity 0.55s ease;
+      border-bottom: 1px solid rgba(244, 243, 239, 0.16);
+      transition: transform 0.7s var(--ease-expo), opacity 0.45s ease;
     }
-    #ncPreloader.is-done {
+    #cpPreloader.is-done {
       transform: translateY(-100%);
       opacity: 0;
       pointer-events: none;
     }
 
-    /* Custom Cursor & Floating Badge (Desktop Pointer Only) */
+    /* Custom Cursor + Floating Contextual Pill (Desktop Pointer Only) */
     @media (hover: hover) and (pointer: fine) {
       body.has-custom-cursor,
       body.has-custom-cursor a,
       body.has-custom-cursor button { cursor: none; }
     }
-    #ncCustomCursor {
+    #cpCustomCursor {
       position: fixed;
       top: 0;
       left: 0;
       z-index: 9999;
       pointer-events: none;
-      transform: translate3d(-100px, -100px, 0);
-      transition: opacity 0.2s ease;
+      transform: translate3d(-120px, -120px, 0);
       display: none;
     }
     @media (hover: hover) and (pointer: fine) {
-      #ncCustomCursor { display: flex; align-items: flex-start; gap: 6px; }
+      #cpCustomCursor { display: flex; align-items: flex-start; gap: 6px; }
     }
-    #ncCursorPill {
-      font-family: 'Inter Tight', sans-serif;
-      font-size: 12px;
-      font-weight: 500;
-      padding: 4px 12px;
+    #cpCursorPill {
+      font-family: 'Source Code Pro', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 10px;
       border-radius: 9999px;
-      background: var(--purple);
-      color: #fff;
+      background: var(--color-accent);
+      color: #0b0d10;
       margin-top: 12px;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
-      transition: background-color 0.2s ease, transform 0.2s var(--ease-expo);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+      transition: background-color 0.2s ease, color 0.2s ease;
       white-space: nowrap;
     }
-    #ncCursorPill.is-orange { background: var(--orange); }
-    #ncCursorPill.is-dark { background: #000; color: #fff; }
+    #cpCursorPill.is-amber { background: var(--color-warning); color: #0b0d10; }
+    #cpCursorPill.is-mono { background: var(--color-primary); color: var(--color-secondary); }
 
-    /* Fixed Gooey Top Frame & Tabs */
-    .nc-top-frame {
+    /* Fixed Gooey-Notch Top Frame */
+    .cp-top-frame {
       position: fixed;
       top: 0;
       left: 0;
@@ -127,56 +161,48 @@
       z-index: 60;
       pointer-events: none;
       transform: translateY(-120%);
-      transition: transform 0.75s var(--ease-expo);
+      transition: transform 0.7s var(--ease-expo);
     }
-    body.nc-ready .nc-top-frame { transform: translateY(0); }
+    body.cp-ready .cp-top-frame { transform: translateY(0); }
 
-    .nc-top-bar-strip {
-      height: 10px;
-      background: #000;
+    .cp-top-bar-strip {
+      height: 8px;
+      background: var(--nav-bg);
+      border-bottom: 1px solid var(--color-line);
       width: 100%;
     }
-    .nc-nav-row {
+    .cp-nav-row {
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
-      padding: 0 20px;
+      padding: 0 18px;
     }
-    .nc-logo-tab,
-    .nc-nav-tab {
+    .cp-logo-tab,
+    .cp-nav-tab {
       pointer-events: auto;
-      background: #000;
-      color: var(--bg);
+      background: var(--nav-bg);
+      color: var(--nav-fg);
+      border: 1px solid var(--color-line);
+      border-top: none;
       position: relative;
     }
-    .nc-logo-tab {
-      border-radius: 0 0 24px 24px;
-      padding: 10px 18px 14px;
+    .cp-logo-tab {
+      border-radius: 0 0 20px 20px;
+      padding: 9px 16px 12px;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 9px;
     }
-    .nc-nav-tab {
-      border-radius: 0 0 26px 26px;
-      padding: 8px 10px 12px 22px;
+    .cp-nav-tab {
+      border-radius: 0 0 22px 22px;
+      padding: 7px 10px 10px 18px;
       display: inline-flex;
       align-items: center;
-      gap: 20px;
+      gap: 16px;
     }
-    /* Inverted fillet corners connecting tabs seamlessly to the top black strip */
-    .nc-tab-curve-l,
-    .nc-tab-curve-r {
-      position: absolute;
-      top: 0;
-      width: 22px;
-      height: 22px;
-      pointer-events: none;
-    }
-    .nc-tab-curve-l { left: -22px; }
-    .nc-tab-curve-r { right: -22px; }
 
     /* Dual-Span Vertical Roll Hover Effect */
-    .nc-roll {
+    .cp-roll {
       position: relative;
       display: inline-flex;
       overflow: hidden;
@@ -184,153 +210,167 @@
       height: 1.25em;
       vertical-align: middle;
     }
-    .nc-roll > span {
+    .cp-roll > span {
       display: block;
-      transition: transform 0.32s var(--ease-roll);
+      transition: transform 0.3s var(--ease-roll);
     }
-    .nc-roll > span:last-child {
+    .cp-roll > span:last-child {
       position: absolute;
       inset: 0;
       transform: translateY(105%);
     }
-    .group:hover .nc-roll > span:first-child,
-    .nc-roll:hover > span:first-child { transform: translateY(-105%); }
-    .group:hover .nc-roll > span:last-child,
-    .nc-roll:hover > span:last-child { transform: translateY(0%); }
+    .group:hover .cp-roll > span:first-child,
+    .cp-roll:hover > span:first-child { transform: translateY(-105%); }
+    .group:hover .cp-roll > span:last-child,
+    .cp-roll:hover > span:last-child { transform: translateY(0%); }
 
-    /* Signature Cursor-Origin Ink-Fill Pill Button */
-    .nc-ink-btn {
+    /* Cursor-Origin Ink-Fill Pill Button (ColoPlus Monochrome + Emerald/Amber) */
+    .cp-ink-btn {
       position: relative;
       overflow: hidden;
       display: inline-flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
       border-radius: 9999px;
-      padding: 8px 8px 8px 22px;
-      font-weight: 500;
-      font-size: 15px;
-      background: #000;
-      color: #fff;
-      border: 1.5px solid #000;
+      padding: 7px 7px 7px 20px;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: var(--color-primary);
+      color: var(--color-secondary);
+      border: 1px solid var(--color-primary);
       isolation: isolate;
-      transition: border-color 0.35s ease, color 0.35s ease;
+      transition: border-color 0.3s ease, color 0.3s ease;
     }
-    .nc-ink-btn.is-light {
-      background: var(--bg);
-      color: #000;
-      border-color: var(--bg);
+    .cp-ink-btn.is-amber-outline {
+      background: var(--color-card-bg);
+      color: var(--color-warning);
+      border: 1px solid rgba(245, 158, 11, 0.55);
     }
-    .nc-ink-btn .nc-ink-circle {
+    .cp-ink-btn .cp-ink-circle {
       position: absolute;
       left: var(--x, 50%);
       top: var(--y, 50%);
       width: 260%;
       aspect-ratio: 1;
       border-radius: 9999px;
-      background: var(--orange);
+      background: var(--color-accent);
       transform: translate(-50%, -50%) scale(0);
-      transition: transform 0.55s var(--ease-ink);
+      transition: transform 0.5s var(--ease-ink);
       z-index: -1;
       pointer-events: none;
     }
-    .nc-ink-btn:hover .nc-ink-circle { transform: translate(-50%, -50%) scale(1); }
-    .nc-ink-btn:hover { border-color: var(--orange); color: #fff; }
-    .nc-ink-btn .nc-btn-badge {
-      width: 34px;
-      height: 34px;
+    .cp-ink-btn.is-amber-outline .cp-ink-circle {
+      background: var(--color-warning);
+    }
+    .cp-ink-btn:hover .cp-ink-circle { transform: translate(-50%, -50%) scale(1); }
+    .cp-ink-btn:hover { border-color: var(--color-accent); color: #0b0d10; }
+    .cp-ink-btn.is-amber-outline:hover { border-color: var(--color-warning); color: #0b0d10; }
+    .cp-ink-btn .cp-btn-badge {
+      width: 30px;
+      height: 30px;
       border-radius: 9999px;
-      background: #fff;
-      color: #000;
+      background: var(--color-secondary);
+      color: var(--color-primary);
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      transition: transform 0.45s var(--ease-ink), background-color 0.35s ease, color 0.35s ease;
+      transition: transform 0.4s var(--ease-ink), background-color 0.3s ease, color 0.3s ease;
     }
-    .nc-ink-btn.is-light .nc-btn-badge { background: #000; color: #fff; }
-    .nc-ink-btn:hover .nc-btn-badge { transform: translateX(2px) rotate(-15deg); background: #000; color: #fff; }
+    .cp-ink-btn.is-amber-outline .cp-btn-badge {
+      background: rgba(245, 158, 11, 0.16);
+      color: var(--color-warning);
+    }
+    .cp-ink-btn:hover .cp-btn-badge {
+      transform: translateX(2px);
+      background: #0b0d10;
+      color: #f4f3ef;
+    }
 
-    /* Fixed Bottom-Right Floating Portal Tab (NiceCrate Cart Silhouette) */
-    .nc-corner-tab {
+    /* Bottom-Right Quick FSE Corner Tab */
+    .cp-corner-tab {
       position: fixed;
-      right: 22px;
+      right: 18px;
       bottom: 0;
       z-index: 60;
-      background: #000;
-      color: #fff;
-      border-radius: 26px 26px 0 0;
-      padding: 14px 18px 14px;
+      background: var(--nav-bg);
+      color: var(--nav-fg);
+      border: 1px solid var(--color-line);
+      border-bottom: none;
+      border-radius: 20px 20px 0 0;
+      padding: 12px 16px 10px;
       display: inline-flex;
       flex-direction: column;
       align-items: center;
       gap: 4px;
       transform: translateY(130%);
-      transition: transform 0.75s var(--ease-expo), background-color 0.25s ease;
-      box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.16);
+      transition: transform 0.7s var(--ease-expo), background-color 0.25s ease, color 0.25s ease;
+      box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.22);
     }
-    body.nc-ready .nc-corner-tab { transform: translateY(0); }
-    .nc-corner-tab:hover { background: var(--orange); }
+    body.cp-ready .cp-corner-tab { transform: translateY(0); }
+    .cp-corner-tab:hover { background: var(--color-accent); color: #0b0d10; border-color: var(--color-accent); }
 
     /* Hero Mask-Up Staggered Reveal */
-    .nc-mask-line { overflow: hidden; display: inline-block; vertical-align: bottom; }
-    .nc-mask-inner {
+    .cp-mask-line { overflow: hidden; display: inline-block; vertical-align: bottom; }
+    .cp-mask-inner {
       display: inline-block;
       transform: translateY(112%);
-      transition: transform 0.85s var(--ease-expo);
+      transition: transform 0.8s var(--ease-expo);
     }
-    body.nc-ready .nc-mask-inner { transform: translateY(0); }
-    .nc-d1 { transition-delay: 0.08s; }
-    .nc-d2 { transition-delay: 0.18s; }
-    .nc-d3 { transition-delay: 0.28s; }
-    .nc-d4 { transition-delay: 0.38s; }
+    body.cp-ready .cp-mask-inner { transform: translateY(0); }
+    .cp-d1 { transition-delay: 0.06s; }
+    .cp-d2 { transition-delay: 0.14s; }
+    .cp-d3 { transition-delay: 0.22s; }
+    .cp-d4 { transition-delay: 0.30s; }
 
-    /* Hero Animated Purple Capsule Pill */
-    .nc-hero-capsule {
+    /* Hero Themed Capsule Pill */
+    .cp-hero-capsule {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      background: var(--purple);
-      color: #fff;
+      background: var(--color-accent);
+      color: #0b0d10;
+      border: 1px solid var(--color-accent);
       border-radius: 9999px;
-      padding: 0.04em 0.42em 0.1em;
+      padding: 0.06em 0.42em 0.08em;
       margin: 0 0.08em;
-      transform: scale(0.75) rotate(-3deg);
+      font-family: 'Source Code Pro', monospace;
+      font-weight: 800;
+      font-size: 0.46em;
+      letter-spacing: 0.06em;
+      vertical-align: middle;
+      transform: scale(0.78) rotate(-2deg);
       opacity: 0;
-      transition: transform 0.8s var(--ease-expo) 0.25s, opacity 0.6s ease 0.25s;
-      position: relative;
+      transition: transform 0.75s var(--ease-expo) 0.2s, opacity 0.55s ease 0.2s;
     }
-    body.nc-ready .nc-hero-capsule { transform: scale(1) rotate(0deg); opacity: 1; }
+    body.cp-ready .cp-hero-capsule { transform: scale(1) rotate(0deg); opacity: 1; }
 
-    /* Floating Stickers */
-    .nc-sticker {
-      transition: transform 0.45s var(--ease-expo);
-      will-change: transform;
+    /* Floating Wireframe Stickers */
+    .cp-sticker { transition: transform 0.4s var(--ease-expo); will-change: transform; }
+    .cp-sticker:hover { transform: scale(1.1) rotate(0deg) !important; }
+    @keyframes cpFloatA {
+      0%, 100% { transform: translateY(0px) rotate(-6deg); }
+      50% { transform: translateY(-9px) rotate(-2deg); }
     }
-    .nc-sticker:hover { transform: scale(1.12) rotate(0deg) !important; }
-    @keyframes ncFloatA {
-      0%, 100% { transform: translateY(0px) rotate(-8deg); }
-      50% { transform: translateY(-10px) rotate(-4deg); }
+    @keyframes cpFloatB {
+      0%, 100% { transform: translateY(0px) rotate(7deg); }
+      50% { transform: translateY(-10px) rotate(3deg); }
     }
-    @keyframes ncFloatB {
-      0%, 100% { transform: translateY(0px) rotate(9deg); }
-      50% { transform: translateY(-12px) rotate(4deg); }
-    }
-    @keyframes ncSpinSlow {
+    @keyframes cpSpinSlow {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
-    .anim-float-a { animation: ncFloatA 5.2s ease-in-out infinite; }
-    .anim-float-b { animation: ncFloatB 6s ease-in-out infinite 0.7s; }
-    .anim-spin-slow { animation: ncSpinSlow 16s linear infinite; }
+    .anim-float-a { animation: cpFloatA 5.2s ease-in-out infinite; }
+    .anim-float-b { animation: cpFloatB 6s ease-in-out infinite 0.7s; }
+    .anim-spin-slow { animation: cpSpinSlow 18s linear infinite; }
 
-    /* Scroll-Driven Hero + Rotary Dial Track */
-    .nc-dial-track {
-      height: 360vh;
+    /* ==================== PRECISION SCROLL-DRIVEN HERO + ROTARY DIAL ==================== */
+    .cp-dial-track {
+      height: 480vh;
       position: relative;
     }
-    @media (max-width: 900px) {
-      .nc-dial-track { height: auto; }
-    }
-    .nc-dial-sticky {
+    .cp-dial-sticky {
       position: sticky;
       top: 0;
       height: 100vh;
@@ -339,156 +379,158 @@
       align-items: center;
       justify-content: center;
     }
-    @media (max-width: 900px) {
-      .nc-dial-sticky { position: relative; height: auto; padding: 110px 20px 64px; flex-direction: column; gap: 40px; }
-    }
 
-    /* Dial Marker Pill */
-    .nc-dial-pill {
-      position: absolute;
-      width: 52px;
-      height: 32px;
-      border-radius: 10px;
-      background: rgba(255, 82, 48, 0.35);
-      color: #fff;
-      font-family: 'Geist Mono', monospace;
-      font-size: 13px;
-      font-weight: 600;
+    /* Precision Responsive Breakpoint (900px) synced 1:1 with JS Scroll Engine */
+    #cpDialWheelWrap {
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background-color 0.3s ease, transform 0.3s var(--ease-expo), box-shadow 0.3s ease;
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      z-index: 10;
     }
-    .nc-dial-pill.is-active {
-      background: var(--orange);
-      transform: scale(1.14);
-      box-shadow: 0 10px 26px rgba(255, 82, 48, 0.42);
+    #cpChapterStage {
+      position: absolute;
+      right: 5vw;
+      top: 50%;
+      z-index: 20;
+      width: min(560px, 46vw);
+      opacity: 0;
+      pointer-events: none;
+      will-change: transform, opacity;
+    }
+    @media (max-width: 900px) {
+      .cp-dial-track { height: auto; }
+      .cp-dial-sticky {
+        position: relative;
+        height: auto;
+        padding: 104px 18px 56px;
+        flex-direction: column;
+        gap: 36px;
+      }
+      #cpDialWheelWrap { display: none; }
+      #cpChapterStage {
+        position: relative;
+        right: auto;
+        top: auto;
+        width: 100%;
+        max-width: 36rem;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        transform: none !important;
+      }
     }
 
-    /* 3D Showcase Carousel */
-    .nc-carousel-stage {
+    /* Dial Rim Pill — Positioned by exact JS trigonometry (r = 390px) */
+    .cp-dial-pill {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 54px;
+      height: 32px;
+      margin-left: -27px;
+      margin-top: -16px;
+      border-radius: 6px;
+      background: var(--color-card-bg);
+      color: var(--color-muted);
+      border: 1px solid var(--color-line);
+      font-family: 'Source Code Pro', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      cursor: pointer;
+      transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+    .cp-dial-pill:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+    .cp-dial-pill.is-active {
+      background: var(--color-accent);
+      color: #0b0d10;
+      border-color: var(--color-accent);
+      box-shadow: 0 0 22px rgba(34, 197, 94, 0.35);
+    }
+    .cp-dial-pill.is-active.is-amber {
+      background: var(--color-warning);
+      border-color: var(--color-warning);
+      box-shadow: 0 0 22px rgba(245, 158, 11, 0.35);
+    }
+
+    /* Crisp Chapter Text Swap Animation (never fights scroll lerp) */
+    .cp-chapter-swap {
+      transition: opacity 0.26s var(--ease-expo), transform 0.32s var(--ease-expo);
+    }
+    .cp-chapter-swap.is-swapping {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+
+    /* ==================== SECTION 2: 3D MODULE SHOWCASE ("EVERY TOWER STAYS ONLINE") ==================== */
+    .cp-carousel-stage {
       perspective: 1400px;
       user-select: none;
       touch-action: pan-y;
     }
-    .nc-showcase-card {
+    .cp-showcase-card {
       position: absolute;
       top: 50%;
       left: 50%;
-      width: min(560px, 84vw);
-      height: min(350px, 56vw);
-      border-radius: 26px;
+      width: min(560px, 86vw);
+      height: min(340px, 58vw);
+      min-height: 290px;
+      border-radius: 6px;
       overflow: hidden;
-      background: #121417;
-      color: #f4f3ef;
-      border: 1px solid rgba(0, 0, 0, 0.14);
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+      background: var(--color-card-bg);
+      color: var(--color-primary);
+      border: 1px solid var(--color-line);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
       transform-style: preserve-3d;
       will-change: transform, opacity;
-      transition: box-shadow 0.3s ease;
+      cursor: grab;
+    }
+    .cp-showcase-card:active { cursor: grabbing; }
+    .cp-showcase-card.is-center {
+      border-color: var(--color-line-hover);
+      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.4);
     }
 
-    /* FAQ Accordion (NiceCrate Orange Expanded Card) */
-    .nc-faq-item {
-      border-radius: 24px;
-      padding: 16px 20px;
-      position: relative;
-      overflow: hidden;
-      cursor: pointer;
-      transition: background-color 0.35s var(--ease-expo), padding 0.35s var(--ease-expo);
-    }
-    .nc-faq-item.is-open {
-      background: var(--orange);
-      padding: 22px 24px 24px;
-    }
-    .nc-faq-badge {
-      width: 34px;
-      height: 34px;
-      border-radius: 9999px;
-      background: var(--orange);
-      color: #fff;
-      font-family: 'Geist Mono', monospace;
-      font-size: 12px;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      transition: background-color 0.3s ease;
-    }
-    .nc-faq-item.is-open .nc-faq-badge { background: #000; color: #fff; }
-    .nc-faq-item.is-open .nc-faq-q { color: #fff; }
-    .nc-faq-body {
-      display: grid;
-      grid-template-rows: 0fr;
-      transition: grid-template-rows 0.42s var(--ease-expo), margin-top 0.35s ease;
-    }
-    .nc-faq-item.is-open .nc-faq-body { grid-template-rows: 1fr; margin-top: 14px; }
-    .nc-faq-body > div { overflow: hidden; }
-    .nc-faq-watermark {
-      position: absolute;
-      right: 18px;
-      top: 4px;
-      font-size: 74px;
-      font-weight: 500;
-      line-height: 1;
-      letter-spacing: -0.05em;
-      color: rgba(0, 0, 0, 0.12);
-      pointer-events: none;
-      opacity: 0;
-      transform: translateY(10px);
-      transition: opacity 0.35s ease, transform 0.4s var(--ease-expo);
-    }
-    .nc-faq-item.is-open .nc-faq-watermark { opacity: 1; transform: translateY(0); }
-
-    /* Orbital Section & Cutout Cards */
-    .nc-orbit-tile {
-      width: clamp(54px, 5.4vw, 84px);
-      height: clamp(54px, 5.4vw, 84px);
-      border-radius: 28%;
-      border: 1px solid rgba(239, 239, 237, 0.14);
-      background: rgba(255, 255, 255, 0.04);
-      backdrop-filter: blur(8px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: transform 0.35s var(--ease-expo), border-color 0.3s ease;
-    }
-    .nc-orbit-tile:hover { transform: scale(1.12); border-color: rgba(255, 82, 48, 0.7); }
-
-    /* Fixed Minimal Progress Rail on Right Edge */
-    #ncScrollRail {
+    /* Right Edge Progress Rail */
+    #cpScrollRail {
       position: fixed;
       right: 6px;
       top: 50%;
       transform: translateY(-50%);
       width: 3px;
-      height: 110px;
+      height: 112px;
       border-radius: 9999px;
-      background: rgba(140, 140, 138, 0.25);
+      background: var(--color-line);
       z-index: 55;
       pointer-events: none;
-      mix-blend-mode: difference;
     }
-    #ncScrollThumb {
+    #cpScrollThumb {
       width: 100%;
       height: 28px;
       border-radius: 9999px;
-      background: #fff;
+      background: var(--color-accent);
       transform: translateY(0);
     }
 
-    /* Ambient Diagonal Light Beams Canvas */
-    #ncAmbientCanvas,
-    #ncPlanesCanvas {
+    /* Background Canvases */
+    #cpAmbientCanvas,
+    #cpPlanesCanvas {
       position: fixed;
       inset: 0;
       width: 100%;
       height: 100%;
       pointer-events: none;
     }
-    #ncAmbientCanvas { z-index: 1; opacity: 0.65; }
-    #ncPlanesCanvas { z-index: 45; }
+    #cpAmbientCanvas { z-index: 1; opacity: 0.7; }
+    #cpPlanesCanvas { z-index: 45; }
 
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
@@ -498,575 +540,339 @@
     }
   </style>
 </head>
-<body class="dot-grid-light">
+<body class="cp-dot-grid">
 
-  <!-- AMBIENT MOVING SUNLIGHT SHADOW CANVAS -->
-  <canvas id="ncAmbientCanvas" aria-hidden="true"></canvas>
+  <!-- AMBIENT MOVING DIAGONAL LIGHT BEAMS CANVAS -->
+  <canvas id="cpAmbientCanvas" aria-hidden="true"></canvas>
 
-  <!-- FLOATING INTERACTIVE PAPER PLANES & BEZIER TRAILS CANVAS -->
-  <canvas id="ncPlanesCanvas" aria-hidden="true"></canvas>
+  <!-- FLYING ARROWS / PAPER PLANES WITH DASHED TRAILS -->
+  <canvas id="cpPlanesCanvas" aria-hidden="true"></canvas>
 
   <!-- CUSTOM CURSOR + CONTEXTUAL PILL BADGE -->
-  <div id="ncCustomCursor" aria-hidden="true">
+  <div id="cpCustomCursor" aria-hidden="true">
     <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
-      <path d="M2 2L15.5 7.5L9.5 9.8L7.2 15.8L2 2Z" fill="#a574f4" stroke="#ffffff" stroke-width="1.2" stroke-linejoin="round"/>
+      <path d="M2 2L15.5 7.5L9.5 9.8L7.2 15.8L2 2Z" fill="#22c55e" stroke="#0b0d10" stroke-width="1.2" stroke-linejoin="round"/>
     </svg>
-    <div id="ncCursorPill">You</div>
+    <div id="cpCursorPill">NOC</div>
   </div>
 
-  <!-- RIGHT EDGE SCROLL RAIL -->
-  <div id="ncScrollRail" aria-hidden="true"><div id="ncScrollThumb"></div></div>
+  <!-- RIGHT EDGE SCROLL PROGRESS RAIL -->
+  <div id="cpScrollRail" aria-hidden="true"><div id="cpScrollThumb"></div></div>
 
-  <!-- PRELOADER -->
-  <div id="ncPreloader">
-    <div class="flex items-center justify-between font-mono-nc text-xs tracking-wider uppercase opacity-70">
-      <span>COLOPLUS TECH</span>
-      <span id="ncPreloaderStep">(01/03) TELEMETRY ENGINE</span>
+  <!-- FAST BOOT PRELOADER (COLOPLUS THEME) -->
+  <div id="cpPreloader">
+    <div class="flex items-center justify-between text-xs tracking-widest uppercase opacity-70">
+      <span class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block"></span>
+        COLOPLUS NOC
+      </span>
+      <span id="cpPreloaderStep">(01/03) TELEMETRY ENGINE</span>
     </div>
-    <div class="text-center space-y-4">
-      <div class="font-mono-nc text-[11px] tracking-[0.2em] uppercase opacity-55">TELECOM ENERGY &amp; NOC COMMAND</div>
-      <div class="text-3xl sm:text-5xl md:text-6xl font-normal tracking-tight">
-        Smart <span class="inline-block bg-[#a574f4] text-white rounded-full px-4 py-0.5 mx-1">diesel</span> to <span class="text-[#ff5230]">site autonomy.</span>
+    <div class="text-center space-y-3">
+      <div class="text-[11px] tracking-[0.2em] uppercase opacity-55">// TELECOM ENERGY &amp; NOC COMMAND</div>
+      <div class="hero-outline-title text-5xl sm:text-7xl uppercase tracking-wider">
+        COLOPLUS SMART DIESEL
+      </div>
+      <div class="text-xs sm:text-sm uppercase tracking-[0.22em] text-emerald-400 font-bold">
+        AUTONOMOUS AGENT
       </div>
     </div>
-    <div class="flex items-end justify-between font-mono-nc">
-      <span class="text-xs opacity-60 uppercase">14 ACTIVE TOWERS · DAILY SYNC</span>
-      <span id="ncPreloaderPct" class="text-4xl sm:text-6xl font-medium tracking-tighter">0%</span>
+    <div class="flex items-end justify-between">
+      <span class="text-[11px] opacity-60 uppercase">14 ACTIVE TOWERS · DAILY SYNC · 15/20 KVA</span>
+      <span id="cpPreloaderPct" class="hero-outline-title text-5xl sm:text-6xl">0%</span>
     </div>
   </div>
 
-  <!-- FIXED GOOEY-NOTCH TOP NAVBAR -->
-  <header class="nc-top-frame">
-    <div class="nc-top-bar-strip"></div>
-    <div class="nc-nav-row">
+  <!-- FIXED GOOEY-NOTCH TOP NAVBAR (EXACT COLOPLUS THEME + SYNCED THEME TOGGLE) -->
+  <header class="cp-top-frame">
+    <div class="cp-top-bar-strip"></div>
+    <div class="cp-nav-row">
       <!-- Left Logo Tab -->
-      <a href="./index.html" class="nc-logo-tab group" data-cursor="Home">
-        <svg class="nc-tab-curve-r" viewBox="0 0 22 22" fill="none"><path d="M0 0H22C9.85 0 0 9.85 0 22V0Z" fill="#000"/></svg>
-        <div class="flex items-center gap-2">
-          <svg width="26" height="20" viewBox="0 0 34 24" fill="none" aria-hidden="true">
-            <path d="M12.5 5.5C9.2 5.5 6.5 8.2 6.5 11.5C6.5 14.8 9.2 17.5 12.5 17.5C14.7 17.5 16.6 16.3 17.6 14.5" stroke="#fff" stroke-width="4.2" stroke-linecap="round"/>
-            <path d="M20.5 18.5V6.2H25.2C27.8 6.2 29.6 7.8 29.6 10.2C29.6 12.6 27.8 14.2 25.2 14.2H21.2" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
-            <circle cx="28.5" cy="17.5" r="3" fill="#ff5230"/>
-          </svg>
-          <span class="font-mono-nc text-[11px] font-semibold tracking-widest uppercase hidden sm:inline">COLOPLUS</span>
-        </div>
+      <a href="./index.html" class="cp-logo-tab group" data-cursor="HOME">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping inline-block"></span>
+        <span class="text-xs font-bold tracking-widest uppercase">COLOPLUS NOC</span>
+        <span class="cursor-blink font-bold text-xs opacity-70">_</span>
       </a>
 
       <!-- Right Navigation Pill Tab -->
-      <nav class="nc-nav-tab text-[13px] font-normal">
-        <svg class="nc-tab-curve-l" viewBox="0 0 22 22" fill="none"><path d="M22 0H0C12.15 0 22 9.85 22 22V0Z" fill="#000"/></svg>
-        <a href="#capabilities" class="group hidden md:inline-flex items-center hover:text-white text-[#efefed]/85" data-cursor="Explore">
-          <span class="nc-roll"><span>Capabilities</span><span>Capabilities</span></span>
+      <nav class="cp-nav-tab text-[11px] font-bold uppercase tracking-wider">
+        <a href="#capabilities" onclick="scrollToDialChapter(0); return false;" class="group hidden md:inline-flex items-center opacity-80 hover:opacity-100" data-cursor="CAPABILITIES">
+          <span class="cp-roll"><span>01. CAPABILITIES</span><span>01. CAPABILITIES</span></span>
         </a>
-        <a href="#showcase" class="group hidden md:inline-flex items-center hover:text-white text-[#efefed]/85" data-cursor="Preview">
-          <span class="nc-roll"><span>Modules</span><span>Modules</span></span>
+        <a href="#showcase" class="group hidden md:inline-flex items-center opacity-80 hover:opacity-100" data-cursor="MODULES">
+          <span class="cp-roll"><span>02. MODULES</span><span>02. MODULES</span></span>
         </a>
-        <a href="#faq" class="group hidden md:inline-flex items-center hover:text-white text-[#efefed]/85" data-cursor="FAQ">
-          <span class="nc-roll"><span>FAQ</span><span>FAQ</span></span>
+        <button type="button" onclick="toggleLandingTheme()" class="border_ui px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider hover:bg-white/10 transition-colors cursor-pointer" data-cursor="THEME" data-cursor-tone="mono">
+          <span id="landingThemeLabel">DARK</span>
+        </button>
+        <a href="./fse.html" class="group inline-flex items-center gap-1.5 opacity-95 hover:text-emerald-400 transition-colors" data-cursor="FSE LOGIN">
+          <span class="cp-roll"><span>FSE PORTAL</span><span>FSE PORTAL</span></span>
+          <span class="text-[9px] font-bold bg-emerald-500 text-black px-1.5 py-0.5 rounded-sm">LIVE</span>
         </a>
-        <a href="./fse.html" class="group inline-flex items-center gap-1.5 hover:text-white text-[#efefed]/90" data-cursor="FSE Login" data-cursor-tone="orange">
-          <span class="nc-roll"><span>FSE Portal</span><span>FSE Portal</span></span>
-          <span class="font-mono-nc text-[9px] font-semibold bg-[#ff5230] text-white px-1.5 py-0.5 rounded-sm tracking-wider">LIVE</span>
-        </a>
-        <a href="./admin.html" class="group inline-flex items-center bg-[#a574f4] hover:bg-[#ff5230] text-white rounded-full px-4 py-2 text-[13px] font-medium transition-colors duration-300" data-cursor="Admin NOC">
-          <span class="nc-roll"><span>Admin Portal</span><span>Admin Portal</span></span>
+        <a href="./admin.html" class="group inline-flex items-center border border-amber-500/60 bg-amber-500/15 text-amber-400 hover:bg-amber-500 hover:text-black rounded-full px-3.5 py-1.5 text-[11px] font-bold transition-colors duration-200" data-cursor="ADMIN NOC" data-cursor-tone="amber">
+          <span class="cp-roll"><span>ADMIN PORTAL</span><span>ADMIN PORTAL</span></span>
         </a>
       </nav>
     </div>
   </header>
 
   <!-- FIXED BOTTOM-RIGHT QUICK FSE PORTAL TAB -->
-  <a href="./fse.html" class="nc-corner-tab" data-cursor="FSE Portal" data-cursor-tone="orange" title="Enter FSE Portal">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <a href="./fse.html" class="cp-corner-tab" data-cursor="FSE PORTAL" title="Enter FSE Portal">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M3 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18"/>
       <path d="M15 9h2a2 2 0 0 1 2 2v4a2 2 0 0 0 2 2 1 1 0 0 0 1-1V9.5a2 2 0 0 0-.59-1.41L18.5 5.2"/>
       <rect x="6" y="6" width="6" height="5" rx="1"/>
       <line x1="2" y1="22" x2="16" y2="22"/>
     </svg>
-    <span class="font-mono-nc text-[9px] font-semibold tracking-wider uppercase">FSE</span>
+    <span class="text-[9px] font-bold tracking-widest uppercase">FSE</span>
   </a>
 
-  <!-- ==================== SECTION 1: HERO + SCROLL-DRIVEN ROTARY DIAL ==================== -->
-  <section id="capabilities" class="nc-dial-track relative z-10">
-    <div class="nc-dial-sticky">
+  <!-- ==================== SECTION 1: HERO + PRECISION SCROLL-DRIVEN ROTARY DIAL ==================== -->
+  <section id="capabilities" class="cp-dial-track relative z-10">
+    <div class="cp-dial-sticky">
 
-      <!-- HERO STATE (Fades smoothly out as you scroll into the Rotary Dial chapters) -->
-      <div id="ncHeroStage" class="relative z-20 max-w-4xl mx-auto px-5 text-center flex flex-col items-center transition-all duration-300 -mt-12 md:-mt-20">
-        <div class="font-mono-nc text-[11px] sm:text-xs tracking-[0.18em] uppercase text-black/50 mb-5 nc-mask-line">
-          <span class="nc-mask-inner nc-d1">COLOPLUS TECH · TELECOM ENERGY &amp; NOC COMMAND</span>
+      <!-- HERO STAGE (Smoothly glides up & fades cleanly BEFORE Chapter 01 locks in) -->
+      <div id="cpHeroStage" class="relative z-20 max-w-4xl mx-auto px-5 text-center flex flex-col items-center -mt-12 md:-mt-24 will-change-transform">
+        <div class="text-[11px] tracking-[0.18em] uppercase opacity-60 mb-4 cp-mask-line">
+          <span class="cp-mask-inner cp-d1">// 01. SYSTEM INTRODUCTION — TELECOM ENERGY &amp; NOC COMMAND</span>
         </div>
 
-        <h1 class="text-[clamp(2.85rem,7.2vw,6.1rem)] leading-[0.98] tracking-[-0.045em] font-normal text-black">
-          <span class="nc-mask-line"><span class="nc-mask-inner nc-d2">Smart</span></span>
-          <span class="nc-hero-capsule">diesel</span><br>
-          <span class="nc-mask-line"><span class="nc-mask-inner nc-d3">to <span class="text-[#ff5230]">site autonomy.</span></span></span>
+        <h1 class="hero-outline-title text-[clamp(3rem,7.8vw,6.4rem)] uppercase tracking-wider">
+          <span class="cp-mask-line"><span class="cp-mask-inner cp-d2">COLOPLUS</span></span>
+          <span class="cp-hero-capsule">SMART DIESEL</span><br>
+          <span class="cp-mask-line"><span class="cp-mask-inner cp-d3">AUTONOMOUS <span style="color: var(--color-accent);">AGENT</span></span></span>
         </h1>
 
-        <p class="mt-6 text-sm sm:text-base text-black/65 max-w-xl leading-relaxed nc-mask-line">
-          <span class="nc-mask-inner nc-d4">
-            Built for ColoPlus Telecom Infrastructure, monitoring <strong id="ncLiveSiteCount" class="text-black font-semibold">14</strong> active tower sites — empowering FSEs and NOC Administrators to track diesel deliveries, grid light hours, BUB battery health, and PPM checklists in real time.
+        <p class="mt-5 text-xs sm:text-sm max-w-2xl leading-relaxed opacity-80 cp-mask-line">
+          <span class="cp-mask-inner cp-d4">
+            Welcome to the <strong class="opacity-100">ColoPlus Tech Smart Diesel &amp; Site Autonomy Platform</strong>. Built for ColoPlus Telecom Infrastructure, this system monitors <strong id="cpLiveSiteCount" style="color: var(--color-accent);">14</strong> active tower sites — empowering Field Support Engineers (FSEs) and NOC Administrators on dedicated portals to track diesel deliveries, utility power grid hours, backup battery health (BUB), PPM checklists, and live site issues in real time.
           </span>
         </p>
 
-        <!-- Primary Portal CTAs + SCROLL Badge -->
+        <!-- Primary Portal CTAs -->
         <div class="mt-7 flex flex-wrap items-center justify-center gap-3">
-          <a href="./fse.html" class="nc-ink-btn group" data-cursor="FSE Login" data-cursor-tone="orange">
-            <span class="nc-ink-circle"></span>
-            <span class="nc-roll"><span>Enter FSE Portal</span><span>Enter FSE Portal</span></span>
-            <span class="nc-btn-badge">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          <a href="./fse.html" class="cp-ink-btn group" data-cursor="FSE LOGIN">
+            <span class="cp-ink-circle"></span>
+            <span class="cp-roll"><span>ENTER FSE PORTAL &gt;&gt;</span><span>ENTER FSE PORTAL &gt;&gt;</span></span>
+            <span class="cp-btn-badge">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </span>
           </a>
-          <a href="./admin.html" class="nc-ink-btn is-light group border-black/25 hover:border-[#ff5230]" data-cursor="Admin NOC">
-            <span class="nc-ink-circle"></span>
-            <span class="nc-roll"><span>Admin Portal</span><span>Admin Portal</span></span>
-            <span class="nc-btn-badge">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          <a href="./admin.html" class="cp-ink-btn is-amber-outline group" data-cursor="ADMIN NOC" data-cursor-tone="amber">
+            <span class="cp-ink-circle"></span>
+            <span class="cp-roll"><span>ADMIN PORTAL &gt;&gt;</span><span>ADMIN PORTAL &gt;&gt;</span></span>
+            <span class="cp-btn-badge">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </span>
           </a>
         </div>
 
-        <button type="button" onclick="scrollToDialChapter(0)" class="mt-6 bg-black text-white font-mono-nc text-[10px] tracking-[0.18em] uppercase px-5 py-2 rounded-full hover:bg-[#ff5230] transition-colors cursor-pointer" data-cursor="Scroll">
-          SCROLL
+        <button type="button" onclick="scrollToDialChapter(0)" class="mt-6 border_ui px-5 py-1.5 text-[10px] font-bold tracking-[0.2em] uppercase hover:border-emerald-500 hover:text-emerald-400 transition-colors cursor-pointer bg-(--color-card-bg)" data-cursor="SCROLL">
+          SCROLL TO EXPLORE ↓
         </button>
 
-        <!-- 4 Playful NiceCrate-Style Floating Vector Stickers (Desktop) -->
-        <!-- Left Orange Diesel Telemetry Mascot -->
-        <div class="hidden lg:block absolute -left-36 top-10 nc-sticker anim-float-a" data-cursor="15/20 kVA" data-cursor-tone="orange">
-          <svg width="108" height="108" viewBox="0 0 110 110" fill="none">
-            <rect x="24" y="22" width="62" height="54" rx="14" fill="#fff" stroke="#ff5230" stroke-width="4"/>
-            <rect x="38" y="12" width="34" height="10" rx="4" fill="#ff5230"/>
-            <path d="M24 38H86" stroke="#ff5230" stroke-width="3"/>
-            <circle cx="44" cy="52" r="4.5" fill="#ff5230"/>
-            <circle cx="66" cy="52" r="4.5" fill="#ff5230"/>
-            <path d="M44 63C49 69 61 69 66 63" stroke="#ff5230" stroke-width="3.5" stroke-linecap="round"/>
-            <!-- Arms & Feet -->
-            <path d="M24 54C12 58 10 70 18 72" stroke="#ff5230" stroke-width="4" stroke-linecap="round"/>
-            <path d="M86 44C96 34 98 24 91 20" stroke="#ff5230" stroke-width="4" stroke-linecap="round"/>
-            <path d="M42 76V90M68 76V90" stroke="#ff5230" stroke-width="4.5" stroke-linecap="round"/>
-            <ellipse cx="38" cy="92" rx="9" ry="5" fill="#ff5230"/>
-            <ellipse cx="72" cy="92" rx="9" ry="5" fill="#ff5230"/>
-          </svg>
+        <!-- Left Floating Telemetry Wireframe Badge (Desktop) -->
+        <div class="hidden lg:block absolute -left-32 top-8 cp-sticker anim-float-a" data-cursor="15/20 KVA">
+          <div class="border_ui p-3 text-left text-[10px] uppercase tracking-wider" style="background: var(--color-card-bg);">
+            <div class="opacity-50">FLEET FUEL</div>
+            <div class="londrina-outline-regular text-2xl mt-0.5" style="color: var(--color-accent);">15 / 20 KVA</div>
+            <div class="opacity-60 text-[9px]">LIVE TANK MATH</div>
+          </div>
         </div>
 
-        <!-- Right Purple BUB Battery / Lightbulb Mascot -->
-        <div class="hidden lg:block absolute -right-36 top-6 nc-sticker anim-float-b" data-cursor="BUB + Grid">
-          <svg width="104" height="104" viewBox="0 0 110 110" fill="none">
-            <line x1="55" y1="6" x2="55" y2="15" stroke="#a574f4" stroke-width="3.5" stroke-linecap="round"/>
-            <line x1="20" y1="22" x2="27" y2="29" stroke="#a574f4" stroke-width="3.5" stroke-linecap="round"/>
-            <line x1="90" y1="22" x2="83" y2="29" stroke="#a574f4" stroke-width="3.5" stroke-linecap="round"/>
-            <path d="M32 48C32 34 42 24 55 24C68 24 78 34 78 48C78 58 70 64 68 72H42C40 64 32 58 32 48Z" fill="#fff" stroke="#a574f4" stroke-width="4"/>
-            <rect x="43" y="75" width="24" height="7" rx="3" fill="#a574f4"/>
-            <rect x="46" y="85" width="18" height="6" rx="3" fill="#a574f4"/>
-            <path d="M44 48C46 45 50 45 52 48M58 48C60 45 64 45 66 48" stroke="#a574f4" stroke-width="3.2" stroke-linecap="round"/>
-            <path d="M46 57C50 62 60 62 64 57" stroke="#a574f4" stroke-width="3.2" stroke-linecap="round"/>
-          </svg>
+        <!-- Right Floating BUB/Grid Wireframe Badge (Desktop) -->
+        <div class="hidden lg:block absolute -right-32 top-6 cp-sticker anim-float-b" data-cursor="BUB + GRID" data-cursor-tone="amber">
+          <div class="border_ui p-3 text-left text-[10px] uppercase tracking-wider" style="background: var(--color-card-bg); border-color: rgba(245,158,11,0.45);">
+            <div class="opacity-50">RELIABILITY</div>
+            <div class="londrina-outline-regular text-2xl mt-0.5" style="color: var(--color-warning);">PPM &amp; RCA</div>
+            <div class="opacity-60 text-[9px]">7-DAY AUTO ALARM</div>
+          </div>
         </div>
 
-        <!-- Bottom-Left Circular Rotating Stamp Badge + Purple Sparkle -->
-        <div class="hidden lg:flex items-center gap-6 absolute -left-44 -bottom-16">
-          <svg width="34" height="34" viewBox="0 0 40 40" fill="none" class="nc-sticker">
-            <path d="M20 3L24 16L37 20L24 24L20 37L16 24L3 20L16 16L20 3Z" fill="#a574f4" stroke="#000" stroke-width="1.5"/>
-          </svg>
-          <div class="relative w-20 h-20 nc-sticker" data-cursor="Zero Clash">
+        <!-- Bottom-Left Circular Rotating Stamp Badge (Desktop) -->
+        <div class="hidden lg:flex items-center gap-4 absolute -left-36 -bottom-16">
+          <div class="relative w-20 h-20 cp-sticker" data-cursor="ZERO CLASH">
             <svg viewBox="0 0 100 100" class="w-full h-full anim-spin-slow">
-              <circle cx="50" cy="50" r="46" fill="#000"/>
+              <circle cx="50" cy="50" r="46" fill="var(--color-card-bg)" stroke="var(--color-line)" stroke-width="1.5"/>
               <defs><path id="stampRing" d="M 50,50 m -32,0 a 32,32 0 1,1 64,0 a 32,32 0 1,1 -64,0"/></defs>
-              <text fill="#fff" font-family="Geist Mono, monospace" font-size="8.2" letter-spacing="2.2">
+              <text fill="var(--color-primary)" font-family="Source Code Pro, monospace" font-size="7.6" font-weight="700" letter-spacing="1.8">
                 <textPath href="#stampRing">15 KVA · 20 KVA · LIVE NOC ·</textPath>
               </text>
             </svg>
             <div class="absolute inset-0 flex items-center justify-center">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="#ff5230"><polygon points="12 2 15 9 22 9.5 16.5 14 18.2 21 12 17.2 5.8 21 7.5 14 2 9.5 9 9"/></svg>
+              <span class="w-3 h-3 rounded-full" style="background: var(--color-accent);"></span>
             </div>
           </div>
         </div>
-
-        <!-- Bottom-Right Orange Sparkle -->
-        <div class="hidden lg:block absolute -right-32 -bottom-12 nc-sticker">
-          <svg width="38" height="38" viewBox="0 0 40 40" fill="none">
-            <path d="M20 2L24.5 15.5L38 20L24.5 24.5L20 38L15.5 24.5L2 20L15.5 15.5L20 2Z" fill="#ff5230" stroke="#000" stroke-width="1.5"/>
-          </svg>
-        </div>
       </div>
 
-      <!-- GIANT PRECISION ROTARY DIAL (Peeks at Bottom Center in Hero, Glides Left on Scroll!) -->
-      <div id="ncDialWheelWrap" class="hidden md:flex items-center justify-center pointer-events-none fixed md:absolute inset-0 z-10">
-        <div id="ncDialWheel" class="relative w-[780px] h-[780px] rounded-full border border-black/15 flex items-center justify-center transition-transform duration-150 will-change-transform" style="transform: translate(0px, 560px) rotate(0deg);">
+      <!-- GIANT PRECISION ROTARY DIAL (Peeks Bottom Center in Hero, Glides Smoothly Left & Locks 01-04 to 3 o'clock Needle) -->
+      <div id="cpDialWheelWrap">
+        <!-- Fixed 3 o'clock Precision Target Needle (aligned dynamically in JS right beside the 3 o'clock pill) -->
+        <div id="cpDialNeedle" class="absolute top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none" style="left: 50%; opacity: 0;">
+          <span class="w-3 h-3 rounded-full border-2" id="cpNeedleDot" style="border-color: var(--color-accent); background: var(--color-secondary);"></span>
+          <span class="w-8 h-px" style="background: var(--color-line-hover);"></span>
+          <span class="text-[9px] font-bold tracking-widest uppercase opacity-60">LOCK</span>
+        </div>
+
+        <div id="cpDialWheel" class="relative w-[780px] h-[780px] rounded-full flex items-center justify-center will-change-transform" style="border: 1px solid var(--color-line);">
           <!-- Inner Dashed Ring -->
-          <div class="w-[640px] h-[640px] rounded-full border border-dashed border-black/10 absolute"></div>
-          <!-- Dial SVG Tick Marks -->
+          <div class="w-[630px] h-[630px] rounded-full border border-dashed absolute" style="border-color: var(--color-line);"></div>
+          <div class="w-[460px] h-[460px] rounded-full border absolute opacity-40" style="border-color: var(--color-line);"></div>
+
+          <!-- Dial SVG Tick Marks & Inner Center Hub -->
           <svg viewBox="0 0 780 780" class="w-full h-full absolute inset-0" aria-hidden="true">
-            <g id="ncDialTicks" stroke="rgba(0,0,0,0.22)" stroke-width="1.2"></g>
-            <!-- Center Needle -->
-            <line x1="390" y1="390" x2="390" y2="62" stroke="#000" stroke-width="1.2" opacity="0.55"/>
-            <line x1="390" y1="16" x2="390" y2="54" stroke="#ff5230" stroke-width="3"/>
-            <circle cx="390" cy="66" r="6" fill="#efefed" stroke="#ff5230" stroke-width="2.5"/>
-            <!-- Rim Labels -->
-            <text x="200" y="135" fill="rgba(0,0,0,0.45)" font-family="Geist Mono, monospace" font-size="11" letter-spacing="1.5" transform="rotate(-32 200 135)">FSE PORTAL</text>
-            <text x="515" y="130" fill="rgba(0,0,0,0.45)" font-family="Geist Mono, monospace" font-size="11" letter-spacing="1.5" transform="rotate(30 515 130)">ADMIN NOC</text>
-            <text x="645" y="340" fill="rgba(0,0,0,0.45)" font-family="Geist Mono, monospace" font-size="11" letter-spacing="1.5" transform="rotate(75 645 340)">FUEL MATH</text>
-            <text x="85" y="340" fill="rgba(0,0,0,0.45)" font-family="Geist Mono, monospace" font-size="11" letter-spacing="1.5" transform="rotate(-75 85 340)">PPM ZERO-CLASH</text>
+            <g id="cpDialTicks" stroke="var(--color-line-hover)" stroke-width="1.2"></g>
+            <!-- Center Crosshair -->
+            <circle cx="390" cy="390" r="14" fill="none" stroke="var(--color-line-hover)" stroke-width="1.2"/>
+            <circle cx="390" cy="390" r="3.5" fill="var(--color-accent)"/>
+            <line x1="390" y1="390" x2="735" y2="390" stroke="var(--color-line)" stroke-width="1" stroke-dasharray="4 6"/>
           </svg>
-          <!-- Numbered Orange Rim Pills (01 - 04) -->
-          <div id="ncDialPill0" class="nc-dial-pill is-active" style="top: 12%; right: 6%; transform: rotate(22deg);">01</div>
-          <div id="ncDialPill1" class="nc-dial-pill" style="top: 38%; right: -5%; transform: rotate(6deg);">02</div>
-          <div id="ncDialPill2" class="nc-dial-pill" style="bottom: 34%; right: -5%; transform: rotate(-10deg);">03</div>
-          <div id="ncDialPill3" class="nc-dial-pill" style="bottom: 10%; right: 8%; transform: rotate(-28deg);">04</div>
+
+          <!-- Numbered Rim Pills (01 - 04) placed by exact trigonometry in JS so active pill locks dead-center at 3 o'clock -->
+          <button type="button" id="cpDialPill0" onclick="scrollToDialChapter(0)" class="cp-dial-pill is-active" data-cursor="01 FSE"><span>01</span></button>
+          <button type="button" id="cpDialPill1" onclick="scrollToDialChapter(1)" class="cp-dial-pill" data-cursor="02 ADMIN" data-cursor-tone="amber"><span>02</span></button>
+          <button type="button" id="cpDialPill2" onclick="scrollToDialChapter(2)" class="cp-dial-pill" data-cursor="03 FUEL"><span>03</span></button>
+          <button type="button" id="cpDialPill3" onclick="scrollToDialChapter(3)" class="cp-dial-pill" data-cursor="04 PPM" data-cursor-tone="amber"><span>04</span></button>
         </div>
       </div>
 
-      <!-- SCROLL-DRIVEN CHAPTER COPY STAGE (Right Half of Viewport During Dial Scroll) -->
-      <div id="ncChapterStage" class="relative md:absolute md:right-[8vw] md:top-1/2 md:-translate-y-1/2 z-20 max-w-lg w-full px-5 md:px-0 opacity-100 md:opacity-0 md:pointer-events-none transition-all duration-300">
-        <div class="flex items-center gap-3 mb-5">
-          <span id="ncChapterBadge" class="bg-black text-white font-mono-nc text-[11px] font-semibold px-3 py-1 rounded-md tracking-wider">CHAPTER 01</span>
-          <span id="ncChapterTag" class="font-mono-nc text-[11px] uppercase tracking-[0.16em] text-black/55">FSE PORTAL</span>
-        </div>
+      <!-- SCROLL-DRIVEN CHAPTER COPY STAGE (Exact Admin & FSE Block Text, Right Side of Viewport) -->
+      <div id="cpChapterStage" class="px-4 md:px-0">
+        <div id="cpChapterSwapBox" class="cp-chapter-swap border_ui p-6 sm:p-8" style="background: var(--color-card-bg);">
+          <div class="flex items-center justify-between gap-3 border-b pb-3 mb-5" style="border-color: var(--color-line);">
+            <div class="flex items-center gap-2.5">
+              <span id="cpChapterBadge" class="text-[11px] font-bold px-2.5 py-0.5 uppercase tracking-wider" style="background: var(--color-accent); color: #0b0d10;">01 // CAPABILITY</span>
+              <span id="cpChapterTag" class="text-[11px] uppercase tracking-widest opacity-65">FSE PORTAL</span>
+            </div>
+            <span id="cpChapterCounter" class="text-[11px] font-bold opacity-55">01 / 04</span>
+          </div>
 
-        <h2 class="text-4xl sm:text-5xl md:text-[3.6rem] leading-[1.02] tracking-[-0.045em] font-normal text-black flex items-start gap-3">
-          <span class="w-3 h-3 rounded-full bg-[#a574f4] mt-4 shrink-0"></span>
-          <span id="ncChapterTitle">Dedicated Field Workspace.</span>
-        </h2>
+          <h2 id="cpChapterTitle" class="hero-outline-title text-4xl sm:text-5xl uppercase tracking-wider">
+            FSE PORTAL (DEDICATED FIELD WORKSPACE)
+          </h2>
 
-        <p id="ncChapterDesc" class="mt-5 text-sm sm:text-base text-black/65 leading-relaxed pl-6">
-          Field Support Engineers verify their Site ID &amp; Tenant ID to log diesel deliveries, view animated tank &amp; BUB/Grid status, complete the 12-item mandatory photo PPM checklist, and submit site tickets &amp; complaints.
-        </p>
+          <p id="cpChapterDesc" class="mt-4 text-xs sm:text-sm leading-relaxed opacity-85">
+            Field Support Engineers verify their Site ID &amp; Tenant ID to log diesel deliveries, view animated tank &amp; BUB/Grid status, complete the 12-item mandatory photo PPM checklist, and submit site tickets &amp; complaints.
+          </p>
 
-        <div class="mt-6 pl-6">
-          <a id="ncChapterCta" href="./fse.html" class="nc-ink-btn group text-sm" data-cursor="Launch" data-cursor-tone="orange">
-            <span class="nc-ink-circle"></span>
-            <span class="nc-roll"><span id="ncChapterCtaText1">Open FSE Portal</span><span id="ncChapterCtaText2">Open FSE Portal</span></span>
-            <span class="nc-btn-badge">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-            </span>
-          </a>
-        </div>
+          <!-- Exact Admin / FSE Menu Strip for this Chapter -->
+          <div id="cpChapterMenus" class="mt-5 flex flex-wrap gap-1.5 text-[10px] font-bold uppercase tracking-wider"></div>
 
-        <!-- Horizontal Stepper (01 - 04 + UP NEXT) -->
-        <div class="mt-10 pl-6 flex items-center flex-wrap gap-2">
-          <button type="button" onclick="selectChapter(0)" id="ncStepBtn0" class="w-9 h-8 rounded-lg font-mono-nc text-xs font-semibold border border-black/15 bg-[#ff5230] text-white cursor-pointer transition-all">01</button>
-          <span class="w-4 h-px bg-black/20"></span>
-          <button type="button" onclick="selectChapter(1)" id="ncStepBtn1" class="w-9 h-8 rounded-lg font-mono-nc text-xs font-semibold border border-black/15 bg-white/60 text-black/60 hover:border-black cursor-pointer transition-all">02</button>
-          <span class="w-4 h-px bg-black/20"></span>
-          <button type="button" onclick="selectChapter(2)" id="ncStepBtn2" class="w-9 h-8 rounded-lg font-mono-nc text-xs font-semibold border border-black/15 bg-white/60 text-black/60 hover:border-black cursor-pointer transition-all">03</button>
-          <span class="w-4 h-px bg-black/20"></span>
-          <button type="button" onclick="selectChapter(3)" id="ncStepBtn3" class="w-9 h-8 rounded-lg font-mono-nc text-xs font-semibold border border-black/15 bg-white/60 text-black/60 hover:border-black cursor-pointer transition-all">04</button>
-          <span class="ml-3 font-mono-nc text-[11px] uppercase tracking-wider text-black/45">
-            UP NEXT → <strong id="ncUpNextLabel" class="text-black font-semibold">ADMIN NOC</strong>
-          </span>
+          <div class="mt-6 pt-5 border-t flex flex-wrap items-center justify-between gap-4" style="border-color: var(--color-line);">
+            <a id="cpChapterCta" href="./fse.html" class="cp-ink-btn group text-xs" data-cursor="LAUNCH">
+              <span class="cp-ink-circle"></span>
+              <span class="cp-roll"><span id="cpChapterCtaText1">ENTER FSE PORTAL &gt;&gt;</span><span id="cpChapterCtaText2">ENTER FSE PORTAL &gt;&gt;</span></span>
+              <span class="cp-btn-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </span>
+            </a>
+
+            <!-- Stepper Buttons 01 - 04 synced strictly with scroll position -->
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="scrollToDialChapter(0)" id="cpStepBtn0" class="w-9 h-8 text-xs font-bold border_ui cursor-pointer transition-colors">01</button>
+              <button type="button" onclick="scrollToDialChapter(1)" id="cpStepBtn1" class="w-9 h-8 text-xs font-bold border_ui cursor-pointer transition-colors">02</button>
+              <button type="button" onclick="scrollToDialChapter(2)" id="cpStepBtn2" class="w-9 h-8 text-xs font-bold border_ui cursor-pointer transition-colors">03</button>
+              <button type="button" onclick="scrollToDialChapter(3)" id="cpStepBtn3" class="w-9 h-8 text-xs font-bold border_ui cursor-pointer transition-colors">04</button>
+            </div>
+          </div>
+
+          <div class="mt-3 flex items-center justify-between text-[10px] uppercase tracking-widest opacity-55">
+            <span>SCROLL DIAL ACCURATELY LOCKED</span>
+            <span>UP NEXT → <strong id="cpUpNextLabel" class="opacity-100">ADMIN PORTAL</strong></span>
+          </div>
         </div>
       </div>
 
     </div>
   </section>
 
-  <!-- ==================== SECTION 2: DRAGGABLE 3D PERSPECTIVE SHOWCASE ==================== -->
-  <section id="showcase" class="relative z-20 py-24 md:py-32 px-4 overflow-hidden">
-    <div class="max-w-3xl mx-auto text-center mb-14">
-      <h2 class="text-[clamp(2.5rem,6vw,5.2rem)] leading-[0.98] tracking-[-0.045em] font-normal text-black">
-        Every tower stays online.
+  <!-- ==================== SECTION 2: EVERY TOWER STAYS ONLINE (3D MODULE SHOWCASE) ==================== -->
+  <section id="showcase" class="relative z-20 pt-20 pb-24 px-4 overflow-hidden border-t" style="border-color: var(--color-line);">
+    <div class="max-w-3xl mx-auto text-center mb-12">
+      <div class="text-[11px] uppercase tracking-[0.2em] opacity-55 mb-2">// 02. WHAT THIS PLATFORM CAN DO (LIVE MODULES)</div>
+      <h2 class="hero-outline-title text-[clamp(2.8rem,6.5vw,5.4rem)] uppercase tracking-wider">
+        EVERY TOWER STAYS ONLINE.
       </h2>
-      <p class="mt-4 text-sm sm:text-base text-black/60 max-w-xl mx-auto">
-        Drag across ColoPlus Tech's four live operational engines — built for daily accuracy, role isolation, and zero-clash scheduling.
+      <p class="mt-3 text-xs sm:text-sm opacity-75 max-w-xl mx-auto leading-relaxed">
+        Drag or click across ColoPlus Tech's four live operational engines — built with exact daily fuel telemetry, Admin/FSE portal isolation, and personalized zero-clash PPM scheduling.
       </p>
     </div>
 
     <!-- Draggable 3D Curved Stage -->
-    <div id="ncCarouselStage" class="nc-carousel-stage relative w-full h-[380px] sm:h-[410px] mx-auto cursor-grab active:cursor-grabbing" data-cursor="Drag" data-cursor-tone="orange">
+    <div id="cpCarouselStage" class="cp-carousel-stage relative w-full h-[360px] sm:h-[390px] mx-auto" data-cursor="DRAG">
       <!-- Cards injected & positioned dynamically in 3D space -->
     </div>
 
-    <!-- Active Showcase Meta + Mono Stack Pills -->
-    <div class="mt-8 text-center space-y-3">
+    <!-- Active Showcase Controls & Mono Stack Pills -->
+    <div class="mt-8 text-center space-y-3.5 max-w-2xl mx-auto">
       <div class="flex items-center justify-center gap-3">
-        <button type="button" onclick="stepShowcase(-1)" class="w-9 h-9 rounded-full border border-black/20 flex items-center justify-center hover:bg-black hover:text-white transition-colors cursor-pointer" aria-label="Previous module">&lt;</button>
-        <div id="ncShowcaseTitle" class="text-lg font-medium tracking-tight text-black min-w-[220px]">FSE Field Workspace</div>
-        <button type="button" onclick="stepShowcase(1)" class="w-9 h-9 rounded-full border border-black/20 flex items-center justify-center hover:bg-black hover:text-white transition-colors cursor-pointer" aria-label="Next module">&gt;</button>
+        <button type="button" onclick="stepShowcase(-1)" class="w-9 h-9 border_ui flex items-center justify-center font-bold hover:border-emerald-500 hover:text-emerald-400 transition-colors cursor-pointer" style="background: var(--color-card-bg);" aria-label="Previous module">&lt;</button>
+        <div id="cpShowcaseTitle" class="text-sm sm:text-base font-bold uppercase tracking-wider min-w-[240px]">01 // FSE PORTAL</div>
+        <button type="button" onclick="stepShowcase(1)" class="w-9 h-9 border_ui flex items-center justify-center font-bold hover:border-emerald-500 hover:text-emerald-400 transition-colors cursor-pointer" style="background: var(--color-card-bg);" aria-label="Next module">&gt;</button>
       </div>
-      <div id="ncShowcasePills" class="flex flex-wrap items-center justify-center gap-2"></div>
-      <div class="pt-2">
-        <a id="ncShowcaseLink" href="./fse.html" class="font-mono-nc text-xs uppercase tracking-wider underline underline-offset-4 hover:text-[#ff5230] transition-colors">
-          Launch This Module →
+      <div id="cpShowcasePills" class="flex flex-wrap items-center justify-center gap-1.5"></div>
+      <div class="pt-3 flex flex-wrap items-center justify-center gap-3">
+        <a id="cpShowcaseLink" href="./fse.html" class="cp-ink-btn group text-xs" data-cursor="OPEN PORTAL">
+          <span class="cp-ink-circle"></span>
+          <span class="cp-roll"><span id="cpShowcaseBtnLabel1">LAUNCH MODULE &gt;&gt;</span><span id="cpShowcaseBtnLabel2">LAUNCH MODULE &gt;&gt;</span></span>
+          <span class="cp-btn-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </span>
+        </a>
+        <a href="./admin.html" class="border_ui px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-amber-400 border-amber-500/50 hover:bg-amber-500 hover:text-black transition-colors" data-cursor="ADMIN NOC" data-cursor-tone="amber">
+          ADMIN PORTAL &gt;&gt;
         </a>
       </div>
     </div>
   </section>
 
-  <!-- ==================== SECTION 3: STICKY LEFT / ORANGE-CARD FAQ ==================== -->
-  <section id="faq" class="relative z-20 py-24 md:py-32 px-5 md:px-[5vw]">
-    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_1.35fr] gap-12 lg:gap-[6vw] items-start">
-
-      <!-- Sticky Left Column -->
-      <div class="lg:sticky lg:top-28 space-y-5">
-        <span class="inline-block bg-[#ff5230] text-white font-mono-nc text-[11px] font-semibold uppercase tracking-wider px-3.5 py-1 rounded-full">
-          FAQ
-        </span>
-        <h2 class="text-[clamp(3rem,6.2vw,5.4rem)] leading-[0.94] tracking-[-0.045em] font-normal uppercase text-black">
-          GOOD<br>QUESTIONS
-        </h2>
-        <p class="text-sm sm:text-base text-black/65 max-w-sm leading-relaxed">
-          Everything FSEs and NOC Administrators ask about site telemetry, PPM verification, and automated 7-day fuel alarms.
-        </p>
-        <div class="pt-2">
-          <a href="./fse.html" class="nc-ink-btn group" data-cursor="FSE Login" data-cursor-tone="orange">
-            <span class="nc-ink-circle"></span>
-            <span class="nc-roll"><span>Enter FSE Portal</span><span>Enter FSE Portal</span></span>
-            <span class="nc-btn-badge">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-            </span>
-          </a>
-        </div>
-      </div>
-
-      <!-- Right Numbered Accordion List -->
-      <div id="ncFaqList" class="space-y-3">
-        <!-- Populated dynamically -->
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ==================== SECTION 4: DARK ORBITAL TRANSITION SECTION ==================== -->
-  <section id="orbital" class="relative z-20 bg-black text-[#efefed] pt-28 pb-24 px-5 overflow-hidden">
-
-    <!-- Signature Curved Top U-Notch Holding Floating CP Badge -->
-    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[190px] h-[94px] pointer-events-none flex items-start justify-center">
-      <svg viewBox="0 0 190 94" class="w-full h-full" fill="none">
-        <path d="M0 0H190C156 0 144 94 95 94C46 94 34 0 0 0Z" fill="#efefed"/>
-      </svg>
-      <div class="absolute top-2.5 w-14 h-14 rounded-full bg-black text-white flex items-center justify-center shadow-lg">
-        <svg width="26" height="20" viewBox="0 0 34 24" fill="none">
-          <path d="M12.5 5.5C9.2 5.5 6.5 8.2 6.5 11.5C6.5 14.8 9.2 17.5 12.5 17.5C14.7 17.5 16.6 16.3 17.6 14.5" stroke="#fff" stroke-width="4.2" stroke-linecap="round"/>
-          <path d="M20.5 18.5V6.2H25.2C27.8 6.2 29.6 7.8 29.6 10.2C29.6 12.6 27.8 14.2 25.2 14.2H21.2" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="28.5" cy="17.5" r="3" fill="#ff5230"/>
-        </svg>
-      </div>
-    </div>
-
-    <!-- Concentric Dashed Orbital Rings -->
-    <div class="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden">
-      <div class="w-[78vw] max-w-[1150px] aspect-square rounded-full border border-dashed border-[#efefed]/15"></div>
-      <div class="absolute w-[46vw] max-w-[680px] aspect-square rounded-full border border-dashed border-[#efefed]/10"></div>
-    </div>
-
-    <div class="relative z-10 max-w-6xl mx-auto pt-12 pb-8">
-      <!-- Floating Orbital Icon Tiles Row -->
-      <div class="flex items-center justify-center gap-6 sm:gap-14 mb-12 flex-wrap">
-        <div class="nc-orbit-tile" data-orbit-speed="0.06" title="Diesel Tank Telemetry">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><rect x="6" y="4" width="12" height="17" rx="3"/><path d="M9 2h6"/><path d="M6 13c3-2 9 2 12 0"/></svg>
-        </div>
-        <div class="nc-orbit-tile" data-orbit-speed="-0.08" title="BUB Battery Pack">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#a574f4" stroke-width="1.6"><rect x="2" y="7" width="18" height="10" rx="2"/><line x1="22" y1="10" x2="22" y2="14"/><polygon points="11 9 8.5 12.5 11.2 12.5 10.2 15.5 13.8 11.5 11 11.5" fill="#facc15" stroke="none"/></svg>
-        </div>
-        <div class="nc-orbit-tile" data-orbit-speed="0.09" title="Utility Power Grid">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.6"><polygon points="12 3 6 21 18 21"/><line x1="4" y1="9" x2="20" y2="9"/><line x1="6" y1="15" x2="18" y2="15"/></svg>
-        </div>
-        <div class="nc-orbit-tile" data-orbit-speed="-0.05" title="12-Item PPM Proof">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ff5230" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 12l2.5 2.5L16 9"/></svg>
-        </div>
-        <div class="nc-orbit-tile" data-orbit-speed="0.07" title="Resend Auto Alerts">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/></svg>
-        </div>
-      </div>
-
-      <!-- Overlapping Graphic Cutout Cards + Glassmorphic Command Launch Card -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-        <!-- Left (7 cols): Headline + Iridescent Lavender Cutout + Glass Card -->
-        <div class="lg:col-span-7 relative">
-          <h2 class="text-[clamp(2.4rem,5.2vw,4.6rem)] leading-[1.03] tracking-[-0.045em] font-normal text-white relative z-20">
-            Live <span class="text-[#ff5230]">Alerts</span> In<br>Your Inbox
-          </h2>
-
-          <div class="relative mt-6 pt-4 pb-6">
-            <!-- Tilted Pastel Lavender Cutout Shape behind Glass Card -->
-            <div class="absolute -left-4 top-0 w-72 sm:w-80 h-56 rounded-[30px] -rotate-6 opacity-90 pointer-events-none"
-                 style="background: radial-gradient(circle at 35% 45%, #fde2c4 0%, #d8c7f7 45%, #c5b6e8 100%);"></div>
-
-            <!-- Glassmorphic Portal Access Card -->
-            <div class="relative z-10 ml-6 sm:ml-14 max-w-md rounded-3xl border border-white/15 bg-[#121214]/80 backdrop-blur-xl p-6 shadow-2xl space-y-4">
-              <div class="text-lg font-medium text-white">7-Day Automatic Fuel Alarms</div>
-              <p class="text-xs sm:text-sm text-white/70 leading-relaxed">
-                Whenever any tower drops within 7 days of dry-out, ColoPlus automatically emails Finance, the site's FSE, and NOC Admin via Resend — synced daily with live dates.
-              </p>
-              <div class="flex flex-wrap items-center gap-2.5 pt-1">
-                <a href="./admin.html" class="inline-flex items-center gap-2.5 bg-white text-black hover:bg-[#ff5230] hover:text-white rounded-full px-5 py-2.5 text-xs font-semibold transition-colors" data-cursor="Admin NOC">
-                  <span>Open Admin Portal</span>
-                  <span>→</span>
-                </a>
-                <a href="./fse.html" class="inline-flex items-center gap-2 border border-white/25 text-white hover:border-[#a574f4] hover:text-[#a574f4] rounded-full px-5 py-2.5 text-xs font-medium transition-colors" data-cursor="FSE Login">
-                  <span>FSE Site Login</span>
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <div class="mt-4 font-mono-nc text-[10px] tracking-[0.18em] uppercase text-white/40">
-            DAILY SYNC · 15 KVA &amp; 20 KVA · ZERO-CLASH PPM
-          </div>
-        </div>
-
-        <!-- Right (5 cols): Tilted Deep Teal Graphic Cutout Card -->
-        <div class="lg:col-span-5 flex justify-center">
-          <div id="ncTealCard" class="relative w-full max-w-[380px] aspect-square rounded-[36px] bg-[#07574f] p-8 flex flex-col justify-between rotate-[5deg] hover:rotate-0 transition-transform duration-500 shadow-2xl overflow-hidden" data-cursor="Live NOC">
-            <div class="flex items-center justify-between font-mono-nc text-[10px] uppercase tracking-widest text-white/70">
-              <span>COLOPLUS TELEMETRY</span>
-              <span class="bg-white/15 px-2 py-0.5 rounded-full text-white">24/7 LIVE</span>
-            </div>
-            <!-- Bold Geometric Starburst / Power Grid Emblem -->
-            <svg viewBox="0 0 220 220" class="w-48 h-48 mx-auto my-2" fill="none">
-              <path d="M110 22 L116 90 L165 44 L126 98 L198 106 L128 122 L176 176 L116 132 L106 200 L96 132 L46 178 L88 120 L22 104 L92 96 L52 44 L102 90 Z" fill="#ffffff"/>
-            </svg>
-            <div class="grid grid-cols-2 gap-2 font-mono-nc text-[11px] text-white/90">
-              <div class="bg-black/25 rounded-xl p-2.5">
-                <div class="text-[9px] text-white/60">GENERATORS</div>
-                <div class="font-semibold">15 &amp; 20 kVA</div>
-              </div>
-              <div class="bg-black/25 rounded-xl p-2.5">
-                <div class="text-[9px] text-white/60">PPM PROOF</div>
-                <div class="font-semibold">12/12 Photos *</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ==================== SECTION 5: NOTCHED DARK FOOTER ==================== -->
-  <footer class="relative z-20 bg-black px-3 sm:px-5 pb-5 pt-4 text-[#efefed]">
-    <div class="relative max-w-[1400px] mx-auto">
-
-      <!-- Floating Top-Right Back-To-Top Circular Button sitting inside stepped notch -->
-      <button type="button" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })"
-              class="nc-ink-btn is-light !p-0 w-14 h-14 justify-center absolute -top-2 right-1 z-30 shadow-xl cursor-pointer"
-              aria-label="Back to top" data-cursor="Top" data-cursor-tone="orange">
-        <span class="nc-ink-circle"></span>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
-      </button>
-
-      <!-- Dark Rounded Footer Card with Micro-Dot Grid -->
-      <div class="dot-grid-dark rounded-[36px] sm:rounded-[44px] border border-white/10 pt-12 sm:pt-16 px-6 sm:px-12 pb-0 overflow-hidden">
-
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 pb-12">
-          <!-- Left CTA Column -->
-          <div class="lg:col-span-5 space-y-5">
-            <h2 class="text-4xl sm:text-5xl leading-[1.02] tracking-[-0.04em] font-normal text-white">
-              Ready to monitor?<br>
-              <span class="text-[#ff5230]">Enter the NOC.</span>
-            </h2>
-            <p class="text-sm text-white/60 max-w-sm leading-relaxed">
-              Dedicated Field Support Engineer and NOC Administrator portals with exact daily fuel depletion math, BUB/Grid status, and zero-clash PPM schedules.
-            </p>
-            <div class="flex flex-wrap items-center gap-3 pt-1">
-              <a href="./fse.html" class="nc-ink-btn is-light group text-sm" data-cursor="FSE Login" data-cursor-tone="orange">
-                <span class="nc-ink-circle"></span>
-                <span class="nc-roll"><span>Enter FSE Portal</span><span>Enter FSE Portal</span></span>
-                <span class="nc-btn-badge">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                </span>
-              </a>
-              <a href="./admin.html" class="border border-white/25 hover:border-white text-white rounded-full px-6 py-3 text-sm font-medium transition-colors" data-cursor="Admin NOC">
-                Admin Login
-              </a>
-            </div>
-          </div>
-
-          <!-- Right 3 Columns -->
-          <div class="lg:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-8 text-sm pt-2">
-            <div class="space-y-3">
-              <div class="text-white font-medium">Portals</div>
-              <ul class="space-y-2 text-white/60">
-                <li><a href="./fse.html" class="hover:text-white transition-colors">FSE Portal</a></li>
-                <li><a href="./admin.html" class="hover:text-white transition-colors">Admin Portal</a></li>
-                <li><a href="./admin.html" class="hover:text-white transition-colors inline-flex items-center gap-1.5">Overview <span class="bg-[#ff5230] text-white font-mono-nc text-[9px] px-1.5 py-0.5 rounded-sm">LIVE</span></a></li>
-              </ul>
-            </div>
-
-            <div class="space-y-3">
-              <div class="text-white font-medium">Capabilities</div>
-              <ul class="space-y-2 text-white/60">
-                <li><a href="#capabilities" class="hover:text-white transition-colors">Fleet &amp; Fuel Math</a></li>
-                <li><a href="#showcase" class="hover:text-white transition-colors">Light &amp; BUB Pack</a></li>
-                <li><a href="#faq" class="hover:text-white transition-colors">12-Item PPM Proof</a></li>
-                <li><a href="#orbital" class="hover:text-white transition-colors">7-Day Auto Alarms</a></li>
-              </ul>
-            </div>
-
-            <div class="space-y-3 col-span-2 sm:col-span-1">
-              <div class="text-white font-medium">Operations</div>
-              <div class="flex items-center gap-2 text-xs text-white/65">
-                <span class="font-mono-nc">noc@coloplus.com</span>
-                <button type="button" onclick="copyNocEmail(this)" class="border border-white/20 px-1.5 py-0.5 rounded text-[9px] font-mono-nc hover:bg-white hover:text-black transition-colors cursor-pointer">COPY</button>
-              </div>
-              <a href="./admin.html" class="mt-2 flex items-center justify-between gap-2 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 p-3 transition-colors" data-cursor="Admin NOC">
-                <div>
-                  <div class="text-[10px] text-white/50">NOC Administrators</div>
-                  <div class="text-xs font-medium text-white">Launch Command</div>
-                </div>
-                <span class="w-8 h-8 rounded-full bg-[#ff5230] text-white flex items-center justify-center text-xs font-bold">↗</span>
-              </a>
-            </div>
-          </div>
-        </div>
-
-        <!-- Mid Legal / Status Row -->
-        <div class="border-t border-white/10 py-5 flex flex-wrap items-center justify-between gap-4 font-mono-nc text-[11px] text-white/45 uppercase tracking-wider">
-          <span>© 2026 COLOPLUS TECH. ALL RIGHTS RESERVED.</span>
-          <div class="flex flex-wrap items-center gap-4">
-            <span class="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1 rounded-full text-white/75">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>LIVE TELEMETRY</span>
-            </span>
-            <span>15 KVA · 20 KVA</span>
-            <span>ZERO-CLASH PPM</span>
-          </div>
-        </div>
-
-        <!-- Giant Arched Bleeding Wordmark at Bottom -->
-        <div class="pt-4 -mb-3 sm:-mb-6 select-none pointer-events-none">
-          <svg viewBox="0 0 1200 220" class="w-full h-auto block" aria-hidden="true">
-            <defs>
-              <path id="footerArc" d="M -20,215 Q 600,120 1220,215" fill="none"/>
-            </defs>
-            <text fill="#efefed" font-family="Inter Tight, sans-serif" font-weight="600" font-size="195" letter-spacing="-6" text-anchor="middle">
-              <textPath href="#footerArc" startOffset="50%">COLOPLUS</textPath>
-            </text>
-          </svg>
-        </div>
-
-      </div>
-    </div>
-  </footer>
-
-  <!-- ==================== INTERACTIVE MOTION ENGINE ==================== -->
+  <!-- ==================== INTERACTIVE MOTION & PRECISION SCROLL ENGINE ==================== -->
   <script>
     (function () {
       'use strict';
 
+      // ---------- 0. SYNCED THEME WITH ADMIN & FSE PORTALS ----------
+      const THEME_KEY = 'coloplus_theme';
+      function applyLandingTheme(theme) {
+        const next = theme === 'light' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        try { localStorage.setItem(THEME_KEY, next); } catch (_) {}
+        const lbl = document.getElementById('landingThemeLabel');
+        if (lbl) lbl.textContent = next === 'dark' ? 'DARK' : 'LIGHT';
+      }
+      applyLandingTheme((() => {
+        try { return localStorage.getItem(THEME_KEY) || 'dark'; } catch (_) { return 'dark'; }
+      })());
+      window.toggleLandingTheme = function () {
+        const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+        applyLandingTheme(cur === 'dark' ? 'light' : 'dark');
+      };
+
       // ---------- 1. FAST SNAPPY PRELOADER ----------
-      const preloader = document.getElementById('ncPreloader');
-      const pctEl = document.getElementById('ncPreloaderPct');
-      const stepEl = document.getElementById('ncPreloaderStep');
+      const preloader = document.getElementById('cpPreloader');
+      const pctEl = document.getElementById('cpPreloaderPct');
+      const stepEl = document.getElementById('cpPreloaderStep');
       let pct = 0;
       const preInterval = setInterval(() => {
-        pct = Math.min(100, pct + Math.floor(Math.random() * 18 + 12));
+        pct = Math.min(100, pct + Math.floor(Math.random() * 22 + 16));
         if (pctEl) pctEl.textContent = pct + '%';
         if (stepEl) {
           if (pct < 40) stepEl.textContent = '(01/03) TELEMETRY ENGINE';
           else if (pct < 80) stepEl.textContent = '(02/03) ZERO-CLASH PPM';
-          else stepEl.textContent = '(03/03) SITE AUTONOMY';
+          else stepEl.textContent = '(03/03) AUTONOMOUS AGENT';
         }
         if (pct >= 100) {
           clearInterval(preInterval);
           setTimeout(() => {
             if (preloader) preloader.classList.add('is-done');
-            document.body.classList.add('nc-ready');
-          }, 180);
+            document.body.classList.add('cp-ready');
+          }, 140);
         }
-      }, 65);
+      }, 55);
 
-      // ---------- 2. AMBIENT MOVING DIAGONAL WINDOW-BLIND LIGHT BEAMS ----------
-      const ambCanvas = document.getElementById('ncAmbientCanvas');
+      // ---------- 2. AMBIENT MOVING DIAGONAL LIGHT BEAMS ----------
+      const ambCanvas = document.getElementById('cpAmbientCanvas');
       if (ambCanvas) {
         const ctx = ambCanvas.getContext('2d');
         const resizeAmb = () => {
@@ -1082,19 +888,20 @@
           const w = ambCanvas.width, h = ambCanvas.height;
           ctx.clearRect(0, 0, w, h);
 
-          // Soft diagonal shadow beams gliding gently over dot grid
+          const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+          const beamAlpha = isLight ? 'rgba(10,10,10,0.055)' : 'rgba(244,243,239,0.04)';
+
           ctx.save();
           ctx.translate(w * 0.5, h * 0.5);
-          ctx.rotate(-0.42 + Math.sin(t * 0.6) * 0.03);
-          const beamCount = 3;
-          for (let i = 0; i < beamCount; i++) {
-            const offset = (i - 1) * (w * 0.38) + Math.sin(t + i * 1.6) * 65;
-            const grad = ctx.createLinearGradient(offset - 180, 0, offset + 180, 0);
+          ctx.rotate(-0.42 + Math.sin(t * 0.6) * 0.025);
+          for (let i = 0; i < 3; i++) {
+            const offset = (i - 1) * (w * 0.38) + Math.sin(t + i * 1.6) * 60;
+            const grad = ctx.createLinearGradient(offset - 170, 0, offset + 170, 0);
             grad.addColorStop(0, 'rgba(0,0,0,0)');
-            grad.addColorStop(0.5, 'rgba(0,0,0,0.065)');
+            grad.addColorStop(0.5, beamAlpha);
             grad.addColorStop(1, 'rgba(0,0,0,0)');
             ctx.fillStyle = grad;
-            ctx.fillRect(offset - 180, -h * 1.4, 360, h * 2.8);
+            ctx.fillRect(offset - 170, -h * 1.4, 340, h * 2.8);
           }
           ctx.restore();
           requestAnimationFrame(drawAmbient);
@@ -1102,8 +909,8 @@
         requestAnimationFrame(drawAmbient);
       }
 
-      // ---------- 3. FLOATING AUTONOMOUS PAPER PLANES + DASHED BEZIER TRAILS ----------
-      const planesCanvas = document.getElementById('ncPlanesCanvas');
+      // ---------- 3. FLYING ARROWS (PAPER PLANES + DASHED TRAILS IN COLOPLUS EMERALD & AMBER) ----------
+      const planesCanvas = document.getElementById('cpPlanesCanvas');
       if (planesCanvas) {
         const pctx = planesCanvas.getContext('2d');
         const resizePlanes = () => {
@@ -1114,59 +921,55 @@
         window.addEventListener('resize', resizePlanes);
 
         const planes = [
-          { color: '#ff5230', x: 0.25, y: 0.3, vx: 0.0005, vy: 0.0003, phase: 0, trail: [] },
-          { color: '#a574f4', x: 0.72, y: 0.55, vx: -0.00045, vy: 0.00035, phase: 2.3, trail: [] }
+          { color: '#22c55e', phase: 0, trail: [] },
+          { color: '#f59e0b', phase: 2.4, trail: [] }
         ];
         let pt = 0;
 
         function drawPlanes() {
-          pt += 0.012;
+          pt += 0.011;
           const w = planesCanvas.width, h = planesCanvas.height;
           pctx.clearRect(0, 0, w, h);
 
           planes.forEach((pl, idx) => {
-            const cx = w * (0.5 + 0.36 * Math.sin(pt * (0.65 + idx * 0.18) + pl.phase));
-            const cy = h * (0.45 + 0.32 * Math.cos(pt * (0.52 + idx * 0.22) + pl.phase * 1.4));
+            const cx = w * (0.5 + 0.36 * Math.sin(pt * (0.62 + idx * 0.17) + pl.phase));
+            const cy = h * (0.45 + 0.31 * Math.cos(pt * (0.50 + idx * 0.21) + pl.phase * 1.35));
             const prev = pl.trail[pl.trail.length - 1] || { x: cx - 1, y: cy };
             const angle = Math.atan2(cy - prev.y, cx - prev.x);
 
             pl.trail.push({ x: cx, y: cy });
-            if (pl.trail.length > 36) pl.trail.shift();
+            if (pl.trail.length > 38) pl.trail.shift();
 
-            // Dashed Bezier-like fading trail
             if (pl.trail.length > 2) {
               pctx.save();
               pctx.setLineDash([5, 6]);
               pctx.lineWidth = 1.3;
-              pctx.strokeStyle = pl.color + '55';
+              pctx.strokeStyle = pl.color + '66';
               pctx.beginPath();
               pctx.moveTo(pl.trail[0].x, pl.trail[0].y);
-              for (let i = 1; i < pl.trail.length; i++) {
-                pctx.lineTo(pl.trail[i].x, pl.trail[i].y);
-              }
+              for (let i = 1; i < pl.trail.length; i++) pctx.lineTo(pl.trail[i].x, pl.trail[i].y);
               pctx.stroke();
               pctx.restore();
             }
 
-            // Soft shadow + Paper plane silhouette
             pctx.save();
             pctx.translate(cx, cy);
             pctx.rotate(angle);
-            pctx.fillStyle = 'rgba(0,0,0,0.14)';
+            pctx.fillStyle = 'rgba(0,0,0,0.2)';
             pctx.beginPath();
-            pctx.moveTo(14, 10);
-            pctx.lineTo(-10, 18);
-            pctx.lineTo(-4, 10);
-            pctx.lineTo(-10, 2);
+            pctx.moveTo(14, 9);
+            pctx.lineTo(-10, 17);
+            pctx.lineTo(-4, 9);
+            pctx.lineTo(-10, 1);
             pctx.closePath();
             pctx.fill();
 
             pctx.fillStyle = pl.color;
             pctx.beginPath();
             pctx.moveTo(14, 0);
-            pctx.lineTo(-10, 9);
+            pctx.lineTo(-10, 8.5);
             pctx.lineTo(-4, 0);
-            pctx.lineTo(-10, -9);
+            pctx.lineTo(-10, -8.5);
             pctx.closePath();
             pctx.fill();
             pctx.restore();
@@ -1178,50 +981,46 @@
       }
 
       // ---------- 4. CUSTOM CURSOR + CURSOR-ORIGIN INK-FILL BUTTONS ----------
-      const cursorEl = document.getElementById('ncCustomCursor');
-      const cursorPill = document.getElementById('ncCursorPill');
+      const cursorEl = document.getElementById('cpCustomCursor');
+      const cursorPill = document.getElementById('cpCursorPill');
       const isFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
       if (isFinePointer && cursorEl && cursorPill) {
         document.body.classList.add('has-custom-cursor');
-        let mx = -100, my = -100, cx = -100, cy = -100;
+        let mx = -120, my = -120, cx = -120, cy = -120;
         window.addEventListener('mousemove', (e) => {
           mx = e.clientX;
           my = e.clientY;
           const target = e.target.closest('[data-cursor]');
           if (target) {
-            cursorPill.textContent = target.getAttribute('data-cursor') || 'You';
+            cursorPill.textContent = target.getAttribute('data-cursor') || 'NOC';
             const tone = target.getAttribute('data-cursor-tone');
-            cursorPill.className = tone === 'orange' ? 'is-orange' : (tone === 'dark' ? 'is-dark' : '');
+            cursorPill.className = tone === 'amber' ? 'is-amber' : (tone === 'mono' ? 'is-mono' : '');
           } else {
-            cursorPill.textContent = 'You';
+            cursorPill.textContent = 'NOC';
             cursorPill.className = '';
           }
         });
         function loopCursor() {
-          cx += (mx - cx) * 0.24;
-          cy += (my - cy) * 0.24;
-          cursorEl.style.transform = `translate3d(${cx}px, ${cy}px, 0)`;
+          cx += (mx - cx) * 0.26;
+          cy += (my - cy) * 0.26;
+          cursorEl.style.transform = `translate3d(${cx.toFixed(1)}px, ${cy.toFixed(1)}px, 0)`;
           requestAnimationFrame(loopCursor);
         }
         requestAnimationFrame(loopCursor);
       }
 
-      // Cursor-Origin Ink-Fill Coordinates (--x, --y)
-      document.querySelectorAll('.nc-ink-btn').forEach(btn => {
-        btn.addEventListener('mouseenter', (e) => {
+      document.querySelectorAll('.cp-ink-btn').forEach(btn => {
+        const setOrigin = (e) => {
           const r = btn.getBoundingClientRect();
           btn.style.setProperty('--x', (e.clientX - r.left) + 'px');
           btn.style.setProperty('--y', (e.clientY - r.top) + 'px');
-        });
-        btn.addEventListener('mouseleave', (e) => {
-          const r = btn.getBoundingClientRect();
-          btn.style.setProperty('--x', (e.clientX - r.left) + 'px');
-          btn.style.setProperty('--y', (e.clientY - r.top) + 'px');
-        });
+        };
+        btn.addEventListener('mouseenter', setOrigin);
+        btn.addEventListener('mouseleave', setOrigin);
       });
 
-      // ---------- 5. ROTARY DIAL TICK GENERATOR + SCROLL CHOREOGRAPHY ----------
-      const ticksGroup = document.getElementById('ncDialTicks');
+      // ---------- 5. PRECISION ROTARY DIAL + SMOOTH LERP SCROLL CHOREOGRAPHY ----------
+      const ticksGroup = document.getElementById('cpDialTicks');
       if (ticksGroup) {
         let ticksSvg = '';
         for (let i = 0; i < 72; i++) {
@@ -1229,7 +1028,7 @@
           const rad = (deg * Math.PI) / 180;
           const isMajor = i % 6 === 0;
           const r1 = 388;
-          const r2 = isMajor ? 366 : 378;
+          const r2 = isMajor ? 364 : 377;
           const x1 = (390 + Math.cos(rad) * r1).toFixed(1);
           const y1 = (390 + Math.sin(rad) * r1).toFixed(1);
           const x2 = (390 + Math.cos(rad) * r2).toFixed(1);
@@ -1239,180 +1038,305 @@
         ticksGroup.innerHTML = ticksSvg;
       }
 
+      // Exact trigonometric pill angles around right rim: -30, -10, +10, +30 deg
+      const PILL_ANGLES = [-30, -10, 10, 30];
+      const PILL_RADIUS = 390;
+      const pillEls = PILL_ANGLES.map((deg, idx) => {
+        const el = document.getElementById('cpDialPill' + idx);
+        if (el) {
+          const rad = (deg * Math.PI) / 180;
+          const px = Math.cos(rad) * PILL_RADIUS;
+          const py = Math.sin(rad) * PILL_RADIUS;
+          el.dataset.px = px.toFixed(2);
+          el.dataset.py = py.toFixed(2);
+          el.style.transform = `translate3d(${px.toFixed(1)}px, ${py.toFixed(1)}px, 0)`;
+        }
+        return el;
+      });
+
+      // Exact Admin & FSE Block Copy
       const CHAPTERS = [
         {
-          badge: 'CHAPTER 01',
-          tag: 'FSE PORTAL',
-          title: 'Dedicated Field Workspace.',
+          badge: '01 // FSE PORTAL',
+          tag: 'FIELD SUPPORT ENGINEER',
+          tone: 'accent',
+          title: 'FSE PORTAL (DEDICATED FIELD WORKSPACE)',
           desc: 'Field Support Engineers verify their Site ID & Tenant ID to log diesel deliveries, view animated tank & BUB/Grid status, complete the 12-item mandatory photo PPM checklist, and submit site tickets & complaints.',
-          cta: 'Open FSE Portal',
+          menus: ['01. FLEET & FUEL', '02. LIGHT & BUB', '03. REPAIRS & PPM', '04. TICKETS & COMPLAINTS', '05. PPM SCHEDULE'],
+          cta: 'ENTER FSE PORTAL >>',
           href: './fse.html',
-          next: 'ADMIN NOC'
+          next: '02. ADMIN PORTAL'
         },
         {
-          badge: 'CHAPTER 02',
-          tag: 'ADMIN PORTAL',
-          title: 'Overview & Full Control.',
-          desc: 'Administrators inspect the standalone Overview (Tickets, Complaints & Fuel Issues), accept or override FSE PPM reports, manage Light & BUB controls, and inline-edit every site parameter directly inside each menu.',
-          cta: 'Open Admin Portal',
+          badge: '02 // ADMIN PORTAL',
+          tag: 'EXCLUSIVE NOC CONTROL',
+          tone: 'amber',
+          title: 'ADMIN PORTAL (OVERVIEW & FULL CONTROL)',
+          desc: 'Administrators review the live Overview (Tickets, Complaints & Fuel Issues), accept or override FSE PPM reports, manage Light & BUB controls, calibrate live diesel levels, and dispatch Finance/Team emails.',
+          menus: ['00. OVERVIEW', '01. REPAIRS & PPM', '02. LIGHT & BUB', '03. FLEET & FUEL', '04. SITE TELEMETRY', '05. FSE & EMAIL', '06. CALENDAR & TASKS'],
+          cta: 'ENTER ADMIN PORTAL >>',
           href: './admin.html',
-          next: 'EXACT FUEL MATH'
+          next: '03. EXACT DIESEL TELEMETRY'
         },
         {
-          badge: 'CHAPTER 03',
-          tag: 'EXACT TELEMETRY',
-          title: '7-Day Auto Fuel Alarms.',
-          desc: 'Continuous daily fuel depletion mathematics synchronized with live calendar dates for 15 kVA & 20 kVA generators — automatically emailing Finance, Site FSE, and Admin whenever fuel drops within 7 days.',
-          cta: 'Inspect Fuel Telemetry',
+          badge: '03 // FUEL TELEMETRY',
+          tag: 'EXACT DAILY FUEL MATH',
+          tone: 'accent',
+          title: 'EXACT DIESEL TELEMETRY & 7-DAY ALARMS',
+          desc: 'Continuous daily fuel depletion math synchronized with live calendar dates for 15 kVA & 20 kVA generators, with automatic 7-day depletion email alarms to Finance, FSE, and Admin.',
+          menus: ['15 KVA & 20 KVA', 'UNROUNDED CPH = CPD/24', 'DAILY LIVE DATES', '7-DAY AUTO ALARM', 'RESEND EMAIL'],
+          cta: 'OPEN SITE TELEMETRY >>',
           href: './admin.html',
-          next: 'ZERO-CLASH PPM'
+          next: '04. ZERO-CLASH PPM'
         },
         {
-          badge: 'CHAPTER 04',
-          tag: 'ZERO-CLASH PPM',
-          title: 'Personalized Site Calendar.',
-          desc: 'Every monitored tower gets its own staggered, non-clashing PPM calendar date aligned daily with real dates — paired with Admin team task assignment via Resend email.',
-          cta: 'Open PPM Scheduler',
+          badge: '04 // PPM CALENDAR',
+          tag: 'PERSONALIZED ZERO-CLASH',
+          tone: 'amber',
+          title: 'PERSONALIZED ZERO-CLASH PPM CALENDAR',
+          desc: 'Every tower receives its own staggered, non-clashing PPM calendar date aligned daily with live dates, paired with Admin team task email assignments and mandatory 12-item photo proof.',
+          menus: ['ZERO-CLASH SLOTS', '12/12 PHOTO PROOF *', 'ACCEPT / OVERRIDE PPM', 'TEAM TASK EMAILS'],
+          cta: 'OPEN CALENDAR & TASKS >>',
           href: './admin.html',
-          next: 'FSE PORTAL'
+          next: 'EVERY TOWER STAYS ONLINE'
         }
       ];
 
       let currentChapter = 0;
-      function renderChapter(idx) {
-        currentChapter = Math.max(0, Math.min(CHAPTERS.length - 1, idx));
-        const c = CHAPTERS[currentChapter];
-        document.getElementById('ncChapterBadge').textContent = c.badge;
-        document.getElementById('ncChapterTag').textContent = c.tag;
-        document.getElementById('ncChapterTitle').textContent = c.title;
-        document.getElementById('ncChapterDesc').textContent = c.desc;
-        document.getElementById('ncChapterCta').setAttribute('href', c.href);
-        document.getElementById('ncChapterCtaText1').textContent = c.cta;
-        document.getElementById('ncChapterCtaText2').textContent = c.cta;
-        document.getElementById('ncUpNextLabel').textContent = c.next;
+      let swapTimer = null;
+
+      function updateChapterUI(idx, animate) {
+        const clamped = Math.max(0, Math.min(CHAPTERS.length - 1, idx));
+        const c = CHAPTERS[clamped];
+        const isAmber = c.tone === 'amber';
+        const accentColor = isAmber ? 'var(--color-warning)' : 'var(--color-accent)';
+
+        const applyContent = () => {
+          document.getElementById('cpChapterBadge').textContent = c.badge;
+          document.getElementById('cpChapterBadge').style.background = accentColor;
+          document.getElementById('cpChapterTag').textContent = c.tag;
+          document.getElementById('cpChapterCounter').textContent = `0${clamped + 1} / 04`;
+          document.getElementById('cpChapterTitle').textContent = c.title;
+          document.getElementById('cpChapterDesc').textContent = c.desc;
+          document.getElementById('cpChapterMenus').innerHTML = c.menus.map(m =>
+            `<span class="border_ui px-2 py-0.5" style="border-color: ${isAmber ? 'rgba(245,158,11,0.4)' : 'var(--color-line)'};">${m}</span>`
+          ).join('');
+
+          const ctaEl = document.getElementById('cpChapterCta');
+          ctaEl.setAttribute('href', c.href);
+          ctaEl.classList.toggle('is-amber-outline', isAmber);
+          document.getElementById('cpChapterCtaText1').textContent = c.cta;
+          document.getElementById('cpChapterCtaText2').textContent = c.cta;
+          document.getElementById('cpUpNextLabel').textContent = c.next;
+
+          const needleDot = document.getElementById('cpNeedleDot');
+          if (needleDot) needleDot.style.borderColor = accentColor;
+        };
+
+        const swapBox = document.getElementById('cpChapterSwapBox');
+        if (animate && swapBox) {
+          clearTimeout(swapTimer);
+          swapBox.classList.add('is-swapping');
+          swapTimer = setTimeout(() => {
+            applyContent();
+            swapBox.classList.remove('is-swapping');
+          }, 110);
+        } else {
+          applyContent();
+        }
 
         for (let i = 0; i < CHAPTERS.length; i++) {
-          const pill = document.getElementById('ncDialPill' + i);
-          const btn = document.getElementById('ncStepBtn' + i);
-          if (pill) pill.classList.toggle('is-active', i === currentChapter);
+          const pill = pillEls[i];
+          const btn = document.getElementById('cpStepBtn' + i);
+          const chAmber = CHAPTERS[i].tone === 'amber';
+          if (pill) {
+            pill.classList.toggle('is-active', i === clamped);
+            pill.classList.toggle('is-amber', i === clamped && chAmber);
+          }
           if (btn) {
-            btn.className = i === currentChapter
-              ? 'w-9 h-8 rounded-lg font-mono-nc text-xs font-semibold border border-[#ff5230] bg-[#ff5230] text-white cursor-pointer transition-all'
-              : 'w-9 h-8 rounded-lg font-mono-nc text-xs font-semibold border border-black/15 bg-white/60 text-black/60 hover:border-black cursor-pointer transition-all';
+            if (i === clamped) {
+              btn.style.background = chAmber ? 'var(--color-warning)' : 'var(--color-accent)';
+              btn.style.color = '#0b0d10';
+              btn.style.borderColor = chAmber ? 'var(--color-warning)' : 'var(--color-accent)';
+            } else {
+              btn.style.background = 'transparent';
+              btn.style.color = 'var(--color-primary)';
+              btn.style.borderColor = 'var(--color-line)';
+            }
           }
         }
+        currentChapter = clamped;
       }
-      window.selectChapter = renderChapter;
+
+      // Initialize chapter 0 immediately
+      updateChapterUI(0, false);
+
+      // Exact target scroll progress for each chapter center:
+      // Dock phase: 0.00 -> 0.24, Chapters 0..3 evenly span 0.28 -> 0.94
+      const DOCK_END = 0.24;
+      const CHAPTER_START = 0.28;
+      const CHAPTER_END = 0.94;
+
+      function getChapterScrollP(idx) {
+        return CHAPTER_START + (idx / (CHAPTERS.length - 1)) * (CHAPTER_END - CHAPTER_START);
+      }
 
       window.scrollToDialChapter = function (idx) {
         const track = document.getElementById('capabilities');
         if (!track) return;
-        const maxScroll = track.offsetHeight - window.innerHeight;
-        if (window.innerWidth > 900 && maxScroll > 0) {
-          const targetY = track.offsetTop + maxScroll * (0.28 + idx * 0.2);
+        if (window.innerWidth > 900) {
+          const maxScroll = Math.max(1, track.offsetHeight - window.innerHeight);
+          const targetP = getChapterScrollP(idx);
+          const targetY = track.offsetTop + maxScroll * targetP;
           window.scrollTo({ top: targetY, behavior: 'smooth' });
         } else {
-          renderChapter(idx);
-          document.getElementById('ncChapterStage').scrollIntoView({ behavior: 'smooth' });
+          updateChapterUI(idx, true);
+          document.getElementById('cpChapterStage').scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       };
 
       const dialTrack = document.getElementById('capabilities');
-      const heroStage = document.getElementById('ncHeroStage');
-      const dialWheel = document.getElementById('ncDialWheel');
-      const chapterStage = document.getElementById('ncChapterStage');
-      const scrollThumb = document.getElementById('ncScrollThumb');
+      const heroStage = document.getElementById('cpHeroStage');
+      const dialWheel = document.getElementById('cpDialWheel');
+      const dialNeedle = document.getElementById('cpDialNeedle');
+      const chapterStage = document.getElementById('cpChapterStage');
+      const scrollThumb = document.getElementById('cpScrollThumb');
 
-      function onScroll() {
+      function smoothstep(edge0, edge1, x) {
+        const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+        return t * t * (3 - 2 * t);
+      }
+
+      let targetP = 0;
+      let smoothP = 0;
+
+      function readScrollTarget() {
         const scrollY = window.scrollY;
         const docH = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
         if (scrollThumb) {
-          scrollThumb.style.transform = `translateY(${(scrollY / docH) * 82}px)`;
+          scrollThumb.style.transform = `translate3d(0, ${((scrollY / docH) * 84).toFixed(1)}px, 0)`;
         }
-
-        // Scroll-driven Rotary Dial Choreography on Desktop
-        if (dialTrack && dialWheel && heroStage && chapterStage && window.innerWidth > 900) {
+        if (dialTrack && window.innerWidth > 900) {
           const rect = dialTrack.getBoundingClientRect();
           const maxDist = Math.max(1, dialTrack.offsetHeight - window.innerHeight);
-          const p = Math.max(0, Math.min(1, -rect.top / maxDist));
+          targetP = Math.max(0, Math.min(1, -rect.top / maxDist));
+        }
+      }
 
-          // Phase 1 (0 -> 0.24): Hero fades up & dial glides left into full arc
-          const transitionP = Math.max(0, Math.min(1, p / 0.24));
-          heroStage.style.opacity = String(Math.max(0, 1 - transitionP * 1.4));
-          heroStage.style.transform = `translateY(${-transitionP * 70}px)`;
-          heroStage.style.pointerEvents = transitionP > 0.65 ? 'none' : 'auto';
+      function animateDialScroll() {
+        if (dialTrack && dialWheel && heroStage && chapterStage && window.innerWidth > 900) {
+          const diff = targetP - smoothP;
+          smoothP = Math.abs(diff) < 0.0004 ? targetP : smoothP + diff * 0.14;
 
-          // Dial position: bottom-center (0, 560) -> left-arc (-520, 0) + continuous rotation
-          const dialX = -500 * transitionP;
-          const dialY = 560 * (1 - transitionP);
-          const dialRot = -p * 78;
-          dialWheel.style.transform = `translate(${dialX.toFixed(1)}px, ${dialY.toFixed(1)}px) rotate(${dialRot.toFixed(1)}deg)`;
+          // 1. Hero exits cleanly (0.02 -> 0.19) before Chapter enters (0.20 -> 0.27)
+          const heroOut = smoothstep(0.02, 0.19, smoothP);
+          heroStage.style.opacity = (1 - heroOut).toFixed(3);
+          heroStage.style.transform = `translate3d(0, ${(-heroOut * 88).toFixed(1)}px, 0) scale(${(1 - heroOut * 0.03).toFixed(4)})`;
+          heroStage.style.pointerEvents = heroOut > 0.55 ? 'none' : 'auto';
 
-          // Phase 2 (0.2 -> 1.0): Chapter copy fades in and switches 01 -> 04
-          const chapOpacity = Math.max(0, Math.min(1, (p - 0.16) / 0.14));
-          chapterStage.style.opacity = String(chapOpacity);
-          chapterStage.style.pointerEvents = chapOpacity > 0.5 ? 'auto' : 'none';
+          // 2. Dial smoothly arcs from bottom-center peek to left-docked arc (responsive X so never overlaps chapter card)
+          const dockT = smoothstep(0.0, DOCK_END, smoothP);
+          const peekY = Math.min(540, window.innerHeight * 0.62);
+          const dockedX = -Math.max(430, Math.min(540, window.innerWidth * 0.36));
+          const dialX = dockedX * dockT;
+          const dialY = peekY * (1 - dockT);
+          if (dialNeedle) {
+            const needleLeftPx = window.innerWidth * 0.5 + dockedX + 390 + 34;
+            dialNeedle.style.left = needleLeftPx.toFixed(1) + 'px';
+          }
 
-          if (p > 0.22) {
-            const chapterP = (p - 0.22) / 0.78;
-            const idx = Math.min(CHAPTERS.length - 1, Math.floor(chapterP * CHAPTERS.length));
-            if (idx !== currentChapter) renderChapter(idx);
+          // 3. Exact mathematical rotation:
+          // - At Hero (dockT = 0): -90deg (so pills 01-04 crown the peeking top rim!)
+          // - At Chapter 0 (CHAPTER_START): +30deg (Pill 01 at -30deg lands EXACTLY at 0deg = 3 o'clock needle!)
+          // - Across Chapters 0 -> 3 (CHAPTER_START -> CHAPTER_END): rotates smoothly +30deg -> -30deg
+          const dockRot = -90 + (30 - (-90)) * dockT;
+          const scrubT = Math.max(0, Math.min(1, (smoothP - CHAPTER_START) / (CHAPTER_END - CHAPTER_START)));
+          const chapterRot = 30 - scrubT * 60; // +30 -> +10 -> -10 -> -30
+          const dialRot = smoothP <= DOCK_END ? dockRot : chapterRot;
+
+          dialWheel.style.transform = `translate3d(${dialX.toFixed(1)}px, ${dialY.toFixed(1)}px, 0) rotate(${dialRot.toFixed(2)}deg)`;
+
+          // Counter-rotate pill inner spans so 01-04 always stay strictly upright
+          for (let i = 0; i < pillEls.length; i++) {
+            const el = pillEls[i];
+            if (el && el.firstElementChild) {
+              el.firstElementChild.style.transform = `rotate(${(-dialRot).toFixed(2)}deg)`;
+            }
+          }
+
+          // 4. Precision 3 o'clock Needle + Chapter Stage fade in cleanly after Hero clears
+          const chapIn = smoothstep(0.19, 0.27, smoothP);
+          chapterStage.style.opacity = chapIn.toFixed(3);
+          chapterStage.style.transform = `translate3d(0, calc(-50% + ${((1 - chapIn) * 28).toFixed(1)}px), 0)`;
+          chapterStage.style.pointerEvents = chapIn > 0.5 ? 'auto' : 'none';
+          if (dialNeedle) dialNeedle.style.opacity = chapIn.toFixed(3);
+
+          // 5. Lock active chapter strictly to whichever pill is closest to 3 o'clock (0 deg)
+          if (smoothP >= 0.20) {
+            const activeIdx = Math.max(0, Math.min(CHAPTERS.length - 1, Math.round(scrubT * (CHAPTERS.length - 1))));
+            if (activeIdx !== currentChapter) {
+              updateChapterUI(activeIdx, true);
+            }
           }
         }
-
-        // Subtle Orbital Icon Parallax
-        document.querySelectorAll('[data-orbit-speed]').forEach(el => {
-          const speed = parseFloat(el.getAttribute('data-orbit-speed')) || 0;
-          const r = el.getBoundingClientRect();
-          const offset = (r.top - window.innerHeight * 0.5) * speed;
-          el.style.transform = `translateY(${offset.toFixed(1)}px)`;
-        });
+        requestAnimationFrame(animateDialScroll);
       }
-      window.addEventListener('scroll', onScroll, { passive: true });
-      window.addEventListener('resize', onScroll);
-      onScroll();
 
-      // ---------- 6. DRAGGABLE 3D PERSPECTIVE MODULE SHOWCASE ----------
+      window.addEventListener('scroll', readScrollTarget, { passive: true });
+      window.addEventListener('resize', readScrollTarget);
+      readScrollTarget();
+      smoothP = targetP;
+      requestAnimationFrame(animateDialScroll);
+
+      // ---------- 6. DRAGGABLE 3D MODULE SHOWCASE ("EVERY TOWER STAYS ONLINE") ----------
       const SHOWCASE_ITEMS = [
         {
-          title: 'FSE Field Workspace',
-          subtitle: 'Dedicated Field Support Engineer Portal',
+          code: '01 // FSE PORTAL',
+          title: 'FSE FIELD WORKSPACE',
+          subtitle: 'Site ID + Tenant ID login for daily field operations',
           href: './fse.html',
+          btnLabel: 'ENTER FSE PORTAL >>',
           accent: '#22c55e',
-          pills: ['SITE LOGIN', 'ANIMATED TANK', '12-ITEM PPM *', 'TICKETS & COMPLAINTS'],
-          metricA: '15 / 20 kVA',
-          metricB: '12/12 PHOTO PROOF'
+          pills: ['01. FLEET & FUEL', '02. LIGHT & BUB', '03. REPAIRS & PPM', '04. TICKETS & COMPLAINTS', '05. PPM SCHEDULE'],
+          metricA: '15 / 20 KVA',
+          metricB: '12/12 PHOTO PROOF *'
         },
         {
-          title: 'Admin Command Overview',
-          subtitle: 'Standalone Tickets, Complaints & Fuel Issues',
+          code: '02 // ADMIN PORTAL',
+          title: 'ADMIN NOC COMMAND',
+          subtitle: 'Standalone 00. OVERVIEW + Inline Site Editing in every menu',
           href: './admin.html',
-          accent: '#ff5230',
-          pills: ['SUPABASE AUTH', 'OVERVIEW', 'ACCEPT / OVERRIDE PPM', 'INLINE SITE EDIT'],
-          metricA: 'LIVE OVERVIEW',
-          metricB: 'ROLE LOCKED'
-        },
-        {
-          title: 'Exact Diesel Telemetry',
-          subtitle: 'Daily Live Fuel Depletion & 7-Day Auto Alarms',
-          href: './admin.html',
-          accent: '#a574f4',
-          pills: ['DAILY LIVE DATES', 'DEPLETION CURVE', '7-DAY AUTO ALARM', 'RESEND EMAIL'],
-          metricA: '0% DRIFT MATH',
-          metricB: '7-DAY BUFFER'
-        },
-        {
-          title: 'Zero-Clash PPM Calendar',
-          subtitle: 'Personalized Per-Site Staggered Schedules',
-          href: './admin.html',
+          btnLabel: 'ENTER ADMIN PORTAL >>',
           accent: '#f59e0b',
-          pills: ['PERSONALIZED', 'NO CLASHES', '2-MONTH GRID', 'TEAM EMAIL CHANNEL'],
+          pills: ['00. OVERVIEW', '01. REPAIRS & PPM', '02. LIGHT & BUB', '03. FLEET & FUEL', '05. FSE & EMAIL'],
+          metricA: 'SUPABASE AUTH',
+          metricB: 'ACCEPT / OVERRIDE PPM'
+        },
+        {
+          code: '03 // FUEL TELEMETRY',
+          title: 'EXACT DIESEL MATH',
+          subtitle: 'Unrounded daily depletion synced live with 7-day auto alarms',
+          href: './admin.html',
+          btnLabel: 'OPEN SITE TELEMETRY >>',
+          accent: '#22c55e',
+          pills: ['DAILY LIVE DATES', 'CPH = CPD / 24', 'DEPLETION CURVE', '7-DAY AUTO ALARM'],
+          metricA: '0% DRIFT MATH',
+          metricB: 'RESEND AUTO ALERT'
+        },
+        {
+          code: '04 // PPM CALENDAR',
+          title: 'ZERO-CLASH SCHEDULER',
+          subtitle: 'Personalized non-clashing per-site dates + Team Task Emails',
+          href: './admin.html',
+          btnLabel: 'OPEN CALENDAR & TASKS >>',
+          accent: '#f59e0b',
+          pills: ['PERSONALIZED PPM', 'NO CLASHES', '2-MONTH GRID', 'TEAM EMAIL CHANNEL'],
           metricA: '1 SITE / DAY MAX',
           metricB: 'AUTO STAGGERED'
         }
       ];
 
-      const stage = document.getElementById('ncCarouselStage');
+      const stage = document.getElementById('cpCarouselStage');
       let showcaseIndex = 0;
       let dragStartX = 0;
       let dragDelta = 0;
@@ -1420,55 +1344,57 @@
 
       if (stage) {
         stage.innerHTML = SHOWCASE_ITEMS.map((item, idx) => `
-          <div class="nc-showcase-card p-6 sm:p-8 flex flex-col justify-between" data-idx="${idx}">
-            <div class="flex items-center justify-between font-mono-nc text-[10px] tracking-widest uppercase text-white/55">
-              <span>0${idx + 1} // COLOPLUS MODULE</span>
-              <span class="px-2.5 py-0.5 rounded-full text-black font-semibold" style="background:${item.accent};">LIVE</span>
+          <div class="cp-showcase-card p-6 sm:p-7 flex flex-col justify-between" data-idx="${idx}">
+            <div class="flex items-center justify-between text-[10px] font-bold tracking-widest uppercase pb-3 border-b" style="border-color: var(--color-line);">
+              <span class="opacity-65">${item.code}</span>
+              <span class="px-2 py-0.5 text-[#0b0d10] font-bold" style="background:${item.accent};">LIVE</span>
             </div>
-            <div class="my-auto space-y-2.5">
-              <div class="text-2xl sm:text-4xl font-medium tracking-tight text-white">${item.title}</div>
-              <div class="text-xs sm:text-sm text-white/65">${item.subtitle}</div>
+            <div class="my-auto py-4 space-y-2">
+              <div class="hero-outline-title text-3xl sm:text-5xl uppercase tracking-wider">${item.title}</div>
+              <div class="text-xs opacity-75 leading-relaxed">${item.subtitle}</div>
             </div>
-            <div class="grid grid-cols-2 gap-3 pt-4 border-t border-white/10 font-mono-nc text-[11px]">
-              <div class="bg-white/5 rounded-xl p-2.5 border border-white/10">
-                <div class="text-[9px] text-white/45">SPEC</div>
-                <div class="font-semibold text-white mt-0.5">${item.metricA}</div>
+            <div class="grid grid-cols-2 gap-2.5 pt-4 border-t text-[11px]" style="border-color: var(--color-line);">
+              <div class="border_ui p-2.5">
+                <div class="text-[9px] opacity-55 uppercase">SPEC</div>
+                <div class="font-bold mt-0.5">${item.metricA}</div>
               </div>
-              <div class="bg-white/5 rounded-xl p-2.5 border border-white/10">
-                <div class="text-[9px] text-white/45">STATUS</div>
-                <div class="font-semibold mt-0.5" style="color:${item.accent};">${item.metricB}</div>
+              <div class="border_ui p-2.5">
+                <div class="text-[9px] opacity-55 uppercase">STATUS</div>
+                <div class="font-bold mt-0.5" style="color:${item.accent};">${item.metricB}</div>
               </div>
             </div>
           </div>
         `).join('');
 
         function layoutShowcase() {
-          const cards = stage.querySelectorAll('.nc-showcase-card');
+          const cards = stage.querySelectorAll('.cp-showcase-card');
           const dragShift = dragDelta / 420;
           cards.forEach((card, idx) => {
             let offset = idx - showcaseIndex + dragShift;
-            // Wrap smoothly around 4 cards
             if (offset > 2) offset -= SHOWCASE_ITEMS.length;
             if (offset < -2) offset += SHOWCASE_ITEMS.length;
 
             const tx = offset * 430;
             const tz = -Math.abs(offset) * 160;
-            const ry = -offset * 18;
-            const scale = Math.max(0.76, 1 - Math.abs(offset) * 0.14);
+            const ry = -offset * 16;
+            const scale = Math.max(0.78, 1 - Math.abs(offset) * 0.13);
             const opacity = Math.max(0.28, 1 - Math.abs(offset) * 0.42);
             const zIndex = Math.round(20 - Math.abs(offset) * 5);
 
-            card.style.transition = isDragging ? 'none' : 'transform 0.55s cubic-bezier(0.22,1,0.36,1), opacity 0.45s ease';
-            card.style.transform = `translate(-50%, -50%) translate3d(${tx}px, ${Math.abs(offset) * 14}px, ${tz}px) rotateY(${ry}deg) scale(${scale})`;
+            card.classList.toggle('is-center', Math.abs(offset) < 0.35);
+            card.style.transition = isDragging ? 'none' : 'transform 0.5s cubic-bezier(0.22,1,0.36,1), opacity 0.4s ease';
+            card.style.transform = `translate(-50%, -50%) translate3d(${tx}px, ${Math.abs(offset) * 12}px, ${tz}px) rotateY(${ry}deg) scale(${scale})`;
             card.style.opacity = String(opacity);
             card.style.zIndex = String(zIndex);
           });
 
           const active = SHOWCASE_ITEMS[((showcaseIndex % SHOWCASE_ITEMS.length) + SHOWCASE_ITEMS.length) % SHOWCASE_ITEMS.length];
-          document.getElementById('ncShowcaseTitle').textContent = active.title;
-          document.getElementById('ncShowcaseLink').setAttribute('href', active.href);
-          document.getElementById('ncShowcasePills').innerHTML = active.pills.map(p =>
-            `<span class="rounded-full border border-black/20 px-3 py-0.5 font-mono-nc text-[11px] uppercase text-black/60">${p}</span>`
+          document.getElementById('cpShowcaseTitle').textContent = `${active.code} — ${active.title}`;
+          document.getElementById('cpShowcaseLink').setAttribute('href', active.href);
+          document.getElementById('cpShowcaseBtnLabel1').textContent = active.btnLabel;
+          document.getElementById('cpShowcaseBtnLabel2').textContent = active.btnLabel;
+          document.getElementById('cpShowcasePills').innerHTML = active.pills.map(p =>
+            `<span class="border_ui px-2.5 py-0.5 text-[10px] font-bold uppercase opacity-75">${p}</span>`
           ).join('');
         }
 
@@ -1488,11 +1414,20 @@
           dragDelta = e.clientX - dragStartX;
           layoutShowcase();
         });
-        const endDrag = () => {
+        const endDrag = (e) => {
           if (!isDragging) return;
           isDragging = false;
-          if (dragDelta < -70) showcaseIndex = (showcaseIndex + 1) % SHOWCASE_ITEMS.length;
-          else if (dragDelta > 70) showcaseIndex = (showcaseIndex - 1 + SHOWCASE_ITEMS.length) % SHOWCASE_ITEMS.length;
+          if (Math.abs(dragDelta) < 8) {
+            const clickedCard = e.target.closest('.cp-showcase-card');
+            if (clickedCard) {
+              const idx = Number(clickedCard.getAttribute('data-idx'));
+              if (!Number.isNaN(idx) && idx !== showcaseIndex) showcaseIndex = idx;
+            }
+          } else if (dragDelta < -60) {
+            showcaseIndex = (showcaseIndex + 1) % SHOWCASE_ITEMS.length;
+          } else if (dragDelta > 60) {
+            showcaseIndex = (showcaseIndex - 1 + SHOWCASE_ITEMS.length) % SHOWCASE_ITEMS.length;
+          }
           dragDelta = 0;
           layoutShowcase();
         };
@@ -1501,81 +1436,14 @@
         layoutShowcase();
       }
 
-      // ---------- 7. NUMBERED FAQ ACCORDION (ORANGE EXPANDED CARD) ----------
-      const FAQS = [
-        {
-          q: 'How do FSEs log into their dedicated site workspace?',
-          a: 'Open the FSE Portal and verify using your assigned Site ID and Tenant ID. Once verified, you confirm your FSE contact details and unlock Fleet & Fuel, view-only Light & BUB status, 12-item PPM checklists, Tickets & Complaints, and your personalized PPM calendar.'
-        },
-        {
-          q: 'Why is a picture required (*) for all 12 PPM checklist items?',
-          a: 'Every preventive maintenance inspection (AVR, Top Gasket, Radiator, Fan Belt, Breaker, Modules, Solenoids, Kick Starters, BUB, Rectifier, DG RH, Janitor) requires verifiable photo/video proof before submission. Admin can then Accept or Override each submitted PPM directly.'
-        },
-        {
-          q: 'How does the 7-day automatic diesel alarm work?',
-          a: 'Using exact unrounded hourly consumption (CPD ÷ 24) synchronized daily against the live clock, ColoPlus calculates the exact dry-out date and time. Whenever a site drops to 7 days or less of fuel remaining, an automated Resend alert email is dispatched to Finance, the Site FSE, and Admin.'
-        },
-        {
-          q: 'How do personalized zero-clash PPM schedules work?',
-          a: 'Every active tower receives its own unique, non-clashing PPM slot on the 2-month calendar. FSEs see only their own site’s schedule, while Admins can toggle between a single site or the staggered fleet-wide view with automatic clash detection.'
-        },
-        {
-          q: 'Who can edit Light & Battery (BUB) and direct diesel calibration?',
-          a: 'Light (Utility Grid), Backup Battery (BUB), direct fuel calibration, generator ratings (15 kVA / 20 kVA), and team task email assignments are restricted strictly to authenticated Supabase Administrators in the Admin Portal.'
-        },
-        {
-          q: 'Where do site tickets, complaints, and fuel issues appear?',
-          a: 'All incoming repair tickets, FSE site complaints (with optional photo/video/PDF attachments), and 7-day fuel alerts flow directly into the standalone Admin 00. OVERVIEW dashboard and trigger instant Resend notifications.'
-        }
-      ];
-
-      const faqList = document.getElementById('ncFaqList');
-      let openFaqIdx = 0;
-      function renderFaqs() {
-        if (!faqList) return;
-        faqList.innerHTML = FAQS.map((item, i) => {
-          const num = String(i + 1).padStart(2, '0');
-          const isOpen = i === openFaqIdx;
-          return `
-            <div class="nc-faq-item ${isOpen ? 'is-open' : ''}" onclick="toggleFaq(${i})" data-cursor="${isOpen ? 'Close' : 'Read'}">
-              <div class="nc-faq-watermark">${num}</div>
-              <div class="flex items-center gap-4 relative z-10">
-                <span class="nc-faq-badge">${num}</span>
-                <span class="nc-faq-q text-base sm:text-lg font-medium tracking-tight text-black">${item.q}</span>
-              </div>
-              <div class="nc-faq-body relative z-10">
-                <div>
-                  <div class="ml-0 sm:ml-12 bg-[#efefed] text-black/85 rounded-2xl p-4 sm:p-5 text-sm leading-relaxed max-w-xl shadow-sm">
-                    ${item.a}
-                  </div>
-                </div>
-              </div>
-            </div>
-          `;
-        }).join('');
-      }
-      window.toggleFaq = function (idx) {
-        openFaqIdx = openFaqIdx === idx ? -1 : idx;
-        renderFaqs();
-      };
-      renderFaqs();
-
-      // ---------- 8. COPY EMAIL UTILITY ----------
-      window.copyNocEmail = function (btn) {
-        if (navigator.clipboard) navigator.clipboard.writeText('noc@coloplus.com').catch(() => {});
-        const orig = btn.textContent;
-        btn.textContent = 'COPIED';
-        setTimeout(() => { btn.textContent = orig; }, 1600);
-      };
-
-      // ---------- 9. OPTIONAL LIVE ACTIVE SITE COUNT FROM SUPABASE ----------
+      // ---------- 7. LIVE ACTIVE SITE COUNT FROM SUPABASE ----------
       fetch('https://kfomqkklnqrosxjxdlsu.supabase.co/rest/v1/sites?select=site_id&is_active=eq.true', {
         headers: { apikey: 'sb_publishable_ZmJLPn-Dwa0WAko12liobw_TnjmqK9_' }
       })
         .then(r => r.ok ? r.json() : null)
         .then(rows => {
           if (Array.isArray(rows) && rows.length > 0) {
-            const el = document.getElementById('ncLiveSiteCount');
+            const el = document.getElementById('cpLiveSiteCount');
             if (el) el.textContent = String(rows.length);
           }
         })
