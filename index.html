@@ -532,6 +532,46 @@
     #cpAmbientCanvas { z-index: 1; opacity: 0.7; }
     #cpPlanesCanvas { z-index: 45; }
 
+    /* Mobile Compact Sizing (<= 640px) */
+    @media (max-width: 640px) {
+      #cpPreloader { padding: 18px 16px; }
+      #cpScrollRail { display: none; }
+      .cp-top-bar-strip { height: 5px; }
+      .cp-nav-row { padding: 0 8px; gap: 6px; }
+      .cp-logo-tab {
+        padding: 6px 10px 7px;
+        border-radius: 0 0 12px 12px;
+        gap: 6px;
+      }
+      .cp-nav-tab {
+        padding: 5px 7px 7px 10px;
+        border-radius: 0 0 14px 14px;
+        gap: 7px;
+        font-size: 9px;
+      }
+      .cp-corner-tab { display: none; }
+      .cp-ink-btn {
+        font-size: 10px;
+        padding: 5px 5px 5px 14px;
+        gap: 8px;
+        letter-spacing: 0.06em;
+      }
+      .cp-ink-btn .cp-btn-badge { width: 24px; height: 24px; }
+      .cp-hero-capsule {
+        font-size: 0.44em;
+        padding: 0.07em 0.36em 0.09em;
+      }
+      .cp-dial-sticky {
+        padding: 74px 14px 36px !important;
+        gap: 24px !important;
+      }
+      .cp-showcase-card {
+        width: min(312px, 88vw);
+        height: 232px;
+        min-height: 232px;
+      }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: 0.01ms !important;
@@ -568,18 +608,18 @@
       </span>
       <span id="cpPreloaderStep">(01/03) TELEMETRY ENGINE</span>
     </div>
-    <div class="text-center space-y-3">
-      <div class="text-[11px] tracking-[0.2em] uppercase opacity-55">// TELECOM ENERGY &amp; NOC COMMAND</div>
-      <div class="hero-outline-title text-5xl sm:text-7xl uppercase tracking-wider">
+    <div class="text-center space-y-2 sm:space-y-3">
+      <div class="text-[10px] sm:text-[11px] tracking-[0.16em] sm:tracking-[0.2em] uppercase opacity-55">// TELECOM ENERGY &amp; NOC COMMAND</div>
+      <div class="hero-outline-title text-4xl sm:text-7xl uppercase tracking-wider">
         COLOPLUS SMART DIESEL
       </div>
-      <div class="text-xs sm:text-sm uppercase tracking-[0.22em] text-emerald-400 font-bold">
+      <div class="text-[11px] sm:text-sm uppercase tracking-[0.18em] sm:tracking-[0.22em] text-emerald-400 font-bold">
         AUTONOMOUS AGENT
       </div>
     </div>
     <div class="flex items-end justify-between">
-      <span class="text-[11px] opacity-60 uppercase">14 ACTIVE TOWERS · DAILY SYNC · 15/20 KVA</span>
-      <span id="cpPreloaderPct" class="hero-outline-title text-5xl sm:text-6xl">0%</span>
+      <span class="text-[9px] sm:text-[11px] opacity-60 uppercase">14 ACTIVE TOWERS · DAILY SYNC · 15/20 KVA</span>
+      <span id="cpPreloaderPct" class="hero-outline-title text-4xl sm:text-6xl">0%</span>
     </div>
   </div>
 
@@ -589,28 +629,28 @@
     <div class="cp-nav-row">
       <!-- Left Logo Tab -->
       <a href="./index.html" class="cp-logo-tab group" data-cursor="HOME">
-        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping inline-block"></span>
-        <span class="text-xs font-bold tracking-widest uppercase">COLOPLUS NOC</span>
-        <span class="cursor-blink font-bold text-xs opacity-70">_</span>
+        <span class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-emerald-500 animate-ping inline-block"></span>
+        <span class="text-[10px] sm:text-xs font-bold tracking-widest uppercase">COLOPLUS<span class="hidden sm:inline"> NOC</span></span>
+        <span class="cursor-blink font-bold text-[10px] sm:text-xs opacity-70">_</span>
       </a>
 
       <!-- Right Navigation Pill Tab -->
-      <nav class="cp-nav-tab text-[11px] font-bold uppercase tracking-wider">
+      <nav class="cp-nav-tab text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">
         <a href="#capabilities" onclick="scrollToDialChapter(0); return false;" class="group hidden md:inline-flex items-center opacity-80 hover:opacity-100" data-cursor="CAPABILITIES">
           <span class="cp-roll"><span>01. CAPABILITIES</span><span>01. CAPABILITIES</span></span>
         </a>
         <a href="#showcase" class="group hidden md:inline-flex items-center opacity-80 hover:opacity-100" data-cursor="MODULES">
           <span class="cp-roll"><span>02. MODULES</span><span>02. MODULES</span></span>
         </a>
-        <button type="button" onclick="toggleLandingTheme()" class="border_ui px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider hover:bg-white/10 transition-colors cursor-pointer" data-cursor="THEME" data-cursor-tone="mono">
+        <button type="button" onclick="toggleLandingTheme()" class="border_ui px-1.5 sm:px-2.5 py-0.5 sm:py-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider hover:bg-white/10 transition-colors cursor-pointer" data-cursor="THEME" data-cursor-tone="mono">
           <span id="landingThemeLabel">DARK</span>
         </button>
-        <a href="./fse.html" class="group inline-flex items-center gap-1.5 opacity-95 hover:text-emerald-400 transition-colors" data-cursor="FSE LOGIN">
-          <span class="cp-roll"><span>FSE PORTAL</span><span>FSE PORTAL</span></span>
-          <span class="text-[9px] font-bold bg-emerald-500 text-black px-1.5 py-0.5 rounded-sm">LIVE</span>
+        <a href="./fse.html" class="group inline-flex items-center gap-1 sm:gap-1.5 opacity-95 hover:text-emerald-400 transition-colors" data-cursor="FSE LOGIN">
+          <span class="cp-roll"><span>FSE<span class="hidden sm:inline"> PORTAL</span></span><span>FSE<span class="hidden sm:inline"> PORTAL</span></span></span>
+          <span class="hidden sm:inline text-[9px] font-bold bg-emerald-500 text-black px-1.5 py-0.5 rounded-sm">LIVE</span>
         </a>
-        <a href="./admin.html" class="group inline-flex items-center border border-amber-500/60 bg-amber-500/15 text-amber-400 hover:bg-amber-500 hover:text-black rounded-full px-3.5 py-1.5 text-[11px] font-bold transition-colors duration-200" data-cursor="ADMIN NOC" data-cursor-tone="amber">
-          <span class="cp-roll"><span>ADMIN PORTAL</span><span>ADMIN PORTAL</span></span>
+        <a href="./admin.html" class="group inline-flex items-center border border-amber-500/60 bg-amber-500/15 text-amber-400 hover:bg-amber-500 hover:text-black rounded-full px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[9px] sm:text-[11px] font-bold transition-colors duration-200" data-cursor="ADMIN NOC" data-cursor-tone="amber">
+          <span class="cp-roll"><span>ADMIN<span class="hidden sm:inline"> PORTAL</span></span><span>ADMIN<span class="hidden sm:inline"> PORTAL</span></span></span>
         </a>
       </nav>
     </div>
@@ -632,42 +672,42 @@
     <div class="cp-dial-sticky">
 
       <!-- HERO STAGE (Smoothly glides up & fades cleanly BEFORE Chapter 01 locks in) -->
-      <div id="cpHeroStage" class="relative z-20 max-w-4xl mx-auto px-5 text-center flex flex-col items-center -mt-12 md:-mt-24 will-change-transform">
-        <div class="text-[11px] tracking-[0.18em] uppercase opacity-60 mb-4 cp-mask-line">
-          <span class="cp-mask-inner cp-d1">// 01. SYSTEM INTRODUCTION — TELECOM ENERGY &amp; NOC COMMAND</span>
+      <div id="cpHeroStage" class="relative z-20 max-w-4xl mx-auto px-2 sm:px-5 text-center flex flex-col items-center mt-0 md:-mt-24 will-change-transform">
+        <div class="text-[9px] sm:text-[11px] tracking-[0.12em] sm:tracking-[0.18em] uppercase opacity-60 mb-2.5 sm:mb-4 cp-mask-line">
+          <span class="cp-mask-inner cp-d1">// 01. SYSTEM INTRODUCTION — TELECOM ENERGY &amp; NOC</span>
         </div>
 
-        <h1 class="hero-outline-title text-[clamp(3rem,7.8vw,6.4rem)] uppercase tracking-wider">
+        <h1 class="hero-outline-title text-[clamp(2.1rem,7.8vw,6.4rem)] uppercase tracking-wider">
           <span class="cp-mask-line"><span class="cp-mask-inner cp-d2">COLOPLUS</span></span>
           <span class="cp-hero-capsule">SMART DIESEL</span><br>
           <span class="cp-mask-line"><span class="cp-mask-inner cp-d3">AUTONOMOUS <span style="color: var(--color-accent);">AGENT</span></span></span>
         </h1>
 
-        <p class="mt-5 text-xs sm:text-sm max-w-2xl leading-relaxed opacity-80 cp-mask-line">
+        <p class="mt-3 sm:mt-5 text-[11px] sm:text-sm max-w-2xl leading-relaxed opacity-80 cp-mask-line">
           <span class="cp-mask-inner cp-d4">
             Welcome to the <strong class="opacity-100">ColoPlus Tech Smart Diesel &amp; Site Autonomy Platform</strong>. Built for ColoPlus Telecom Infrastructure, this system monitors <strong id="cpLiveSiteCount" style="color: var(--color-accent);">14</strong> active tower sites — empowering Field Support Engineers (FSEs) and NOC Administrators on dedicated portals to track diesel deliveries, utility power grid hours, backup battery health (BUB), PPM checklists, and live site issues in real time.
           </span>
         </p>
 
         <!-- Primary Portal CTAs -->
-        <div class="mt-7 flex flex-wrap items-center justify-center gap-3">
+        <div class="mt-5 sm:mt-7 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
           <a href="./fse.html" class="cp-ink-btn group" data-cursor="FSE LOGIN">
             <span class="cp-ink-circle"></span>
             <span class="cp-roll"><span>ENTER FSE PORTAL &gt;&gt;</span><span>ENTER FSE PORTAL &gt;&gt;</span></span>
             <span class="cp-btn-badge">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </span>
           </a>
           <a href="./admin.html" class="cp-ink-btn is-amber-outline group" data-cursor="ADMIN NOC" data-cursor-tone="amber">
             <span class="cp-ink-circle"></span>
             <span class="cp-roll"><span>ADMIN PORTAL &gt;&gt;</span><span>ADMIN PORTAL &gt;&gt;</span></span>
             <span class="cp-btn-badge">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </span>
           </a>
         </div>
 
-        <button type="button" onclick="scrollToDialChapter(0)" class="mt-6 border_ui px-5 py-1.5 text-[10px] font-bold tracking-[0.2em] uppercase hover:border-emerald-500 hover:text-emerald-400 transition-colors cursor-pointer bg-(--color-card-bg)" data-cursor="SCROLL">
+        <button type="button" onclick="scrollToDialChapter(0)" class="mt-4 sm:mt-6 border_ui px-4 sm:px-5 py-1 sm:py-1.5 text-[9px] sm:text-[10px] font-bold tracking-[0.16em] sm:tracking-[0.2em] uppercase hover:border-emerald-500 hover:text-emerald-400 transition-colors cursor-pointer bg-(--color-card-bg)" data-cursor="SCROLL">
           SCROLL TO EXPLORE ↓
         </button>
 
@@ -738,48 +778,49 @@
       </div>
 
       <!-- SCROLL-DRIVEN CHAPTER COPY STAGE (Exact Admin & FSE Block Text, Right Side of Viewport) -->
-      <div id="cpChapterStage" class="px-4 md:px-0">
-        <div id="cpChapterSwapBox" class="cp-chapter-swap border_ui p-6 sm:p-8" style="background: var(--color-card-bg);">
-          <div class="flex items-center justify-between gap-3 border-b pb-3 mb-5" style="border-color: var(--color-line);">
-            <div class="flex items-center gap-2.5">
-              <span id="cpChapterBadge" class="text-[11px] font-bold px-2.5 py-0.5 uppercase tracking-wider" style="background: var(--color-accent); color: #0b0d10;">01 // CAPABILITY</span>
-              <span id="cpChapterTag" class="text-[11px] uppercase tracking-widest opacity-65">FSE PORTAL</span>
+      <div id="cpChapterStage" class="px-0">
+        <div id="cpChapterSwapBox" class="cp-chapter-swap border_ui p-4 sm:p-8" style="background: var(--color-card-bg);">
+          <div class="flex items-center justify-between gap-2 border-b pb-2.5 sm:pb-3 mb-3.5 sm:mb-5" style="border-color: var(--color-line);">
+            <div class="flex items-center gap-2 min-w-0">
+              <span id="cpChapterBadge" class="text-[9px] sm:text-[11px] font-bold px-2 sm:px-2.5 py-0.5 uppercase tracking-wider shrink-0" style="background: var(--color-accent); color: #0b0d10;">01 // CAPABILITY</span>
+              <span id="cpChapterTag" class="text-[9px] sm:text-[11px] uppercase tracking-wider sm:tracking-widest opacity-65 truncate">FSE PORTAL</span>
             </div>
-            <span id="cpChapterCounter" class="text-[11px] font-bold opacity-55">01 / 04</span>
+            <span id="cpChapterCounter" class="text-[10px] sm:text-[11px] font-bold opacity-55 shrink-0">01 / 04</span>
           </div>
 
-          <h2 id="cpChapterTitle" class="hero-outline-title text-4xl sm:text-5xl uppercase tracking-wider">
+          <h2 id="cpChapterTitle" class="hero-outline-title text-2xl sm:text-5xl uppercase tracking-wider">
             FSE PORTAL (DEDICATED FIELD WORKSPACE)
           </h2>
 
-          <p id="cpChapterDesc" class="mt-4 text-xs sm:text-sm leading-relaxed opacity-85">
+          <p id="cpChapterDesc" class="mt-2.5 sm:mt-4 text-[11px] sm:text-sm leading-relaxed opacity-85">
             Field Support Engineers verify their Site ID &amp; Tenant ID to log diesel deliveries, view animated tank &amp; BUB/Grid status, complete the 12-item mandatory photo PPM checklist, and submit site tickets &amp; complaints.
           </p>
 
           <!-- Exact Admin / FSE Menu Strip for this Chapter -->
-          <div id="cpChapterMenus" class="mt-5 flex flex-wrap gap-1.5 text-[10px] font-bold uppercase tracking-wider"></div>
+          <div id="cpChapterMenus" class="mt-3.5 sm:mt-5 flex flex-wrap gap-1 sm:gap-1.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider"></div>
 
-          <div class="mt-6 pt-5 border-t flex flex-wrap items-center justify-between gap-4" style="border-color: var(--color-line);">
-            <a id="cpChapterCta" href="./fse.html" class="cp-ink-btn group text-xs" data-cursor="LAUNCH">
+          <div class="mt-4 sm:mt-6 pt-3.5 sm:pt-5 border-t flex flex-wrap items-center justify-between gap-3" style="border-color: var(--color-line);">
+            <a id="cpChapterCta" href="./fse.html" class="cp-ink-btn group text-[10px] sm:text-xs" data-cursor="LAUNCH">
               <span class="cp-ink-circle"></span>
               <span class="cp-roll"><span id="cpChapterCtaText1">ENTER FSE PORTAL &gt;&gt;</span><span id="cpChapterCtaText2">ENTER FSE PORTAL &gt;&gt;</span></span>
               <span class="cp-btn-badge">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
               </span>
             </a>
 
             <!-- Stepper Buttons 01 - 04 synced strictly with scroll position -->
-            <div class="flex items-center gap-1.5">
-              <button type="button" onclick="scrollToDialChapter(0)" id="cpStepBtn0" class="w-9 h-8 text-xs font-bold border_ui cursor-pointer transition-colors">01</button>
-              <button type="button" onclick="scrollToDialChapter(1)" id="cpStepBtn1" class="w-9 h-8 text-xs font-bold border_ui cursor-pointer transition-colors">02</button>
-              <button type="button" onclick="scrollToDialChapter(2)" id="cpStepBtn2" class="w-9 h-8 text-xs font-bold border_ui cursor-pointer transition-colors">03</button>
-              <button type="button" onclick="scrollToDialChapter(3)" id="cpStepBtn3" class="w-9 h-8 text-xs font-bold border_ui cursor-pointer transition-colors">04</button>
+            <div class="flex items-center gap-1 sm:gap-1.5">
+              <button type="button" onclick="scrollToDialChapter(0)" id="cpStepBtn0" class="w-8 h-7 sm:w-9 sm:h-8 text-[10px] sm:text-xs font-bold border_ui cursor-pointer transition-colors">01</button>
+              <button type="button" onclick="scrollToDialChapter(1)" id="cpStepBtn1" class="w-8 h-7 sm:w-9 sm:h-8 text-[10px] sm:text-xs font-bold border_ui cursor-pointer transition-colors">02</button>
+              <button type="button" onclick="scrollToDialChapter(2)" id="cpStepBtn2" class="w-8 h-7 sm:w-9 sm:h-8 text-[10px] sm:text-xs font-bold border_ui cursor-pointer transition-colors">03</button>
+              <button type="button" onclick="scrollToDialChapter(3)" id="cpStepBtn3" class="w-8 h-7 sm:w-9 sm:h-8 text-[10px] sm:text-xs font-bold border_ui cursor-pointer transition-colors">04</button>
             </div>
           </div>
 
-          <div class="mt-3 flex items-center justify-between text-[10px] uppercase tracking-widest opacity-55">
-            <span>SCROLL DIAL ACCURATELY LOCKED</span>
-            <span>UP NEXT → <strong id="cpUpNextLabel" class="opacity-100">ADMIN PORTAL</strong></span>
+          <div class="mt-2.5 sm:mt-3 flex items-center justify-between gap-2 text-[9px] sm:text-[10px] uppercase tracking-wider sm:tracking-widest opacity-55">
+            <span class="hidden sm:inline">SCROLL DIAL ACCURATELY LOCKED</span>
+            <span class="sm:hidden">TAP 01–04</span>
+            <span class="truncate">UP NEXT → <strong id="cpUpNextLabel" class="opacity-100">ADMIN PORTAL</strong></span>
           </div>
         </div>
       </div>
@@ -788,39 +829,39 @@
   </section>
 
   <!-- ==================== SECTION 2: EVERY TOWER STAYS ONLINE (3D MODULE SHOWCASE) ==================== -->
-  <section id="showcase" class="relative z-20 pt-20 pb-24 px-4 overflow-hidden border-t" style="border-color: var(--color-line);">
-    <div class="max-w-3xl mx-auto text-center mb-12">
-      <div class="text-[11px] uppercase tracking-[0.2em] opacity-55 mb-2">// 02. WHAT THIS PLATFORM CAN DO (LIVE MODULES)</div>
-      <h2 class="hero-outline-title text-[clamp(2.8rem,6.5vw,5.4rem)] uppercase tracking-wider">
+  <section id="showcase" class="relative z-20 py-12 sm:pt-20 sm:pb-24 px-3 sm:px-4 overflow-hidden border-t" style="border-color: var(--color-line);">
+    <div class="max-w-3xl mx-auto text-center mb-6 sm:mb-12">
+      <div class="text-[9px] sm:text-[11px] uppercase tracking-[0.14em] sm:tracking-[0.2em] opacity-55 mb-1.5 sm:mb-2">// 02. WHAT THIS PLATFORM CAN DO (LIVE MODULES)</div>
+      <h2 class="hero-outline-title text-[clamp(1.95rem,6.5vw,5.4rem)] uppercase tracking-wider">
         EVERY TOWER STAYS ONLINE.
       </h2>
-      <p class="mt-3 text-xs sm:text-sm opacity-75 max-w-xl mx-auto leading-relaxed">
-        Drag or click across ColoPlus Tech's four live operational engines — built with exact daily fuel telemetry, Admin/FSE portal isolation, and personalized zero-clash PPM scheduling.
+      <p class="mt-2 sm:mt-3 text-[11px] sm:text-sm opacity-75 max-w-xl mx-auto leading-relaxed">
+        Drag or tap across ColoPlus Tech's four live operational engines — built with exact daily fuel telemetry, Admin/FSE portal isolation, and personalized zero-clash PPM scheduling.
       </p>
     </div>
 
     <!-- Draggable 3D Curved Stage -->
-    <div id="cpCarouselStage" class="cp-carousel-stage relative w-full h-[360px] sm:h-[390px] mx-auto" data-cursor="DRAG">
+    <div id="cpCarouselStage" class="cp-carousel-stage relative w-full h-[255px] sm:h-[385px] mx-auto" data-cursor="DRAG">
       <!-- Cards injected & positioned dynamically in 3D space -->
     </div>
 
     <!-- Active Showcase Controls & Mono Stack Pills -->
-    <div class="mt-8 text-center space-y-3.5 max-w-2xl mx-auto">
-      <div class="flex items-center justify-center gap-3">
-        <button type="button" onclick="stepShowcase(-1)" class="w-9 h-9 border_ui flex items-center justify-center font-bold hover:border-emerald-500 hover:text-emerald-400 transition-colors cursor-pointer" style="background: var(--color-card-bg);" aria-label="Previous module">&lt;</button>
-        <div id="cpShowcaseTitle" class="text-sm sm:text-base font-bold uppercase tracking-wider min-w-[240px]">01 // FSE PORTAL</div>
-        <button type="button" onclick="stepShowcase(1)" class="w-9 h-9 border_ui flex items-center justify-center font-bold hover:border-emerald-500 hover:text-emerald-400 transition-colors cursor-pointer" style="background: var(--color-card-bg);" aria-label="Next module">&gt;</button>
+    <div class="mt-5 sm:mt-8 text-center space-y-2.5 sm:space-y-3.5 max-w-2xl mx-auto">
+      <div class="flex items-center justify-center gap-2 sm:gap-3">
+        <button type="button" onclick="stepShowcase(-1)" class="w-8 h-8 sm:w-9 sm:h-9 shrink-0 border_ui flex items-center justify-center text-xs sm:text-sm font-bold hover:border-emerald-500 hover:text-emerald-400 transition-colors cursor-pointer" style="background: var(--color-card-bg);" aria-label="Previous module">&lt;</button>
+        <div id="cpShowcaseTitle" class="text-[11px] sm:text-base font-bold uppercase tracking-wider truncate px-1">01 // FSE PORTAL</div>
+        <button type="button" onclick="stepShowcase(1)" class="w-8 h-8 sm:w-9 sm:h-9 shrink-0 border_ui flex items-center justify-center text-xs sm:text-sm font-bold hover:border-emerald-500 hover:text-emerald-400 transition-colors cursor-pointer" style="background: var(--color-card-bg);" aria-label="Next module">&gt;</button>
       </div>
-      <div id="cpShowcasePills" class="flex flex-wrap items-center justify-center gap-1.5"></div>
-      <div class="pt-3 flex flex-wrap items-center justify-center gap-3">
-        <a id="cpShowcaseLink" href="./fse.html" class="cp-ink-btn group text-xs" data-cursor="OPEN PORTAL">
+      <div id="cpShowcasePills" class="flex flex-wrap items-center justify-center gap-1 sm:gap-1.5"></div>
+      <div class="pt-2 sm:pt-3 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+        <a id="cpShowcaseLink" href="./fse.html" class="cp-ink-btn group text-[10px] sm:text-xs" data-cursor="OPEN PORTAL">
           <span class="cp-ink-circle"></span>
           <span class="cp-roll"><span id="cpShowcaseBtnLabel1">LAUNCH MODULE &gt;&gt;</span><span id="cpShowcaseBtnLabel2">LAUNCH MODULE &gt;&gt;</span></span>
           <span class="cp-btn-badge">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </span>
         </a>
-        <a href="./admin.html" class="border_ui px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-amber-400 border-amber-500/50 hover:bg-amber-500 hover:text-black transition-colors" data-cursor="ADMIN NOC" data-cursor-tone="amber">
+        <a href="./admin.html" class="border_ui px-3.5 sm:px-4 py-2 sm:py-2.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-amber-400 border-amber-500/50 hover:bg-amber-500 hover:text-black transition-colors" data-cursor="ADMIN NOC" data-cursor-tone="amber">
           ADMIN PORTAL &gt;&gt;
         </a>
       </div>
@@ -955,6 +996,7 @@
             pctx.save();
             pctx.translate(cx, cy);
             pctx.rotate(angle);
+            if (w < 640) pctx.scale(0.76, 0.76);
             pctx.fillStyle = 'rgba(0,0,0,0.2)';
             pctx.beginPath();
             pctx.moveTo(14, 9);
@@ -1344,23 +1386,23 @@
 
       if (stage) {
         stage.innerHTML = SHOWCASE_ITEMS.map((item, idx) => `
-          <div class="cp-showcase-card p-6 sm:p-7 flex flex-col justify-between" data-idx="${idx}">
-            <div class="flex items-center justify-between text-[10px] font-bold tracking-widest uppercase pb-3 border-b" style="border-color: var(--color-line);">
+          <div class="cp-showcase-card p-4 sm:p-7 flex flex-col justify-between" data-idx="${idx}">
+            <div class="flex items-center justify-between text-[9px] sm:text-[10px] font-bold tracking-widest uppercase pb-2 sm:pb-3 border-b" style="border-color: var(--color-line);">
               <span class="opacity-65">${item.code}</span>
-              <span class="px-2 py-0.5 text-[#0b0d10] font-bold" style="background:${item.accent};">LIVE</span>
+              <span class="px-1.5 sm:px-2 py-0.5 text-[#0b0d10] font-bold" style="background:${item.accent};">LIVE</span>
             </div>
-            <div class="my-auto py-4 space-y-2">
-              <div class="hero-outline-title text-3xl sm:text-5xl uppercase tracking-wider">${item.title}</div>
-              <div class="text-xs opacity-75 leading-relaxed">${item.subtitle}</div>
+            <div class="my-auto py-2 sm:py-4 space-y-1 sm:space-y-2">
+              <div class="hero-outline-title text-2xl sm:text-5xl uppercase tracking-wider">${item.title}</div>
+              <div class="text-[10px] sm:text-xs opacity-75 leading-relaxed">${item.subtitle}</div>
             </div>
-            <div class="grid grid-cols-2 gap-2.5 pt-4 border-t text-[11px]" style="border-color: var(--color-line);">
-              <div class="border_ui p-2.5">
-                <div class="text-[9px] opacity-55 uppercase">SPEC</div>
-                <div class="font-bold mt-0.5">${item.metricA}</div>
+            <div class="grid grid-cols-2 gap-2 sm:gap-2.5 pt-2.5 sm:pt-4 border-t text-[10px] sm:text-[11px]" style="border-color: var(--color-line);">
+              <div class="border_ui p-1.5 sm:p-2.5">
+                <div class="text-[8px] sm:text-[9px] opacity-55 uppercase">SPEC</div>
+                <div class="font-bold mt-0.5 truncate">${item.metricA}</div>
               </div>
-              <div class="border_ui p-2.5">
-                <div class="text-[9px] opacity-55 uppercase">STATUS</div>
-                <div class="font-bold mt-0.5" style="color:${item.accent};">${item.metricB}</div>
+              <div class="border_ui p-1.5 sm:p-2.5">
+                <div class="text-[8px] sm:text-[9px] opacity-55 uppercase">STATUS</div>
+                <div class="font-bold mt-0.5 truncate" style="color:${item.accent};">${item.metricB}</div>
               </div>
             </div>
           </div>
@@ -1368,22 +1410,24 @@
 
         function layoutShowcase() {
           const cards = stage.querySelectorAll('.cp-showcase-card');
-          const dragShift = dragDelta / 420;
+          const isMobile = window.innerWidth < 640;
+          const spreadX = isMobile ? 255 : 430;
+          const dragShift = dragDelta / (isMobile ? 260 : 420);
           cards.forEach((card, idx) => {
             let offset = idx - showcaseIndex + dragShift;
             if (offset > 2) offset -= SHOWCASE_ITEMS.length;
             if (offset < -2) offset += SHOWCASE_ITEMS.length;
 
-            const tx = offset * 430;
-            const tz = -Math.abs(offset) * 160;
-            const ry = -offset * 16;
-            const scale = Math.max(0.78, 1 - Math.abs(offset) * 0.13);
-            const opacity = Math.max(0.28, 1 - Math.abs(offset) * 0.42);
+            const tx = offset * spreadX;
+            const tz = -Math.abs(offset) * (isMobile ? 120 : 160);
+            const ry = -offset * (isMobile ? 14 : 16);
+            const scale = Math.max(0.76, 1 - Math.abs(offset) * 0.14);
+            const opacity = Math.max(0.24, 1 - Math.abs(offset) * 0.45);
             const zIndex = Math.round(20 - Math.abs(offset) * 5);
 
             card.classList.toggle('is-center', Math.abs(offset) < 0.35);
             card.style.transition = isDragging ? 'none' : 'transform 0.5s cubic-bezier(0.22,1,0.36,1), opacity 0.4s ease';
-            card.style.transform = `translate(-50%, -50%) translate3d(${tx}px, ${Math.abs(offset) * 12}px, ${tz}px) rotateY(${ry}deg) scale(${scale})`;
+            card.style.transform = `translate(-50%, -50%) translate3d(${tx}px, ${Math.abs(offset) * 10}px, ${tz}px) rotateY(${ry}deg) scale(${scale})`;
             card.style.opacity = String(opacity);
             card.style.zIndex = String(zIndex);
           });
@@ -1394,9 +1438,10 @@
           document.getElementById('cpShowcaseBtnLabel1').textContent = active.btnLabel;
           document.getElementById('cpShowcaseBtnLabel2').textContent = active.btnLabel;
           document.getElementById('cpShowcasePills').innerHTML = active.pills.map(p =>
-            `<span class="border_ui px-2.5 py-0.5 text-[10px] font-bold uppercase opacity-75">${p}</span>`
+            `<span class="border_ui px-2 sm:px-2.5 py-0.5 text-[9px] sm:text-[10px] font-bold uppercase opacity-75">${p}</span>`
           ).join('');
         }
+        window.addEventListener('resize', layoutShowcase);
 
         window.stepShowcase = function (delta) {
           showcaseIndex = (showcaseIndex + delta + SHOWCASE_ITEMS.length) % SHOWCASE_ITEMS.length;
