@@ -3526,7 +3526,7 @@
       }
       document.getElementById('fseDeliverySupplier').value = site.supplier || 'In-House';
       const now = new Date();
-      document.getElementById('fseDeliveryDate').value = now.toISOString().slice(0, 10);
+      document.getElementById('fseDeliveryDate').value = getLocalTodayIso();
       document.getElementById('fseDeliveryTime').value = now.toTimeString().slice(0, 5);
 
       const prevDate = site.previousSupplyDate || (site.refuelHistory && site.refuelHistory.length > 1 ? site.refuelHistory[1].date : 'No prior record');
@@ -3673,21 +3673,23 @@
         '</div>'
       ).join('');
 
-      // Site Repair Tickets
+      // Site Repair Tickets (only populated if element exists; FSE now uses dedicated 04. TICKETS & COMPLAINTS menu)
       const ticketsEl = document.getElementById('fseSiteRepairsList');
-      if (siteTickets.length === 0) {
-        ticketsEl.innerHTML = '<div class="opacity-60 text-[11px] py-2">No active repair tickets logged for ' + site.siteId + '.</div>';
-      } else {
-        ticketsEl.innerHTML = siteTickets.map(t =>
-          '<div class="border_ui p-2.5 space-y-1">' +
-            '<div class="flex justify-between font-bold"><span>' + t.ticketId + ' · ' + (t.category || 'GENERAL') + '</span><span class="text-amber-400">' + t.status + '</span></div>' +
-            '<div class="opacity-80 text-[11px]">' + t.issue + '</div>' +
-            '<div class="flex items-center justify-between gap-2 opacity-60 text-[10px]">' +
-              '<span>Logged: ' + t.loggedDate + ' · Tech: ' + (t.technician || fseSession.fseName) + '</span>' +
-              (t.attachmentUrl ? '<a href="' + t.attachmentUrl + '" target="_blank" class="underline text-amber-400 font-bold opacity-100">VIEW ATTACHMENT</a>' : '') +
-            '</div>' +
-          '</div>'
-        ).join('');
+      if (ticketsEl) {
+        if (siteTickets.length === 0) {
+          ticketsEl.innerHTML = '<div class="opacity-60 text-[11px] py-2">No active repair tickets logged for ' + site.siteId + '.</div>';
+        } else {
+          ticketsEl.innerHTML = siteTickets.map(t =>
+            '<div class="border_ui p-2.5 space-y-1">' +
+              '<div class="flex justify-between font-bold"><span>' + t.ticketId + ' · ' + (t.category || 'GENERAL') + '</span><span class="text-amber-400">' + t.status + '</span></div>' +
+              '<div class="opacity-80 text-[11px]">' + t.issue + '</div>' +
+              '<div class="flex items-center justify-between gap-2 opacity-60 text-[10px]">' +
+                '<span>Logged: ' + t.loggedDate + ' · Tech: ' + (t.technician || fseSession.fseName) + '</span>' +
+                (t.attachmentUrl ? '<a href="' + t.attachmentUrl + '" target="_blank" class="underline text-amber-400 font-bold opacity-100">VIEW ATTACHMENT</a>' : '') +
+              '</div>' +
+            '</div>'
+          ).join('');
+        }
       }
 
       // Site PPM Schedule (Read-Only for FSE) & Checklist with Photo/Video Attachment (Max 20MB) + Delete

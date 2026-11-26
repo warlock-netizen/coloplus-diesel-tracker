@@ -158,9 +158,6 @@
             <div id="fseActiveSiteSub" class="opacity-70 text-[11px]">State · Tenant · FSE</div>
           </div>
           <div class="flex items-center gap-2 flex-wrap">
-            <button onclick="openFseModule('tickets')" class="border_ui border-amber-400/70 text-amber-400 px-3 py-1.5 hover:bg-amber-500 hover:text-black cursor-pointer font-bold text-[11px]">
-              + TICKET / COMPLAINT
-            </button>
             <button onclick="editFseEmailDirect()" class="border_ui px-3 py-1.5 btn-invert cursor-pointer font-bold text-[11px]">
               EDIT FSE EMAIL
             </button>
@@ -244,35 +241,25 @@
             <div id="fseConstantRepairList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5"></div>
           </div>
 
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
-            <div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">
-              <div class="flex items-center justify-between border-b border_ui pb-2">
-                <span class="font-bold uppercase tracking-wider">// SITE REPAIR TICKETS</span>
-                <button onclick="openFseModule('tickets')" class="border_ui px-2 py-1 btn-invert cursor-pointer text-[10px] font-bold">+ LOG TICKET / COMPLAINT</button>
-              </div>
-              <div id="fseSiteRepairsList" class="space-y-2"></div>
+          <div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border_ui pb-2">
+              <span class="font-bold uppercase tracking-wider">// SITE PPM CHECKLIST &amp; MANDATORY PHOTO PROOF (<span class="text-rose-500">*</span> ALL 12 REQUIRED)</span>
+              <button onclick="openTicksModal(fseSession.siteId)" class="border_ui px-2 py-1 btn-invert cursor-pointer text-[10px] font-bold">OPEN FULL CHECKLIST</button>
             </div>
-
-            <div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">
-              <div class="flex flex-wrap items-center justify-between gap-2 border-b border_ui pb-2">
-                <span class="font-bold uppercase tracking-wider">// SITE PPM CHECKLIST &amp; MANDATORY PHOTO PROOF (<span class="text-rose-500">*</span> ALL 12 REQUIRED)</span>
-                <button onclick="openTicksModal(fseSession.siteId)" class="border_ui px-2 py-1 btn-invert cursor-pointer text-[10px] font-bold">OPEN FULL CHECKLIST</button>
-              </div>
-              <div class="border_ui p-2.5 bg-black/10 dark:bg-white/5 space-y-1">
-                <div class="text-[10px] uppercase opacity-60 font-bold">// PPM SCHEDULE (SET BY ADMIN)</div>
-                <div id="fseNextPpmDisplay" class="text-[11px] text-(--color-accent) font-bold"></div>
-              </div>
-              <div id="fsePpmPhotoProgress" class="border_ui border-rose-500/40 bg-rose-500/10 p-2 text-[10px] font-bold text-rose-300">
-                // PHOTO PROOF (* MANDATORY): 0 / 12 ATTACHED — SNAP A PICTURE OF EVERY ITEM TO ENABLE SUBMIT
-              </div>
-              <div id="fseSitePpmList" class="space-y-1.5 max-h-[380px] overflow-y-auto no-scrollbar"></div>
-              <div id="fsePpmSubmitError" class="hidden border_ui border-rose-500/60 bg-rose-500/10 p-2.5 text-[10px] text-rose-400 font-bold"></div>
-              <div class="pt-2 border-t border_ui flex flex-wrap items-center justify-between gap-2">
-                <span id="fsePpmLastSubmittedText" class="text-[10px] opacity-60"></span>
-                <button type="button" id="fseSubmitPpmBtn" onclick="submitFsePpmReport()" class="border_ui px-4 py-2 min-h-[44px] sm:min-h-0 font-bold nav_active btn-invert cursor-pointer text-[11px]">
-                  SUBMIT PPM REPORT &gt;&gt;
-                </button>
-              </div>
+            <div class="border_ui p-2.5 bg-black/10 dark:bg-white/5 space-y-1">
+              <div class="text-[10px] uppercase opacity-60 font-bold">// PPM SCHEDULE (SET BY ADMIN)</div>
+              <div id="fseNextPpmDisplay" class="text-[11px] text-(--color-accent) font-bold"></div>
+            </div>
+            <div id="fsePpmPhotoProgress" class="border_ui border-rose-500/40 bg-rose-500/10 p-2 text-[10px] font-bold text-rose-300">
+              // PHOTO PROOF (* MANDATORY): 0 / 12 ATTACHED — SNAP A PICTURE OF EVERY ITEM TO ENABLE SUBMIT
+            </div>
+            <div id="fseSitePpmList" class="grid grid-cols-1 md:grid-cols-2 gap-1.5 max-h-[420px] overflow-y-auto no-scrollbar"></div>
+            <div id="fsePpmSubmitError" class="hidden border_ui border-rose-500/60 bg-rose-500/10 p-2.5 text-[10px] text-rose-400 font-bold"></div>
+            <div class="pt-2 border-t border_ui flex flex-wrap items-center justify-between gap-2">
+              <span id="fsePpmLastSubmittedText" class="text-[10px] opacity-60"></span>
+              <button type="button" id="fseSubmitPpmBtn" onclick="submitFsePpmReport()" class="border_ui px-4 py-2 min-h-[44px] sm:min-h-0 font-bold nav_active btn-invert cursor-pointer text-[11px]">
+                SUBMIT PPM REPORT &gt;&gt;
+              </button>
             </div>
           </div>
         </div>
