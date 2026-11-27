@@ -1899,6 +1899,8 @@
             settingsRows.forEach(r => {
               if (r.key === 'finance_email' && r.value) {
                 emailChannelSettings.financeEmail = r.value.trim();
+              } else if (r.key === 'auto_fse_reminder' && r.value != null) {
+                emailChannelSettings.autoFseReminder = String(r.value).toLowerCase() !== 'false';
               } else if (r.key === 'team_emails' && r.value) {
                 try {
                   const parsed = JSON.parse(r.value);
@@ -1979,17 +1981,16 @@
           return { ok: false, error: error.message };
         }
         setSupabaseSyncStatus('live', 'Delivery synced to Supabase');
-        sb.functions.invoke('send-alert-email', {
-          body: {
-            type: 'DIESEL_DELIVERY',
-            site_id: siteId,
-            qty: qty,
-            received_date: dateIso,
-            received_time: timeStr,
-            supplier: supplier,
-            logged_by: loggedBy
-          }
-        }).catch(() => {});
+        dispatchSiteEmail({
+          type: 'DIESEL_DELIVERY',
+          site_id: siteId,
+          qty: qty,
+          received_date: dateIso,
+          received_time: timeStr,
+          supplier: supplier,
+          logged_by: loggedBy,
+          to: emailChannelSettings.financeEmail || undefined
+        }, { silent: true }).catch(() => {});
         return { ok: true };
       } catch (e) {
         console.warn('Supabase delivery RPC:', e);
@@ -2417,18 +2418,369 @@
       }
     } catch (e) { masterTasks = []; }
 
-    let emailChannelSettings = { financeEmail: '', teamEmails: [] };
+    let emailChannelSettings = { financeEmail: '', teamEmails: [], autoFseReminder: true };
     try {
       const savedEmailCfg = localStorage.getItem('coloplus_email_settings_v1');
       if (savedEmailCfg) {
         const parsed = JSON.parse(savedEmailCfg);
         emailChannelSettings.financeEmail = parsed.financeEmail || '';
         emailChannelSettings.teamEmails = Array.isArray(parsed.teamEmails) ? parsed.teamEmails : [];
+        emailChannelSettings.autoFseReminder = parsed.autoFseReminder !== false;
       }
     } catch (e) {}
 
+    let emailDispatchLog = [];
+    try {
+      const savedLog = localStorage.getItem('coloplus_email_log_v1');
+      if (savedLog) {
+        const parsedLog = JSON.parse(savedLog);
+        if (Array.isArray(parsedLog)) emailDispatchLog = parsedLog.slice(0, 30);
+      }
+    } catch (e) { emailDispatchLog = []; }
+
+    let emailServiceHealth = { checked: false, configured: false, from: '', adminConfigured: false, financeConfigured: false };
+
     function saveEmailChannelSettingsLocal() {
       localStorage.setItem('coloplus_email_settings_v1', JSON.stringify(emailChannelSettings));
+    }
+
+    function escapeHtml(str) {
+      return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function appendEmailDispatchLog(entry) {
+      const now = new Date();
+      const item = {
+        id: 'EM-' + Date.now(),
+        at: now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) + ' ' +
+            now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+        type: entry.type || 'CUSTOM_EMAIL',
+        to: Array.isArray(entry.to) ? entry.to.join(', ') : String(entry.to || 'Configured Inbox'),
+        subject: entry.subject || '(Automated Notice)',
+        ok: !!entry.ok,
+        detail: entry.detail || ''
+      };
+      emailDispatchLog.unshift(item);
+      if (emailDispatchLog.length > 30) emailDispatchLog = emailDispatchLog.slice(0, 30);
+      try { localStorage.setItem('coloplus_email_log_v1', JSON.stringify(emailDispatchLog)); } catch (_) {}
+      refreshAdminEmailLogDom();
+    }
+
+    function renderAdminEmailLogHtml() {
+      if (!emailDispatchLog || emailDispatchLog.length === 0) {
+        return '<div class="text-[11px] opacity-60 py-3 text-center">No emails dispatched from this browser yet. Send a custom email or enter an FSE email to trigger an automatic reminder.</div>';
+      }
+      return '<div class="overflow-x-auto"><table class="w-full text-left border-collapse text-[10px]">' +
+        '<thead><tr class="border-b border_ui opacity-60 uppercase">' +
+          '<th class="py-1.5 pr-2">TIME</th>' +
+          '<th class="py-1.5 pr-2">TYPE</th>' +
+          '<th class="py-1.5 pr-2">RECIPIENT(S)</th>' +
+          '<th class="py-1.5 pr-2">SUBJECT / DETAIL</th>' +
+          '<th class="py-1.5 text-right">STATUS</th>' +
+        '</tr></thead><tbody>' +
+        emailDispatchLog.slice(0, 15).map(row =>
+          '<tr class="border-b border_ui/40">' +
+            '<td class="py-1.5 pr-2 whitespace-nowrap opacity-75">' + escapeHtml(row.at) + '</td>' +
+            '<td class="py-1.5 pr-2 whitespace-nowrap font-bold">' + escapeHtml(row.type) + '</td>' +
+            '<td class="py-1.5 pr-2 break-all max-w-[180px]">' + escapeHtml(row.to) + '</td>' +
+            '<td class="py-1.5 pr-2">' + escapeHtml(row.subject) + (row.detail && !row.ok ? '<div class="text-rose-400 text-[9px] mt-0.5">' + escapeHtml(row.detail) + '</div>' : '') + '</td>' +
+            '<td class="py-1.5 text-right whitespace-nowrap"><span class="border_ui px-1.5 py-0.5 font-bold ' + (row.ok ? 'text-emerald-400 border-emerald-500/40' : 'text-rose-400 border-rose-500/40') + '">' + (row.ok ? 'SENT' : 'FAILED') + '</span></td>' +
+          '</tr>'
+        ).join('') +
+        '</tbody></table></div>';
+    }
+
+    function refreshAdminEmailLogDom() {
+      const box = document.getElementById('admEmailLogContainer');
+      if (box) box.innerHTML = renderAdminEmailLogHtml();
+    }
+
+    function updateEmailHealthBadgeDom() {
+      const badge = document.getElementById('admEmailHealthBadge');
+      if (!badge) return;
+      if (!emailServiceHealth.checked) {
+        badge.className = 'border_ui px-2 py-0.5 text-[10px] font-bold opacity-70';
+        badge.innerText = 'CHECKING /api/send-email...';
+      } else if (emailServiceHealth.configured) {
+        badge.className = 'border_ui px-2 py-0.5 text-[10px] font-bold text-emerald-400 border-emerald-500/40';
+        badge.innerText = 'RESEND ENGINE LIVE · ' + (emailServiceHealth.from || 'onboarding@resend.dev');
+      } else {
+        badge.className = 'border_ui px-2 py-0.5 text-[10px] font-bold text-amber-400 border-amber-500/40';
+        badge.innerText = 'ADD RESEND_API_KEY IN VERCEL ENV';
+      }
+    }
+
+    async function checkEmailServiceHealth(force) {
+      if (emailServiceHealth.checked && !force) {
+        updateEmailHealthBadgeDom();
+        return emailServiceHealth;
+      }
+      try {
+        const resp = await fetch('/api/send-email', { method: 'GET' });
+        if (resp.ok) {
+          const data = await resp.json();
+          emailServiceHealth = {
+            checked: true,
+            configured: !!data.configured,
+            from: data.from || '',
+            adminConfigured: !!data.adminConfigured,
+            financeConfigured: !!data.financeConfigured
+          };
+        } else {
+          emailServiceHealth = { checked: true, configured: false, from: '', adminConfigured: false, financeConfigured: false };
+        }
+      } catch (_) {
+        emailServiceHealth = { checked: true, configured: false, from: '', adminConfigured: false, financeConfigured: false };
+      }
+      updateEmailHealthBadgeDom();
+      return emailServiceHealth;
+    }
+
+    async function dispatchSiteEmail(payload, opts) {
+      const options = opts || {};
+      const body = Object.assign({}, payload || {});
+      let result = null;
+      let shouldFallbackToSupabase = false;
+
+      try {
+        const resp = await fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        if (resp.status === 404) {
+          shouldFallbackToSupabase = true;
+        } else {
+          let data = {};
+          try { data = await resp.json(); } catch (_) { data = { ok: false, error: 'HTTP ' + resp.status }; }
+          const ok = resp.ok && data.ok !== false && !data.error;
+          result = {
+            ok: ok,
+            id: data.id || null,
+            to: data.to || body.to || body.custom_email || body.fse_email || body.target || '',
+            sent_count: data.sent_count,
+            total: data.total,
+            error: ok ? null : (data.error || (data.data && data.data.message) || ('HTTP ' + resp.status)),
+            hint: data.hint || '',
+            data: data
+          };
+        }
+      } catch (err) {
+        shouldFallbackToSupabase = true;
+        result = { ok: false, error: err && err.message ? err.message : 'Network error reaching /api/send-email', hint: '' };
+      }
+
+      if (shouldFallbackToSupabase && sb) {
+        try {
+          const { data, error } = await sb.functions.invoke('send-alert-email', { body: body });
+          const ok = !error && !(data && data.ok === false) && !(data && data.error);
+          result = {
+            ok: ok,
+            to: body.to || body.custom_email || body.fse_email || body.target || '',
+            error: ok ? null : ((error && error.message) || (data && (data.error || (data.data && data.data.message))) || 'Email delivery failed'),
+            hint: (data && data.hint) || '',
+            data: data
+          };
+        } catch (err2) {
+          result = { ok: false, error: err2 && err2.message ? err2.message : 'Email service unreachable', hint: '' };
+        }
+      }
+
+      if (!result) result = { ok: false, error: 'Email service unavailable', hint: '' };
+
+      if (!options.skipLog) {
+        const logTo = Array.isArray(body.sites) && body.sites.length > 0
+          ? body.sites.map(s => s.fse_email).filter(Boolean).join(', ')
+          : (result.to || body.to || body.custom_email || body.fse_email || body.target || 'Configured Inbox');
+        appendEmailDispatchLog({
+          type: body.type || 'CUSTOM_EMAIL',
+          to: logTo,
+          subject: body.subject || (body.type === 'FSE_WELCOME_REMINDER' ? ('Auto FSE Reminder — ' + (body.site_id || '')) : (body.type || 'Email Dispatch')),
+          ok: result.ok,
+          detail: result.error ? (result.error + (result.hint ? ' — ' + result.hint : '')) : ''
+        });
+      }
+
+      return result;
+    }
+
+    function toggleAutoFseReminder() {
+      if (!isAdminUnlocked) return;
+      emailChannelSettings.autoFseReminder = !emailChannelSettings.autoFseReminder;
+      saveEmailChannelSettingsLocal();
+      if (sb) {
+        try {
+          Promise.resolve(sb.from('app_settings').upsert({
+            key: 'auto_fse_reminder',
+            value: emailChannelSettings.autoFseReminder ? 'true' : 'false',
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'key' })).catch(() => {});
+        } catch (_) {}
+      }
+      const site = adminSession ? masterSites.find(s => s.siteId === adminSession.siteId) : null;
+      if (site) renderAdminModuleContent(site);
+      showToast('Auto FSE Reminder on Email Input: ' + (emailChannelSettings.autoFseReminder ? 'ENABLED' : 'PAUSED'));
+    }
+
+    async function sendAutomatedFseReminder(site, fseEmail, triggerSource, isManual) {
+      const cleanEmail = String(fseEmail || (site && site.fseEmail) || '').trim();
+      if (!site || !cleanEmail || !cleanEmail.includes('@')) {
+        if (isManual) showToast('Save or enter a valid FSE email for ' + (site ? site.siteId : 'this site') + ' first');
+        return { ok: false, error: 'Invalid FSE email' };
+      }
+      if (!isManual && emailChannelSettings.autoFseReminder === false) {
+        return { ok: false, skipped: true };
+      }
+      synchronizeSite(site);
+      rememberTeamEmail(cleanEmail);
+
+      const fb = isManual ? document.getElementById('admEmailFeedbackBox') : null;
+      if (fb) {
+        fb.className = 'border_ui border-amber-500/40 bg-amber-500/10 p-2.5 text-[11px] text-amber-300';
+        fb.innerText = 'Sending automated FSE reminder to ' + cleanEmail + ' (' + site.siteId + ')...';
+        fb.classList.remove('hidden');
+      }
+
+      const res = await dispatchSiteEmail({
+        type: 'FSE_WELCOME_REMINDER',
+        to: cleanEmail,
+        site_id: site.siteId,
+        tenant_id: site.tenantId || '',
+        state: site.state || '',
+        address: site.address || '',
+        fse_name: site.fse || 'Field Support Engineer',
+        next_ppm_date: site.nextPpmDate || 'Check Portal Calendar',
+        last_ppm_date: site.lastPpmDate || 'Not recorded',
+        ppm_cycle_days: site.ppmCycleDays || 30,
+        current_dl: site.currentDL,
+        cpd: site.cpd,
+        autonomy: site.autonomyBreakdown || (site.daysRemaining + 'd'),
+        battery_status: site.batteryStatus || 'HEALTHY',
+        trigger_source: triggerSource || 'FSE Portal'
+      });
+
+      if (res.ok) {
+        if (fb) {
+          fb.className = 'border_ui border-emerald-500/50 bg-emerald-500/10 p-2.5 text-[11px] text-emerald-400 font-bold';
+          fb.innerText = 'Automated FSE reminder sent to ' + cleanEmail + ' for ' + site.siteId + '!';
+          fb.classList.remove('hidden');
+        }
+        showToast('Auto-reminder email sent to ' + cleanEmail);
+      } else {
+        const msg = res.error + (res.hint ? ' — ' + res.hint : '');
+        if (fb) {
+          fb.className = 'border_ui border-rose-500/50 bg-rose-500/10 p-2.5 text-[11px] text-rose-400 font-bold';
+          fb.innerText = 'FSE reminder error: ' + msg;
+          fb.classList.remove('hidden');
+        }
+        if (isManual) showToast('FSE reminder failed: ' + res.error);
+      }
+      return res;
+    }
+
+    function triggerSelectedSiteFseReminder() {
+      if (!isAdminUnlocked || !adminSession) return;
+      const site = masterSites.find(s => s.siteId === adminSession.siteId);
+      if (!site) return;
+      const inp = document.getElementById('admProfileFseEmail');
+      const email = (inp && inp.value.trim()) || site.fseEmail || '';
+      sendAutomatedFseReminder(site, email, 'Admin Automated Email Hub', true);
+    }
+
+    async function sendBulkFsePpmReminders() {
+      if (!isAdminUnlocked) return;
+      const eligible = masterSites.filter(s => s.fseEmail && s.fseEmail.includes('@'));
+      if (eligible.length === 0) {
+        showToast('No FSE emails registered on any site yet');
+        return;
+      }
+      const fb = document.getElementById('admEmailFeedbackBox');
+      if (fb) {
+        fb.className = 'border_ui border-amber-500/40 bg-amber-500/10 p-2.5 text-[11px] text-amber-300';
+        fb.innerText = 'Dispatching personalized PPM & site reminders to ' + eligible.length + ' registered FSE(s)...';
+        fb.classList.remove('hidden');
+      }
+
+      const sitesPayload = eligible.map(s => {
+        synchronizeSite(s);
+        return {
+          site_id: s.siteId,
+          tenant_id: s.tenantId,
+          state: s.state,
+          address: s.address,
+          fse_name: s.fse,
+          fse_email: s.fseEmail,
+          ppm_cycle_days: s.ppmCycleDays || 30,
+          last_ppm_date: s.lastPpmDate || 'N/A',
+          next_ppm_date: s.nextPpmDate || 'Check Calendar'
+        };
+      });
+
+      const res = await dispatchSiteEmail({
+        type: 'PPM_REMINDER',
+        sites: sitesPayload,
+        subject: 'Bulk FSE PPM Reminders (' + eligible.length + ' sites)'
+      });
+
+      if (res.ok) {
+        const count = res.sent_count != null ? res.sent_count : eligible.length;
+        if (fb) {
+          fb.className = 'border_ui border-emerald-500/50 bg-emerald-500/10 p-2.5 text-[11px] text-emerald-400 font-bold';
+          fb.innerText = 'Bulk FSE reminders delivered to ' + count + ' / ' + eligible.length + ' registered FSE(s)!';
+          fb.classList.remove('hidden');
+        }
+        showToast('Reminders sent to ' + count + ' FSE(s)');
+      } else {
+        const msg = (res.error || 'Delivery failed') + (res.hint ? ' — ' + res.hint : '');
+        if (fb) {
+          fb.className = 'border_ui border-rose-500/50 bg-rose-500/10 p-2.5 text-[11px] text-rose-400 font-bold';
+          fb.innerText = 'Bulk reminder error: ' + msg;
+          fb.classList.remove('hidden');
+        }
+        showToast('Bulk reminder failed: ' + (res.error || 'Delivery failed'));
+      }
+    }
+
+    function applyAdminEmailPreset(presetKey) {
+      if (!presetKey) return;
+      const site = adminSession ? masterSites.find(s => s.siteId === adminSession.siteId) : null;
+      const subjEl = document.getElementById('admEmailSubject');
+      const bodyEl = document.getElementById('admEmailBody');
+      if (!subjEl || !bodyEl) return;
+      const sid = site ? site.siteId : 'SITE';
+      const st = site ? site.state : '';
+      if (site) synchronizeSite(site);
+
+      if (presetKey === 'diesel_refill') {
+        subjEl.value = '[DIESEL REFILL REQUEST] ' + sid + (st ? ' (' + st + ')' : '') + ' — ' + (site ? site.litresFor7Days : 500) + 'L Approval';
+        bodyEl.value = 'Hello Team,\n\nPlease approve diesel replenishment for ' + sid + (site ? ' (' + site.state + ' — ' + site.address + ')' : '') + '.\n\n' +
+          'Current Live Diesel: ' + (site ? site.currentDL : 0) + ' L\n' +
+          'Daily Consumption (CPD): ' + (site ? site.cpd : 0) + ' L/day\n' +
+          'Autonomy Remaining: ' + (site ? (site.autonomyBreakdown || (site.daysRemaining + 'd')) : 'N/A') + '\n' +
+          'Recommended 7-Day Refill: ' + (site ? site.litresFor7Days : 0) + ' L (Tank space: ' + (site ? site.litresToFull : 0) + ' L)\n\n' +
+          'Kindly confirm dispatch schedule.';
+      } else if (presetKey === 'ppm_notice') {
+        subjEl.value = '[PPM ACTION REQUIRED] ' + sid + ' — Scheduled Maintenance (' + (site && site.nextPpmDate ? site.nextPpmDate : 'Upcoming') + ')';
+        bodyEl.value = 'Hello ' + (site && site.fse ? site.fse : 'FSE') + ',\n\nThis is a reminder to complete Preventive & Planned Maintenance (PPM) for ' + sid + '.\n\n' +
+          'Next Scheduled PPM: ' + (site && site.nextPpmDate ? site.nextPpmDate : 'Check Portal Calendar') + '\n' +
+          'Cycle: ' + (site ? (site.ppmCycleDays || 30) : 30) + ' days\n\n' +
+          'Please log into the FSE Portal, attach photo proof (*) for all 12 checklist items, and submit your PPM report.';
+      } else if (presetKey === 'bub_fault') {
+        subjEl.value = '[URGENT BUB / POWER ALERT] ' + sid + ' — Battery Bank Status: ' + (site ? (site.batteryStatus || 'FAULTY') : 'FAULTY');
+        bodyEl.value = 'Hello Team,\n\nBackup Battery (BUB) inspection is required at ' + sid + (site ? ' (' + site.state + ')' : '') + '.\n\n' +
+          'Battery Status: ' + (site ? (site.batteryStatus || 'FAULTY') : 'FAULTY') + '\n' +
+          'Current SOC: ' + (site ? (site.batterySocPct || 0) : 0) + '% | Autonomy: ' + (site ? (site.batteryAutonomyHours || 0) : 0) + ' hrs\n' +
+          'Utility Grid (Light): ' + (site ? (site.gridHoursPerDay != null ? site.gridHoursPerDay : 12) : 12) + ' hrs/day\n\n' +
+          'Please prioritize battery diagnostics and log your findings in the Repairs & Tickets tab.';
+      } else if (presetKey === 'general_update') {
+        subjEl.value = '[COLOPLUS NOC NOTICE] ' + sid + ' — Operations Update';
+        bodyEl.value = 'Hello Team,\n\nSite operations update for ' + sid + (site ? ' (' + site.state + ')' : '') + ':\n\n- \n\nRegards,\n' + (adminSession ? adminSession.adminName : 'ColoPlus NOC');
+      }
     }
 
     function rememberTeamEmail(email) {
@@ -2848,36 +3200,32 @@
         'Assigned By: ' + (adminSession ? adminSession.adminName : 'NOC Administrator') + '\n\n' +
         'Please complete this task on or before the due date and update the portal.';
 
-      if (!sb) {
-        showToast('Supabase client unavailable for email dispatch');
-        return;
-      }
-
       try {
-        const { data, error } = await sb.functions.invoke('send-alert-email', {
-          body: {
-            type: 'CUSTOM_EMAIL',
-            target: 'CUSTOM',
-            custom_email: task.assigneeEmail,
-            subject: subject,
-            message: message
-          }
+        const res = await dispatchSiteEmail({
+          type: 'TASK_ASSIGNED',
+          target: 'CUSTOM',
+          to: task.assigneeEmail,
+          custom_email: task.assigneeEmail,
+          site_id: task.site,
+          sender_name: adminSession ? adminSession.adminName : 'NOC Administrator',
+          subject: subject,
+          message: message
         });
-        if (error || (data && data.ok === false) || (data && data.error)) {
-          const msg = (error && error.message) || (data && (data.error || (data.data && data.data.message))) || 'Resend delivery failed';
+        if (!res.ok) {
+          const msg = (res.error || 'Resend delivery failed') + (res.hint ? ' — ' + res.hint : '');
           if (statusBox) {
             statusBox.className = 'border_ui border-rose-500/50 bg-rose-500/10 p-2 text-[10px] text-rose-400 font-bold';
             statusBox.innerText = 'Email error: ' + msg;
             statusBox.classList.remove('hidden');
           }
-          showToast('Task email failed: ' + msg);
+          showToast('Task email failed: ' + (res.error || 'Resend delivery failed'));
           return;
         }
         const now = new Date();
         task.emailSentAt = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' +
                            now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
         localStorage.setItem('coloplus_tasks_v1', JSON.stringify(masterTasks));
-        if (!String(task.id).startsWith('t_') && !String(task.id).startsWith('ppm_auto_')) {
+        if (sb && !String(task.id).startsWith('t_') && !String(task.id).startsWith('ppm_auto_')) {
           try { Promise.resolve(sb.from('calendar_tasks').update({ email_sent_at: now.toISOString() }).eq('id', task.id)).catch(() => {}); } catch (_) {}
         }
         if (statusBox) {
@@ -3099,6 +3447,9 @@
       updateFseUiState();
       openFseModule('fuel');
       showToast('Verified & Logged into ' + site.siteId);
+      if (fseEmail && fseEmail.includes('@')) {
+        sendAutomatedFseReminder(site, fseEmail, 'FSE Portal Login', false).catch(() => {});
+      }
     }
 
     function editFseEmailDirect() {
@@ -3125,6 +3476,9 @@
       }
       updateFseUiState();
       showToast('FSE Email updated for ' + site.siteId);
+      if (cleaned && cleaned.includes('@')) {
+        sendAutomatedFseReminder(site, cleaned, 'FSE Portal Email Update', false).catch(() => {});
+      }
     }
 
     function logoutFsePortal() {
@@ -3439,23 +3793,17 @@
       masterRepairs.unshift(ticket);
       saveState();
       const repRes = await sbInsertRepair(site.siteId, site.tenantId, fullCategory, details + (attachmentUrl ? (' [Attachment: ' + attachmentUrl + ']') : ''), ticket.technician);
-      if (sb) {
-        try {
-          Promise.resolve(sb.functions.invoke('send-alert-email', {
-            body: {
-              type: 'REPAIR_TICKET',
-              ticket_id: ticket.ticketId,
-              site_id: site.siteId,
-              tenant_id: site.tenantId,
-              state: site.state,
-              category: fullCategory,
-              status: 'OPEN',
-              issue: details + (attachmentUrl ? (' | Attachment: ' + attachmentUrl) : ''),
-              technician: ticket.technician
-            }
-          })).catch(() => {});
-        } catch (_) {}
-      }
+      dispatchSiteEmail({
+        type: 'REPAIR_TICKET',
+        ticket_id: ticket.ticketId,
+        site_id: site.siteId,
+        tenant_id: site.tenantId,
+        state: site.state,
+        category: fullCategory,
+        status: 'OPEN',
+        issue: details + (attachmentUrl ? (' | Attachment: ' + attachmentUrl) : ''),
+        technician: ticket.technician
+      }, { silent: true }).catch(() => {});
 
       document.getElementById('fseTicketComplaintForm').reset();
       const info = document.getElementById('fseTicketAttachmentInfo');
@@ -3592,7 +3940,7 @@
 
     async function send7DayFuelAlarm(siteId, isManual) {
       const site = masterSites.find(s => s.siteId === siteId);
-      if (!site || !sb) return false;
+      if (!site) return false;
       synchronizeSite(site);
 
       const recipients = [];
@@ -3614,22 +3962,16 @@
         'Assigned FSE: ' + (site.fse || 'N/A') + ' (' + (site.fsePhone || 'N/A') + ')\n\n' +
         'Action Required: Please schedule diesel replenishment before the dry-out timestamp above.';
 
-      let sentAny = false;
-      const targets = recipients.length > 0
-        ? recipients.map(em => ({ target: 'CUSTOM', custom_email: em }))
-        : [{ target: 'ADMIN', custom_email: '' }];
-      if (recipients.length > 0) {
-        targets.push({ target: 'ADMIN', custom_email: '' });
-      }
-
-      for (const t of targets) {
-        try {
-          const { data, error } = await sb.functions.invoke('send-alert-email', {
-            body: { type: 'CUSTOM_EMAIL', target: t.target, custom_email: t.custom_email, subject, message }
-          });
-          if (!error && !(data && data.ok === false)) sentAny = true;
-        } catch (_) {}
-      }
+      const res = await dispatchSiteEmail({
+        type: 'FUEL_7DAY_ALARM',
+        target: recipients.length > 0 ? 'CUSTOM' : 'ADMIN',
+        to: recipients.length > 0 ? recipients : undefined,
+        custom_email: recipients.join(', '),
+        site_id: site.siteId,
+        subject: subject,
+        message: message
+      });
+      const sentAny = !!(res && res.ok);
 
       if (sentAny) {
         sent7DayAlarmsMap[site.siteId] = new Date().toISOString();
@@ -3639,7 +3981,7 @@
           if (isAdminUnlocked && adminSession) updateAdminPortalUiState();
         }
       } else if (isManual) {
-        showToast('Could not send 7-Day Fuel Alarm — check Finance/FSE email or Resend config');
+        showToast('Could not send 7-Day Fuel Alarm: ' + ((res && res.error) || 'check Finance/FSE email or Resend config'));
       }
       return sentAny;
     }
@@ -5987,9 +6329,39 @@
       } else if (adminActiveModule === 'directory') {
         const cleanFsePhone = (site.fsePhone || '').replace(/[^0-9]/g, '');
         const cleanSecPhone = (site.securityPhone || '').replace(/[^0-9]/g, '');
+        const fseRegisteredCount = masterSites.filter(s => s.fseEmail && s.fseEmail.includes('@')).length;
+        const autoOn = emailChannelSettings.autoFseReminder !== false;
+        const healthTxt = !emailServiceHealth.checked
+          ? 'CHECKING /api/send-email...'
+          : (emailServiceHealth.configured ? ('RESEND ENGINE LIVE · ' + (emailServiceHealth.from || 'onboarding@resend.dev')) : 'ADD RESEND_API_KEY IN VERCEL ENV');
+        const healthCls = !emailServiceHealth.checked
+          ? 'opacity-70'
+          : (emailServiceHealth.configured ? 'text-emerald-400 border-emerald-500/40' : 'text-amber-400 border-amber-500/40');
 
         container.innerHTML =
           '<div class="space-y-3">' +
+            '<!-- Automated Email & FSE Reminder Hub -->' +
+            '<div class="border_ui border-emerald-500/40 p-4 bg-(--color-card-bg)/50 space-y-3">' +
+              '<div class="flex flex-wrap items-center justify-between gap-2 border-b border_ui pb-2">' +
+                '<div>' +
+                  '<div class="font-bold uppercase text-emerald-400">// AUTOMATED EMAIL &amp; FSE REMINDER HUB</div>' +
+                  '<div class="text-[10px] opacity-70">Automatically emails an FSE live site summary &amp; PPM reminder the moment they input or update their email on the portal.</div>' +
+                '</div>' +
+                '<div class="flex flex-wrap items-center gap-1.5">' +
+                  '<span id="admEmailHealthBadge" class="border_ui px-2 py-0.5 text-[10px] font-bold ' + healthCls + '">' + healthTxt + '</span>' +
+                  '<span class="border_ui px-2 py-0.5 text-[10px] font-bold opacity-85">' + fseRegisteredCount + ' / ' + masterSites.length + ' FSE EMAILS</span>' +
+                '</div>' +
+              '</div>' +
+              '<div class="flex flex-wrap items-center justify-between gap-2">' +
+                '<div class="flex flex-wrap items-center gap-2">' +
+                  '<button type="button" onclick="toggleAutoFseReminder()" class="border_ui px-3 py-1.5 text-[10px] font-bold cursor-pointer ' + (autoOn ? 'border-emerald-500/60 text-emerald-400 bg-emerald-500/10' : 'border-amber-500/60 text-amber-400 bg-amber-500/10') + '">AUTO-REMINDER ON FSE EMAIL INPUT: ' + (autoOn ? 'ON' : 'PAUSED') + '</button>' +
+                  '<button type="button" onclick="triggerSelectedSiteFseReminder()" class="border_ui px-3 py-1.5 text-[10px] font-bold nav_active btn-invert cursor-pointer">SEND REMINDER TO THIS FSE</button>' +
+                  '<button type="button" onclick="sendBulkFsePpmReminders()" class="border_ui border-amber-400/70 px-3 py-1.5 text-[10px] font-bold text-amber-400 hover:bg-amber-500 hover:text-black cursor-pointer">REMIND ALL REGISTERED FSEs (' + fseRegisteredCount + ')</button>' +
+                '</div>' +
+                '<button type="button" onclick="checkEmailServiceHealth(true)" class="border_ui px-2.5 py-1.5 text-[10px] font-bold opacity-80 btn-invert cursor-pointer">CHECK ENGINE</button>' +
+              '</div>' +
+            '</div>' +
+
             '<div class="grid grid-cols-1 lg:grid-cols-2 gap-2.5">' +
               '<!-- Selected Site FSE Profile -->' +
               '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
@@ -6012,7 +6384,7 @@
                   '<div><label class="block text-[10px] opacity-60 mb-1">FSE NAME</label><input type="text" id="admProfileFseName" value="' + (site.fse || '') + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
                   '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">' +
                     '<div><label class="block text-[10px] opacity-60 mb-1">FSE PHONE NUMBER</label><input type="text" id="admProfileFsePhone" value="' + (site.fsePhone || '') + '" required class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
-                    '<div><label class="block text-[10px] opacity-60 mb-1">FSE EMAIL</label><input type="email" id="admProfileFseEmail" value="' + (site.fseEmail || '') + '" placeholder="fse@coloplus.com" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
+                    '<div><label class="block text-[10px] opacity-60 mb-1">FSE EMAIL (AUTO-REMINDS ON SAVE)</label><input type="email" id="admProfileFseEmail" value="' + (site.fseEmail || '') + '" placeholder="fse@coloplus.com" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none"></div>' +
                   '</div>' +
                   '<button type="submit" class="w-full border_ui py-2 font-bold nav_active btn-invert cursor-pointer">SAVE SITE &amp; FSE PROFILE</button>' +
                 '</form>' +
@@ -6045,43 +6417,74 @@
               '<div class="flex flex-wrap items-center justify-between gap-2 border-b border_ui pb-2">' +
                 '<div>' +
                   '<div class="font-bold uppercase text-amber-400">// FINANCE TEAM EMAIL CHANNEL (SAVED AUTOMATICALLY)</div>' +
-                  '<div class="text-[10px] opacity-65">Store Finance Team email once so it auto-fills &amp; receives automatic reminders.</div>' +
+                  '<div class="text-[10px] opacity-65">Store Finance Team email once so it auto-fills &amp; receives automatic diesel delivery / 7-day fuel alarms.</div>' +
                 '</div>' +
                 '<span class="border_ui px-2 py-0.5 text-[10px] font-bold ' + (emailChannelSettings.financeEmail ? 'text-emerald-400 border-emerald-500/40' : 'text-amber-400 border-amber-500/40') + '">' + (emailChannelSettings.financeEmail ? 'SAVED: ' + emailChannelSettings.financeEmail : 'NOT SAVED YET') + '</span>' +
               '</div>' +
               '<div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-end">' +
-                '<div class="sm:col-span-9">' +
+                '<div class="sm:col-span-7">' +
                   '<label class="block text-[10px] opacity-60 mb-1">FINANCE TEAM EMAIL ADDRESS</label>' +
                   '<input type="email" id="admFinanceEmailInput" value="' + (emailChannelSettings.financeEmail || '') + '" placeholder="finance@coloplus.com" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none focus:border-(--color-primary)">' +
                 '</div>' +
-                '<div class="sm:col-span-3">' +
+                '<div class="sm:col-span-2">' +
                   '<button type="button" onclick="saveAdminFinanceEmail()" class="w-full border_ui py-1.5 font-bold nav_active btn-invert cursor-pointer">SAVE EMAIL</button>' +
+                '</div>' +
+                '<div class="sm:col-span-3">' +
+                  '<button type="button" onclick="sendTestFinanceEmail()" class="w-full border_ui border-emerald-500/50 py-1.5 font-bold text-emerald-400 hover:bg-emerald-500 hover:text-black cursor-pointer">SEND TEST EMAIL</button>' +
                 '</div>' +
               '</div>' +
             '</div>' +
 
-            '<!-- Custom Email Composer (Resend) -->' +
+            '<!-- Custom Email Composer (Native Site Resend Engine) -->' +
             '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-3">' +
-              '<div class="font-bold uppercase text-(--color-accent) border-b border_ui pb-2">// CUSTOM EMAIL COMPOSER — FINANCE / FSE / TEAM (VIA RESEND)</div>' +
+              '<div class="flex flex-wrap items-center justify-between gap-2 border-b border_ui pb-2">' +
+                '<div class="font-bold uppercase text-(--color-accent)">// CUSTOM EMAIL DISPATCH — SEND TO ANY RECIPIENT</div>' +
+                '<div class="flex items-center gap-1.5">' +
+                  '<label class="text-[10px] opacity-60">PRESET:</label>' +
+                  '<select onchange="applyAdminEmailPreset(this.value)" class="border_ui bg-(--color-card-bg) px-2 py-1 text-[10px] outline-none">' +
+                    '<option value="">-- Choose Template --</option>' +
+                    '<option value="diesel_refill">Diesel Refill Approval</option>' +
+                    '<option value="ppm_notice">PPM Inspection Reminder</option>' +
+                    '<option value="bub_fault">Faulty BUB / Power Alert</option>' +
+                    '<option value="general_update">General Site Update</option>' +
+                  '</select>' +
+                '</div>' +
+              '</div>' +
               '<form onsubmit="handleAdminSendCustomEmail(event)" class="space-y-2.5">' +
                 '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">' +
                   '<div><label class="block text-[10px] opacity-60 mb-1">RECIPIENT CHANNEL</label><select id="admEmailTarget" onchange="syncAdminEmailRecipientBox()" class="w-full border_ui bg-(--color-card-bg) px-2.5 py-1.5 outline-none">' +
                     '<option value="FINANCE">FINANCE TEAM (' + (emailChannelSettings.financeEmail || 'Enter email ->') + ')</option>' +
                     '<option value="SITE_FSE">THIS SITE FSE (' + (site.fseEmail || 'No email set yet') + ')</option>' +
-                    '<option value="CUSTOM">TEAM MEMBER / SPECIFIC EMAIL</option>' +
-                    '<option value="ADMIN">ADMIN ALERT EMAIL</option>' +
+                    '<option value="ALL_FSES">ALL REGISTERED FSEs (' + fseRegisteredCount + ' site emails)</option>' +
+                    '<option value="CUSTOM">CUSTOM RECIPIENT(S) (Comma-separated)</option>' +
+                    '<option value="ADMIN">ADMIN ALERT EMAIL (Vercel Env)</option>' +
                   '</select></div>' +
-                  '<div id="admRecipientEmailWrap"><label id="admRecipientEmailLabel" class="block text-[10px] opacity-60 mb-1">FINANCE TEAM EMAIL (AUTO-SAVED)</label><input type="email" id="admCustomEmailTo" list="savedTeamEmailList" value="' + (emailChannelSettings.financeEmail || '') + '" placeholder="finance@coloplus.com" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none focus:border-(--color-primary)"></div>' +
+                  '<div id="admRecipientEmailWrap"><label id="admRecipientEmailLabel" class="block text-[10px] opacity-60 mb-1">FINANCE TEAM EMAIL (AUTO-SAVED)</label><input type="text" id="admCustomEmailTo" list="savedTeamEmailList" value="' + (emailChannelSettings.financeEmail || '') + '" placeholder="finance@coloplus.com (or comma-separated emails)" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none focus:border-(--color-primary)"></div>' +
+                '</div>' +
+                '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">' +
+                  '<div><label class="block text-[10px] opacity-60 mb-1">CC (OPTIONAL, COMMA-SEPARATED)</label><input type="text" id="admEmailCc" placeholder="ops@coloplus.com, manager@coloplus.com" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none focus:border-(--color-primary)"></div>' +
+                  '<div><label class="block text-[10px] opacity-60 mb-1">REPLY-TO EMAIL (OPTIONAL)</label><input type="email" id="admEmailReplyTo" placeholder="noc@coloplus.com" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none focus:border-(--color-primary)"></div>' +
                 '</div>' +
                 '<div><label class="block text-[10px] opacity-60 mb-1">SUBJECT</label><input type="text" id="admEmailSubject" required placeholder="e.g. ' + site.siteId + ' — Finance Diesel Approval / PPM Notice" class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none focus:border-(--color-primary)"></div>' +
-                '<div><label class="block text-[10px] opacity-60 mb-1">MESSAGE</label><textarea id="admEmailBody" rows="4" required placeholder="Type your message for Finance Team, Site FSE, or Team Member..." class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none focus:border-(--color-primary)"></textarea></div>' +
+                '<div><label class="block text-[10px] opacity-60 mb-1">MESSAGE</label><textarea id="admEmailBody" rows="4" required placeholder="Type your custom message for Finance Team, Site FSE, or any recipient..." class="w-full border_ui bg-transparent px-2.5 py-1.5 outline-none focus:border-(--color-primary)"></textarea></div>' +
                 '<div class="flex flex-wrap items-center gap-2">' +
-                  '<button type="submit" class="border_ui px-5 py-2 font-bold nav_active btn-invert cursor-pointer">SEND EMAIL VIA RESEND &gt;&gt;</button>' +
+                  '<button type="submit" class="border_ui px-5 py-2 font-bold nav_active btn-invert cursor-pointer">SEND EMAIL NOW &gt;&gt;</button>' +
+                  '<span class="text-[10px] opacity-60">Dispatched natively via /api/send-email (Resend)</span>' +
                 '</div>' +
                 '<div id="admEmailFeedbackBox" class="hidden border_ui p-2.5 text-[11px]"></div>' +
               '</form>' +
             '</div>' +
+
+            '<!-- Live Dispatched Emails Activity Log -->' +
+            '<div class="border_ui p-4 bg-(--color-card-bg)/40 space-y-2.5">' +
+              '<div class="flex flex-wrap items-center justify-between gap-2 border-b border_ui pb-2">' +
+                '<div class="font-bold uppercase opacity-90">// AUTOMATED &amp; CUSTOM EMAIL DISPATCH LOG</div>' +
+                '<span class="text-[10px] opacity-60">Latest ' + Math.min(15, emailDispatchLog.length) + ' of ' + emailDispatchLog.length + ' records</span>' +
+              '</div>' +
+              '<div id="admEmailLogContainer">' + renderAdminEmailLogHtml() + '</div>' +
+            '</div>' +
           '</div>';
+        checkEmailServiceHealth(false);
       }
     }
 
@@ -6214,6 +6617,7 @@
       const site = masterSites.find(s => s.siteId === adminSession.siteId);
       if (!site) return;
 
+      const prevEmail = (site.fseEmail || '').trim().toLowerCase();
       if (document.getElementById('admProfileTenantId')) site.tenantId = document.getElementById('admProfileTenantId').value.trim() || site.tenantId;
       if (document.getElementById('admProfileState')) site.state = document.getElementById('admProfileState').value.trim() || site.state;
       if (document.getElementById('admProfileAddress')) site.address = document.getElementById('admProfileAddress').value.trim() || site.address;
@@ -6233,6 +6637,10 @@
         updateFseUiState();
       }
       if (res && res.ok) showToast('Saved & synced site & FSE profile for ' + site.siteId);
+      const nextEmail = (site.fseEmail || '').trim().toLowerCase();
+      if (nextEmail && nextEmail.includes('@') && nextEmail !== prevEmail) {
+        sendAutomatedFseReminder(site, site.fseEmail, 'Admin FSE Profile Save', false).catch(() => {});
+      }
     }
 
     async function handleAdminSaveSecurityProfile(e) {
@@ -6311,10 +6719,15 @@
         if (label) label.innerText = 'SITE FSE EMAIL (' + (site ? site.siteId : '') + ')';
         input.value = (site && site.fseEmail) ? site.fseEmail : '';
         input.placeholder = 'fse@coloplus.com';
+      } else if (val === 'ALL_FSES') {
+        const allFses = [...new Set(masterSites.map(s => (s.fseEmail || '').trim()).filter(em => em && em.includes('@')))];
+        if (label) label.innerText = 'ALL REGISTERED FSE EMAILS (' + allFses.length + ')';
+        input.value = allFses.join(', ');
+        input.placeholder = 'No FSE emails saved yet — add them in FSE profiles above';
       } else {
-        if (label) label.innerText = 'TEAM MEMBER / RECIPIENT EMAIL';
+        if (label) label.innerText = 'RECIPIENT EMAIL(S) — COMMA-SEPARATED';
         input.value = '';
-        input.placeholder = 'teammember@coloplus.com';
+        input.placeholder = 'person1@coloplus.com, person2@coloplus.com';
       }
     }
 
@@ -6350,7 +6763,7 @@
     }
 
     async function sendTestFinanceEmail() {
-      if (!isAdminUnlocked || !sb) return;
+      if (!isAdminUnlocked) return;
       const inp = document.getElementById('admFinanceEmailInput');
       const email = inp ? inp.value.trim() : emailChannelSettings.financeEmail;
       if (!email || !email.includes('@')) {
@@ -6362,53 +6775,48 @@
       const fb = document.getElementById('admEmailFeedbackBox');
       if (fb) {
         fb.className = 'border_ui border-amber-500/40 bg-amber-500/10 p-2.5 text-[11px] text-amber-300';
-        fb.innerText = 'Sending test email to Finance Team (' + email + ') via Resend...';
+        fb.innerText = 'Sending test email to Finance Team (' + email + ') via /api/send-email...';
         fb.classList.remove('hidden');
       }
 
       const site = adminSession ? masterSites.find(s => s.siteId === adminSession.siteId) : null;
-      try {
-        const { data, error } = await sb.functions.invoke('send-alert-email', {
-          body: {
-            type: 'CUSTOM_EMAIL',
-            target: 'CUSTOM',
-            custom_email: email,
-            subject: '[TEST] ColoPlus NOC — Finance Team Email Channel Verified',
-            message: 'Hello Finance Team,\n\nThis is a live test email from the ColoPlus Diesel & Operations Command Center.\nSaved Finance Email: ' + email + (site ? '\nActive Site Context: ' + site.siteId + ' (' + site.state + ')' : '') + '\nSent by: ' + (adminSession ? adminSession.adminName : 'Admin') + '\n\nYour Finance email channel is active and stored for automatic diesel/alert notifications.'
-          }
-        });
-        if (error || (data && data.ok === false) || (data && data.error)) {
-          const msg = (error && error.message) || (data && (data.error || (data.data && data.data.message))) || 'Delivery failed';
-          if (fb) {
-            fb.className = 'border_ui border-rose-500/50 bg-rose-500/10 p-2.5 text-[11px] text-rose-400 font-bold';
-            fb.innerText = 'Test email failed: ' + msg;
-            fb.classList.remove('hidden');
-          }
-          showToast('Test email failed: ' + msg);
-          return;
-        }
-        if (fb) {
-          fb.className = 'border_ui border-emerald-500/50 bg-emerald-500/10 p-2.5 text-[11px] text-emerald-400 font-bold';
-          fb.innerText = 'Test email successfully sent to ' + email + ' via Resend! (Saved automatically)';
-          fb.classList.remove('hidden');
-        }
-        showToast('Test email sent to ' + email);
-      } catch (err) {
+      const res = await dispatchSiteEmail({
+        type: 'CUSTOM_EMAIL',
+        target: 'CUSTOM',
+        to: email,
+        custom_email: email,
+        site_id: site ? site.siteId : '',
+        sender_name: adminSession ? adminSession.adminName : 'Admin',
+        subject: '[TEST] ColoPlus NOC — Finance Team Email Channel Verified',
+        message: 'Hello Finance Team,\n\nThis is a live test email from the ColoPlus Diesel & Operations Command Center.\nSaved Finance Email: ' + email + (site ? '\nActive Site Context: ' + site.siteId + ' (' + site.state + ')' : '') + '\nSent by: ' + (adminSession ? adminSession.adminName : 'Admin') + '\n\nYour Finance email channel is active and stored for automatic diesel/alert notifications.'
+      });
+
+      if (!res.ok) {
+        const msg = (res.error || 'Delivery failed') + (res.hint ? ' — ' + res.hint : '');
         if (fb) {
           fb.className = 'border_ui border-rose-500/50 bg-rose-500/10 p-2.5 text-[11px] text-rose-400 font-bold';
-          fb.innerText = 'Could not reach Resend Edge Function.';
+          fb.innerText = 'Test email failed: ' + msg;
           fb.classList.remove('hidden');
         }
-        showToast('Could not reach email service');
+        showToast('Test email failed: ' + (res.error || 'Delivery failed'));
+        return;
       }
+      if (fb) {
+        fb.className = 'border_ui border-emerald-500/50 bg-emerald-500/10 p-2.5 text-[11px] text-emerald-400 font-bold';
+        fb.innerText = 'Test email successfully sent to ' + email + ' via Resend! (Saved automatically)';
+        fb.classList.remove('hidden');
+      }
+      showToast('Test email sent to ' + email);
     }
 
     async function handleAdminSendCustomEmail(e) {
       e.preventDefault();
-      if (!isAdminUnlocked || !sb) return;
+      if (!isAdminUnlocked) return;
       const site = adminSession ? masterSites.find(s => s.siteId === adminSession.siteId) : null;
       let target = document.getElementById('admEmailTarget').value;
       let customEmail = document.getElementById('admCustomEmailTo') ? document.getElementById('admCustomEmailTo').value.trim() : '';
+      const ccVal = document.getElementById('admEmailCc') ? document.getElementById('admEmailCc').value.trim() : '';
+      const replyToVal = document.getElementById('admEmailReplyTo') ? document.getElementById('admEmailReplyTo').value.trim() : '';
       const subject = document.getElementById('admEmailSubject').value.trim();
       const message = document.getElementById('admEmailBody').value.trim();
       const fb = document.getElementById('admEmailFeedbackBox');
@@ -6436,49 +6844,60 @@
         rememberTeamEmail(fseEmail);
         target = 'CUSTOM';
         customEmail = fseEmail;
-      } else if (target === 'CUSTOM') {
-        if (!customEmail || !customEmail.includes('@')) {
-          showToast('Please enter a valid recipient email address');
+      } else if (target === 'ALL_FSES') {
+        const allFses = customEmail
+          ? customEmail
+          : [...new Set(masterSites.map(s => (s.fseEmail || '').trim()).filter(em => em && em.includes('@')))].join(', ');
+        if (!allFses || !allFses.includes('@')) {
+          showToast('No FSE emails registered yet — save FSE emails first');
           return;
         }
-        rememberTeamEmail(customEmail);
+        target = 'CUSTOM';
+        customEmail = allFses;
+      } else if (target === 'CUSTOM') {
+        if (!customEmail || !customEmail.includes('@')) {
+          showToast('Please enter at least one valid recipient email address');
+          return;
+        }
+        customEmail.split(/[,;\n]+/).forEach(em => rememberTeamEmail(em));
       }
 
       if (fb) {
         fb.className = 'border_ui border-amber-500/40 bg-amber-500/10 p-2.5 text-[11px] text-amber-300';
-        fb.innerText = 'Sending email to ' + (customEmail || target) + ' via Resend...';
+        fb.innerText = 'Dispatching email to ' + (customEmail || target) + ' via /api/send-email...';
         fb.classList.remove('hidden');
       }
 
-      try {
-        const { data, error } = await sb.functions.invoke('send-alert-email', {
-          body: { type: 'CUSTOM_EMAIL', target, custom_email: customEmail, subject, message }
-        });
-        if (error || (data && data.ok === false) || (data && data.error)) {
-          const msg = (error && error.message) || (data && (data.error || (data.data && data.data.message))) || 'Delivery failed';
-          if (fb) {
-            fb.className = 'border_ui border-rose-500/50 bg-rose-500/10 p-2.5 text-[11px] text-rose-400 font-bold';
-            fb.innerText = 'Email error: ' + msg;
-            fb.classList.remove('hidden');
-          }
-          showToast('Email error: ' + msg);
-        } else {
-          document.getElementById('admEmailSubject').value = '';
-          document.getElementById('admEmailBody').value = '';
-          if (fb) {
-            fb.className = 'border_ui border-emerald-500/50 bg-emerald-500/10 p-2.5 text-[11px] text-emerald-400 font-bold';
-            fb.innerText = 'Email successfully sent to ' + (customEmail || target) + ' via Resend!';
-            fb.classList.remove('hidden');
-          }
-          showToast('Email sent via Resend to ' + (customEmail || target));
-        }
-      } catch (err) {
+      const res = await dispatchSiteEmail({
+        type: 'CUSTOM_EMAIL',
+        target: target,
+        to: customEmail || undefined,
+        custom_email: customEmail,
+        cc: ccVal || undefined,
+        reply_to: replyToVal || undefined,
+        site_id: site ? site.siteId : '',
+        sender_name: adminSession ? adminSession.adminName : 'NOC Administrator',
+        subject: subject,
+        message: message
+      });
+
+      if (!res.ok) {
+        const msg = (res.error || 'Delivery failed') + (res.hint ? ' — ' + res.hint : '');
         if (fb) {
           fb.className = 'border_ui border-rose-500/50 bg-rose-500/10 p-2.5 text-[11px] text-rose-400 font-bold';
-          fb.innerText = 'Failed to reach Resend email service.';
+          fb.innerText = 'Email error: ' + msg;
           fb.classList.remove('hidden');
         }
-        showToast('Failed to send custom email');
+        showToast('Email error: ' + (res.error || 'Delivery failed'));
+      } else {
+        document.getElementById('admEmailSubject').value = '';
+        document.getElementById('admEmailBody').value = '';
+        if (fb) {
+          fb.className = 'border_ui border-emerald-500/50 bg-emerald-500/10 p-2.5 text-[11px] text-emerald-400 font-bold';
+          fb.innerText = 'Email successfully delivered to ' + (customEmail || target) + ' via Resend!';
+          fb.classList.remove('hidden');
+        }
+        showToast('Email sent via Resend to ' + (customEmail || target));
       }
     }
 
@@ -6560,18 +6979,35 @@
     }
 
     async function sendAdminPpmReminders(siteId) {
-      if (!isAdminUnlocked || !sb) return;
-      try {
-        const { data, error } = await sb.functions.invoke('send-alert-email', {
-          body: { type: 'PPM_REMINDER', site_id: siteId || undefined }
-        });
-        if (error) {
-          showToast('PPM reminder error: ' + error.message);
-        } else {
-          showToast('PPM reminder email triggered via Resend' + (siteId ? ' for ' + siteId : ''));
-        }
-      } catch (e) {
-        showToast('Could not reach send-alert-email Edge Function');
+      if (!isAdminUnlocked) return;
+      if (!siteId) {
+        await sendBulkFsePpmReminders();
+        return;
+      }
+      const site = masterSites.find(s => s.siteId === siteId);
+      if (!site) return;
+      synchronizeSite(site);
+      if (!site.fseEmail || !site.fseEmail.includes('@')) {
+        showToast('No FSE email saved for ' + site.siteId + ' — add one in 05. FSE & EMAIL first');
+        return;
+      }
+      const res = await dispatchSiteEmail({
+        type: 'PPM_REMINDER',
+        site_id: site.siteId,
+        tenant_id: site.tenantId,
+        state: site.state,
+        address: site.address,
+        fse_name: site.fse,
+        fse_email: site.fseEmail,
+        ppm_cycle_days: site.ppmCycleDays || 30,
+        last_ppm_date: site.lastPpmDate || 'N/A',
+        next_ppm_date: site.nextPpmDate || 'Check Calendar',
+        subject: '[PPM REMINDER] ' + site.siteId + ' — Next PPM: ' + (site.nextPpmDate || 'Upcoming')
+      });
+      if (!res.ok) {
+        showToast('PPM reminder error: ' + (res.error || 'Delivery failed'));
+      } else {
+        showToast('PPM reminder email sent to ' + site.fseEmail + ' (' + site.siteId + ')');
       }
     }
 
@@ -7192,28 +7628,22 @@
       const rBadge = document.getElementById('repairBadgeCount');
       if (rBadge) rBadge.innerText = masterRepairs.length;
 
-      // Sync to Supabase & email Admin via Resend Edge Function
+      // Sync to Supabase & email Admin via Site Email Engine
       if (s) {
         sbInsertRepair(s.siteId, s.tenantId, repairType, issueText + (attachmentUrl ? (' [Attachment: ' + attachmentUrl + ']') : ''), techName);
       }
-      if (sb) {
-        try {
-          Promise.resolve(sb.functions.invoke('send-alert-email', {
-            body: {
-              type: 'REPAIR_TICKET',
-              ticket_id: ticket.ticketId,
-              site_id: siteId,
-              tenant_id: ticket.tenantId,
-              state: s ? s.state : '',
-              category: repairType,
-              status: repairStatus,
-              issue: issueText + (attachmentUrl ? (' | Attachment: ' + attachmentUrl) : ''),
-              technician: techName,
-              gen_run_hours: genHours
-            }
-          })).catch(() => {});
-        } catch (err) {}
-      }
+      dispatchSiteEmail({
+        type: 'REPAIR_TICKET',
+        ticket_id: ticket.ticketId,
+        site_id: siteId,
+        tenant_id: ticket.tenantId,
+        state: s ? s.state : '',
+        category: repairType,
+        status: repairStatus,
+        issue: issueText + (attachmentUrl ? (' | Attachment: ' + attachmentUrl) : ''),
+        technician: techName,
+        gen_run_hours: genHours
+      }, { silent: true }).catch(() => {});
 
       renderRepairs();
       if (fseSession && fseSession.siteId === siteId && s) renderFseRepairsModule(s);
